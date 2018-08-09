@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 # This file is part of botwtools.
-#
-# botwtools is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# botwtools is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
+LICENSE = """
+botwtools is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+botwtools is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
+"""
 
 import logger; logger.setup('botwtools')
 log = logger.logging.getLogger()
@@ -38,6 +39,9 @@ def _setupArgs():
 
     parser.add_argument('--list-codecs', action='store_true',
         help="List supported file formats.")
+
+    parser.add_argument('--license', action='store_true',
+        help="Print this program's license.")
 
     return parser.parse_args()
 
@@ -75,6 +79,7 @@ def main(*args):
         arg_parser.print_help()
         return 0
 
+    if args.license: print(LICENSE)
     if args.list_codecs: list_codecs()
     for arg in args.list: list_file(arg)
     for arg in args.extract: extract_file(*arg)

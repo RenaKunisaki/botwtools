@@ -2,6 +2,8 @@ Breath of the Wild modding tools by Rena
 
 Able to extract several file types found in BotW (and maybe other games).
 
+Usage: `python botwtools` or `./botwtools/__main__.py`
+
 Requires Python 3 and modules:
     - PyYAML
     - sortedcontainers
