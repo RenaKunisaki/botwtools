@@ -1,12 +1,26 @@
+# This file is part of botwtools.
+#
+# botwtools is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# botwtools is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
+
 # This is basically a tidied-up version of libyaz0 by
-# MasterVermilli0n / AboodXD.
-# Licensed under GPLv3.
+# MasterVermilli0n / AboodXD, whch is also GPLv3.
 
 # Yaz0 is a compressed format based on LZ, used in many Nintendo games.
 # It's the successor to MIO0/YAY0 used in N64 games.
-# Technically, `Yaz` is the file marker, and the 0 (or 1) tells if it comes
-# from the original media or an expansion disk. Yaz1 is identical to Yaz0
-# and is rarely seen.
+# Technically, `Yaz` is the file marker, and the 0 (or 1) tells if it
+# comes from the original media or an expansion disk.
+# Yaz1 is identical to Yaz0 and is rarely seen.
 import logging; log = logging.getLogger()
 import io
 import struct
