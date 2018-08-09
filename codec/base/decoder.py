@@ -67,11 +67,12 @@ class Decoder:
 
         Returns None if not known.
         """
-        return len(self.objects)
+        return None
 
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
-        print("Objects:", self.numObjects)
+        if self.numObjects is not None:
+            print("Objects:", self.numObjects)
         for obj in self.objects:
             print(obj)
 
