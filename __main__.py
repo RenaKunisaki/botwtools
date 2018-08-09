@@ -72,7 +72,7 @@ def extract_file(path, dest):
         decoder.unpack()
 
 
-def main(*args):
+def main():
     global arg_parser
     args = _setupArgs()
     if not any(vars(args).values()):
@@ -91,6 +91,6 @@ def main(*args):
 
 if __name__ == '__main__':
     try:
-        sys.exit(main(*sys.argv[1:]))
+        sys.exit(main())
     except codec.UnsupportedFileTypeError as ex:
         sys.stderr.write(str(ex))
