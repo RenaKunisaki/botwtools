@@ -60,7 +60,6 @@ def readString(file, maxlen=None, encoding='shift-jis'):
         b = file.read(1)
         if b == b'\0': break
         else: s.append(b)
-
     s = b''.join(s)
     if encoding is not None: s = s.decode()
     return s

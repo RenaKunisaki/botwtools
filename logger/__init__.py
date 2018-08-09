@@ -1,3 +1,4 @@
+# Sets up logging nicely to output to console with colours.
 import logging
 import os
 
@@ -54,6 +55,7 @@ def setup(appName):
     ch.setFormatter(formatter)
     log.addHandler(ch)
 
+    # uncomment to output to debug.log too
     #fh = logging.FileHandler('debug.log', mode='at')
     #fh.setLevel(logging.DEBUG)
     #fh.setFormatter(formatter)

@@ -10,32 +10,38 @@
 import logging; log = logging.getLogger()
 import io
 import struct
-from ..base import Decoder, FileReader, UnsupportedFileTypeError
+from ..base import Decoder, FileReader, UnsupportedFileTypeError, BinInput
 
 class Yaz0Stream(io.RawIOBase):
     """Yaz0 byte stream.
 
     Accepts an input file and yields bytes of the decompressed data.
     """
-    def __init__(self, file):
+
+    def __init__(self, file:BinInput):
         self.file = FileReader(file)
-        self.magic, self.dest_end = struct.unpack('>4sI', self.file.read(8))
+        self.magic, self.dest_end = self.file.read('>4sI')
         if self.magic not in (b'Yaz0', b'Yaz1'):
             raise UnsupportedFileTypeError(self.magic)
         self.src_pos  = 16
         self.dest_pos = 0
         self._output  = []
 
-    def _nextByte(self):
+
+    def _nextByte(self) -> bytes:
+        """Return next byte from input, or EOF."""
         d = self.file.read(1, self.src_pos)[0]
         self.src_pos += 1
         return d
 
-    def _outputByte(self, b):
+
+    def _outputByte(self, b:(int,bytes)) -> bytes:
+        """Write byte to output and return it."""
         if type(b) is int: b = bytes((b,))
         self._output.append(b)
         self.dest_pos += 1
         return b
+
 
     def bytes(self):
         """Generator that yields bytes from the decompressed stream."""
@@ -45,9 +51,9 @@ class Yaz0Stream(io.RawIOBase):
             if not code_len:
                 code = self._nextByte()
                 code_len = 8
-            if code & 0x80:
+            if code & 0x80: # output next byte from input
                 yield self._outputByte(self._nextByte())
-            else:
+            else: # repeat some bytes from output
                 b1 = self._nextByte()
                 b2 = self._nextByte()
                 offs = ((b1 & 0x0F) << 8) | b2
@@ -62,7 +68,8 @@ class Yaz0Stream(io.RawIOBase):
             code <<= 1
             code_len -= 1
 
-    def read(self, size=-1):
+
+    def read(self, size:int=-1) -> bytes:
         """File-like interface for reading decompressed stream."""
         res = []
         data = self.bytes()
@@ -71,19 +78,27 @@ class Yaz0Stream(io.RawIOBase):
             except StopIteration: break
         return b''.join(res)
 
+
     def __str__(self):
         return "<Yaz0 stream at 0x%x>" % id(self)
+
 
 
 class Yaz0Decoder(Decoder):
     """Decoder for Yaz0-compressed files."""
 
     def _read(self):
+        """Read the input file, upon opening it."""
         self.stream = Yaz0Stream(self.input)
 
     def _iter_objects(self):
-        yield self.stream # only one object
+        """Iterate over the objects in this file."""
+        # Yaz0 is a single-file compression format,
+        # so we only contain one object, which is
+        # the compressed data stream.
+        yield self.stream
 
     def unpack(self):
+        """Unpack this file to `self.destPath`."""
         with open(self.destPath, 'wb') as file:
             file.write(self.stream.read())

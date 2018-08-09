@@ -3,6 +3,13 @@ import io
 import os
 import sys
 
+# some type annotations
+Path      = str
+BinInput  = io.BufferedIOBase
+BinOutput = io.BufferedIOBase
+TxtOutput = io.TextIOBase
+fopenMode = str
+
 class Decoder:
     """Base class for decoders.
 
@@ -16,7 +23,7 @@ class Decoder:
     such as files.
     """
 
-    def __init__(self, input:io.BufferedIOBase, output=None):
+    def __init__(self, input:BinInput, output:BinOutput=None):
         """Create new decoder.
 
         input: File to decode.
@@ -27,17 +34,23 @@ class Decoder:
         self._read()
 
     def _read(self):
-        """Read the input file."""
+        """Read the input file, upon opening it."""
         raise NotImplementedError
 
     @property
     def objects(self):
-        """An iterator over the objects in the file."""
+        """An iterator over the objects in the file.
+
+        Decoders should implement `_iter_objects` instead.
+        """
         return self._iter_objects()
 
     @property
     def numObjects(self):
-        """Number of objects in this file."""
+        """Number of objects in this file.
+
+        Decoders should implement `_get_num_objects` instead.
+        """
         # This is a property rather than using len(objects)
         # because objects might be a generator, to which
         # len() can't apply. Otherwise, we might need to
@@ -49,10 +62,14 @@ class Decoder:
         """Iterate over the objects in this file."""
         raise NotImplementedError
 
-    def _get_num_objects(self):
+    def _get_num_objects(self) -> (int, None):
+        """Get number of objects in this file.
+
+        Returns None if not known.
+        """
         return len(self.objects)
 
-    def printList(self, dest=sys.stdout):
+    def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
         print("Objects:", self.numObjects)
         for obj in self.objects:
@@ -62,7 +79,7 @@ class Decoder:
         """Unpack this file to `self.destPath`."""
         raise NotImplementedError
 
-    def mkdir(self, path:str):
+    def mkdir(self, path:Path) -> Path:
         """Create a subdirectory within the output directory.
 
         Allows multiple nested paths (eg foo/bar/baz).
@@ -79,7 +96,7 @@ class Decoder:
                 except FileExistsError: pass
         return path
 
-    def mkfile(self, path:str, mode='wb'):
+    def mkfile(self, path:Path, mode:fopenMode='wb') -> BinOutput:
         """Create a file within the output directory.
 
         Allows multiple nested paths. Creates the directories as needed.
@@ -91,7 +108,7 @@ class Decoder:
         if path != '': path = self.mkdir(path)
         return open(path+'/'+name, mode)
 
-    def writeFile(self, path:str, data):
+    def writeFile(self, path:Path, data):
         """Write data to a file within the output directory."""
         with self.mkfile(path) as file:
             file.write(data)
