@@ -1,3 +1,6 @@
+# This is basically a tidied-up version of libyaz0 by
+# MasterVermilli0n / AboodXD.
+# Licensed under GPLv3.
 import logging; log = logging.getLogger()
 import io
 import struct
