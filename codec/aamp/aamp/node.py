@@ -1,12 +1,21 @@
 import logging; log = logging.getLogger()
+from lxml import etree as ET
 from structreader import StructReader, BinaryObject
 from .types import read_aamp_type, get_type_name
 from .names import getName
 
+xmlns = 'https://github.com/jam1garner/aamp2xml' # XXX
+xmlnsmap = {
+    'aamp': xmlns,
+}
+
 class Node(BinaryObject):
     """AAMP node."""
+    xmlns = xmlns
+    xmlnsmap = xmlnsmap
+
     _reader = StructReader(
-        ('I', 'node_id'),
+        ('I', 'name_hash'),
         ('H', 'data_offset'),
         ('B', 'num_children'),
         ('B', 'data_type'),
@@ -37,22 +46,25 @@ class Node(BinaryObject):
             self.data = read_aamp_type(file, self.data_type)
 
         file.seek(curPos) # restore position
-        self.name = getName(self.node_id)
+        self.name = getName(self.name_hash)
 
 
     def toXML(self, _depth=0):
-        """Return XML string for this node."""
-        pad = ' ' * _depth
+        """Convert node to XML node object."""
+        elem = ET.Element(self.name, nsmap=self.xmlnsmap)
+        elem.set('{'+self.xmlns+'}namehash',
+            '%08X' % self.name_hash)
 
-        # XXX use proper XML module here...
         if self.num_children > 0:
-            res = ['%s<%s>\n' % (pad, self.name)]
             for child in self.children:
-                res.append(child.toXML(_depth=_depth+1))
-            res.append('%s</%s>\n' % (pad, self.name))
-            return ''.join(res)
-
+                elem.append(child.toXML())
         else:
-            typ = get_type_name(self.data_type)
-            return '%s<%s type="%s">%s</%s>\n' % (
-                pad, self.name, typ, str(self.data), self.name)
+            elem.set('{'+self.xmlns+'}type',
+                get_type_name(self.data_type))
+            elem.text = str(self.data)
+
+        return elem
+
+
+    def __str__(self):
+        return "<AAMP node '%s' at 0x%x>" % (self.name, id(self))
