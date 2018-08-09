@@ -1,5 +1,7 @@
 Breath of the Wild modding tools by Rena
 
+Able to extract several file types found in BotW (and maybe other games).
+
 Requires Python 3 and modules:
     - PyYAML
     - sortedcontainers
@@ -7,3 +9,5 @@ Requires Python 3 and modules:
 Uses third-party libraries:
     - libyaz0 by MasterVermilli0n / AboodXD
     - byml-v2 by leoetlino <leo@leolam.fr>
+
+This program is only tested on Linux, but probably works fine on Windows too.
