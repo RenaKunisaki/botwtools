@@ -1,13 +1,19 @@
 # This is basically a tidied-up version of libyaz0 by
 # MasterVermilli0n / AboodXD.
 # Licensed under GPLv3.
+
+# Yaz0 is a compressed format based on LZ, used in many Nintendo games.
+# It's the successor to MIO0/YAY0 used in N64 games.
+# Technically, `Yaz` is the file marker, and the 0 (or 1) tells if it comes
+# from the original media or an expansion disk. Yaz1 is identical to Yaz0
+# and is rarely seen.
 import logging; log = logging.getLogger()
 import io
 import struct
 from ..base import Decoder, FileReader, UnsupportedFileTypeError
 
 class Yaz0Stream(io.RawIOBase):
-    """YAZ0 byte stream.
+    """Yaz0 byte stream.
 
     Accepts an input file and yields bytes of the decompressed data.
     """
@@ -66,11 +72,11 @@ class Yaz0Stream(io.RawIOBase):
         return b''.join(res)
 
     def __str__(self):
-        return "<YAZ0 stream at 0x%x>" % id(self)
+        return "<Yaz0 stream at 0x%x>" % id(self)
 
 
 class Yaz0Decoder(Decoder):
-    """Decoder for YAZ0-compressed files."""
+    """Decoder for Yaz0-compressed files."""
 
     def _read(self):
         self.stream = Yaz0Stream(self.input)
