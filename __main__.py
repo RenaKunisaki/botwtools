@@ -49,6 +49,9 @@ def _setupArgs():
     parser.add_argument('--license', action='store_true',
         help="Print this program's license.")
 
+    parser.add_argument('--debug', action='store_true',
+        help="Print debug messages.")
+
     return parser.parse_args()
 
 
@@ -78,37 +81,39 @@ def extract_file(path, dest):
         decoder.unpack()
 
 
-def extract_directory(path):
+def extract_directory(path, _depth=0):
+    log.info("Recursing into %s", path)
     for name in map(lambda n: path+'/'+n, os.listdir(path)):
         if os.path.isdir(name):
-            log.info("Recursing into %s", name)
-            extract_directory(name)
+            extract_directory(name, _depth=_depth+1)
         else:
-            extract_recursive(name, name+'.tmp')
-            os.remove(name)
-            os.rename(name+'.tmp', name)
+            extract_recursive(name, name, _depth=_depth+1)
 
 
-def extract_recursive(path, dest):
+def extract_recursive(path, dest, _depth=0):
     log.info("Recursively extracting %s to %s...", path, dest)
     try:
+        # extract the input file
         with open(path, 'rb') as file:
             decoder = codec.getDecoderForFile(file)
-            decoder = decoder(file, dest)
+            name    = os.path.normpath(decoder.suggestOutputName(dest))
+            log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
+            decoder = decoder(file, name)
             decoder.unpack()
-        try: os.remove(dest+'.tmp')
-        except IsADirectoryError: shutil.rmtree(dest+'.tmp')
-        except FileNotFoundError: pass
-        os.rename(dest, dest+'.tmp')
-        extract_recursive(dest+'.tmp', dest)
-    except IsADirectoryError:
-        log.info("Recursing into %s", path)
-        extract_directory(path)
+
+        # if successful, remove the input file, if we created it
+        if _depth > 0:
+            log.debug("Removing %s", path)
+            os.remove(path)
+
+        # recurse into this file
+        extract_recursive(name, name, _depth=_depth+1)
+
+    except IsADirectoryError: # recurse into the directory
+        extract_directory(path, _depth=_depth+1)
+
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
-    finally:
-        try: os.rename(dest+'.tmp', dest)
-        except FileNotFoundError: pass
 
 
 def main():
@@ -118,6 +123,7 @@ def main():
         arg_parser.print_help()
         return 0
 
+    if not args.debug: log.setLevel(logger.logging.INFO)
     if args.license: print(LICENSE)
     if args.list_codecs: list_codecs()
     for arg in args.list: list_file(arg)

@@ -32,6 +32,7 @@ class Decoder:
     such as files.
     """
     #__codec_name__ = 'your decoder should put a name here'
+    defaultFileExt = 'extracted'
 
     def __init__(self, input:BinInput, output:Path=None):
         """Create new decoder.
@@ -46,6 +47,14 @@ class Decoder:
     def _read(self):
         """Read the input file, upon opening it."""
         raise NotImplementedError
+
+    @classmethod
+    def suggestOutputName(cls, path:Path) -> Path:
+        """Given the path of the input file,
+        suggest a path for the output file.
+        """
+        #path, ext = os.path.splitext(path)
+        return path + '.' + cls.defaultFileExt
 
     @property
     def objects(self):

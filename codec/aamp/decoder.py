@@ -15,6 +15,7 @@
 
 import logging; log = logging.getLogger()
 import io
+import os
 import struct
 from ..base import Decoder, FileReader, UnsupportedFileTypeError, BinInput
 from .aamp import Header, Node, RootNode
@@ -22,6 +23,7 @@ from .aamp import Header, Node, RootNode
 class AampDecoder(Decoder):
     """Decoder for AAMP files."""
     __codec_name__ = 'AAMP'
+    defaultFileExt = 'xml'
 
     def _read(self):
         """Read the input file, upon opening it."""

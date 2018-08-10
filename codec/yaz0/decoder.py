@@ -101,6 +101,7 @@ class Yaz0Stream(io.RawIOBase):
 class Yaz0Decoder(Decoder):
     """Decoder for Yaz0-compressed files."""
     __codec_name__ = 'Yaz0'
+    defaultFileExt = 'bin'
 
     def _read(self):
         """Read the input file, upon opening it."""

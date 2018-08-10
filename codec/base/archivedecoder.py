@@ -15,14 +15,24 @@
 
 import logging; log = logging.getLogger()
 import io
+import os
 import sys
 import struct
 from .decoder import Decoder
+from .types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 
 class ArchiveDecoder(Decoder):
     """Base class for decoders for archive files (files which
     may contain more than one file).
     """
+    @classmethod
+    def suggestOutputName(cls, path:Path) -> Path:
+        """Given the path of the input file,
+        suggest a path for the output file.
+        """
+        path, ext = os.path.splitext(path)
+        return path + '/'
+
     def unpack(self):
         nobj = self.numObjects
         for i, obj in enumerate(self.objects):
