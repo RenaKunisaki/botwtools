@@ -15,7 +15,7 @@ Requires Python 3 and modules:
     - sortedcontainers
 
 
-# Ackowledgememts
+# Acknowledgememts
 Uses third-party libraries:
     - libyaz0 by MasterVermilli0n / AboodXD
     - byml-v2 by leoetlino <leo@leolam.fr>
