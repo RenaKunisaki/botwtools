@@ -51,6 +51,10 @@ class Yaz0Stream(io.RawIOBase):
 
     def _outputByte(self, b:(int,bytes)) -> bytes:
         """Write byte to output and return it."""
+        # XXX we keep the output in memory because the compression
+        # involves seeking back in the output stream and re-outputting
+        # some bytes. However we only need to keep the most recent
+        # 0x111 bytes, not the entire file.
         if type(b) is int: b = bytes((b,))
         self._output.append(b)
         self.dest_pos += 1
