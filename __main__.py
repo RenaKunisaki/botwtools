@@ -134,7 +134,7 @@ def main():
     if not args.debug: log.setLevel(logger.logging.INFO)
     if args.license: print(LICENSE)
     if args.list_codecs: list_codecs()
-    for arg in args.list: list_file(arg)
+    for arg in args.list: list_file(*arg)
     for arg in args.extract: extract_file(*arg)
     for arg in args.extract_recursive: extract_recursive(*arg)
     return 0
