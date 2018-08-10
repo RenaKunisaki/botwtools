@@ -37,8 +37,9 @@ class Decoder:
     For archive files, the contents are zero or more objects,
     such as files.
     """
+    #__codec_name__ = '(put a name here)'
 
-    def __init__(self, input:BinInput, output:BinOutput=None):
+    def __init__(self, input:BinInput, output:Path=None):
         """Create new decoder.
 
         input: File to decode.

@@ -44,6 +44,7 @@ def byml_to_yml(root, output) -> None:
 
 class BymlDecoder(Decoder):
     """Decoder for BYML files."""
+    __codec_name__ = 'BYML'
 
     def _read(self):
         """Read the input file, upon opening it."""

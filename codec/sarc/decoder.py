@@ -22,6 +22,7 @@ from .reader import SARC
 
 class SarcDecoder(ArchiveDecoder):
     """Decoder for SARC archive."""
+    __codec_name__ = 'SARC'
 
     def _read(self):
         """Read the input file, upon opening it."""

@@ -21,6 +21,7 @@ from .aamp import Header, Node, RootNode
 
 class AampDecoder(Decoder):
     """Decoder for AAMP files."""
+    __codec_name__ = 'AAMP'
 
     def _read(self):
         """Read the input file, upon opening it."""

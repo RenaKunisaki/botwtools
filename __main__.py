@@ -53,14 +53,14 @@ def _setupArgs():
 
 
 def list_codecs():
-    print("Available encoders:", ', '.join(map(
-        lambda f: f.decode('utf-8'),
-        sorted(codec.encoders.keys())
-    )))
-    print("Available decoders:", ', '.join(map(
-        lambda f: f.decode('utf-8'),
-        sorted(codec.decoders.keys())
-    )))
+    print("Available encoders:", ', '.join(sorted(set(
+        map(lambda c: c.__codec_name__,
+        codec.encoders.values()
+    )))))
+    print("Available decoders:", ', '.join(sorted(set(
+        map(lambda c: c.__codec_name__,
+        codec.decoders.values()
+    )))))
 
 
 def list_file(path):
