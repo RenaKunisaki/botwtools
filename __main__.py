@@ -23,7 +23,7 @@ import codec
 import shutil
 import argparse
 
-arg_parser = None
+arg_parser = None # declare global
 
 def _setupArgs():
     global arg_parser
@@ -56,6 +56,7 @@ def _setupArgs():
 
 
 def list_codecs():
+    """Print list of available encoders and decoders."""
     print("Available encoders:", ', '.join(sorted(set(
         map(lambda c: c.__codec_name__,
         codec.encoders.values()
@@ -67,6 +68,7 @@ def list_codecs():
 
 
 def list_file(path):
+    """Print list of given file's contents."""
     with open(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
         decoder = decoder(file, None)
@@ -74,6 +76,7 @@ def list_file(path):
 
 
 def extract_file(path, dest):
+    """Extract given file to given destination."""
     log.info("Extracting %s...", path)
     with open(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
@@ -82,6 +85,10 @@ def extract_file(path, dest):
 
 
 def extract_directory(path, _depth=0):
+    """Recursively extract given directory.
+
+    Called from extract_recursive.
+    """
     log.info("Recursing into %s", path)
     for name in map(lambda n: path+'/'+n, os.listdir(path)):
         if os.path.isdir(name):
@@ -91,6 +98,7 @@ def extract_directory(path, _depth=0):
 
 
 def extract_recursive(path, dest, _depth=0):
+    """Recursively extract given file/directory to given destination."""
     log.info("Recursively extracting %s to %s...", path, dest)
     try:
         # extract the input file
@@ -103,7 +111,7 @@ def extract_recursive(path, dest, _depth=0):
 
         # if successful, remove the input file, if we created it
         if _depth > 0:
-            log.debug("Removing %s", path)
+            log.debug("Removing intermediate file %s", path)
             os.remove(path)
 
         # recurse into this file
