@@ -41,8 +41,10 @@ def String(file):
     res = b''.join(res)
     try:
         res = res.decode('shift-jis')
-    except LookupError:
-        pass
+    except LookupError: pass # decoder not available
+    except UnicodeDecodeError:
+        try: res = res.decode('utf-8')
+        except UnicodeDecodeError: pass
     return res
 
 
@@ -90,5 +92,5 @@ defType(0x04, VecF(3),'Vec3f')
 defType(0x06, VecF(4),'Vec4f')
 defType(0x07, String, 'string')
 # 0x08: actor
-defType(0x08, String, 'actor')
-defType(0x14, String, 'string2')
+defType(0x08, String, 'actor') # actor name
+defType(0x14, String, 'string2') # probably some object name

@@ -57,8 +57,10 @@ class Node(BinaryObject):
         if self.num_children > 0:
             for i in range(self.num_children):
                 self.children.append(Node(file))
-        else:
+        elif hasattr(self, 'data_type'):
             self.data = read_aamp_type(file, self.data_type)
+        else: # root node
+            pass
 
         file.seek(curPos) # restore position
         self.name = getName(self.name_hash)
@@ -73,10 +75,12 @@ class Node(BinaryObject):
         if self.num_children > 0:
             for child in self.children:
                 elem.append(child.toXML())
-        else:
+        elif hasattr(self, 'data_type'):
             elem.set('{'+self.xmlns+'}type',
                 get_type_name(self.data_type))
             elem.text = str(self.data)
+        else: # root node
+            pass
 
         return elem
 

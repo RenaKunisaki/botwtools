@@ -127,7 +127,7 @@ def extract_recursive(path, dest, _depth=0):
 def main():
     global arg_parser
     args = _setupArgs()
-    if not any(vars(args).values()):
+    if not any(vars(args).values()): # no argument given
         arg_parser.print_help()
         return 0
 

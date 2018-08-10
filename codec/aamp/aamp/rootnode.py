@@ -32,7 +32,7 @@ class RootNode(Node):
         if self.name_hash != 0xA4F6CB6C:
             log.warn("Root name_hash is 0x%08X, should be 0xA4F6CB6C",
                 self.name_hash)
-        log.debug("AAMP root unk04=%d, data=0x%04X, nChild=%d",
+        log.debug("AAMP root unk04=0x%08X, data=0x%04X, nChild=%d",
             self.unk04, self.data_offset, self.num_children)
         return super().validate()
 
