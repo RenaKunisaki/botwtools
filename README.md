@@ -11,12 +11,14 @@ Run `python botwtools` or `./botwtools/__main__.py` and follow instructions.
 
 # Requirements
 Requires Python 3 and modules:
+
     - PyYAML
     - sortedcontainers
 
 
 # Acknowledgememts
 Uses third-party libraries:
+
     - libyaz0 by MasterVermilli0n / AboodXD
     - byml-v2 by leoetlino <leo@leolam.fr>
 
