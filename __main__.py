@@ -17,8 +17,10 @@ along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logger; logger.setup('botwtools')
 log = logger.logging.getLogger()
+import os
 import sys
 import codec
+import shutil
 import argparse
 
 arg_parser = None
@@ -32,6 +34,10 @@ def _setupArgs():
     parser.add_argument('--extract', '-x', nargs=2, action='append',
         metavar=('PATH', 'DESTPATH'), default=[],
         help="Extract file to specified path.")
+
+    parser.add_argument('--extract-recursive', '-X', nargs=2,
+        action='append', metavar=('PATH', 'DESTPATH'), default=[],
+        help="Extract file recursively (ie extract the extracted file).")
 
     parser.add_argument('--list', '-l', nargs=1, action='append',
         metavar='PATH', default=[],
@@ -72,6 +78,39 @@ def extract_file(path, dest):
         decoder.unpack()
 
 
+def extract_directory(path):
+    for name in map(lambda n: path+'/'+n, os.listdir(path)):
+        if os.path.isdir(name):
+            log.info("Recursing into %s", name)
+            extract_directory(name)
+        else:
+            extract_recursive(name, name+'.tmp')
+            os.remove(name)
+            os.rename(name+'.tmp', name)
+
+
+def extract_recursive(path, dest):
+    log.info("Recursively extracting %s to %s...", path, dest)
+    try:
+        with open(path, 'rb') as file:
+            decoder = codec.getDecoderForFile(file)
+            decoder = decoder(file, dest)
+            decoder.unpack()
+        try: os.remove(dest+'.tmp')
+        except IsADirectoryError: shutil.rmtree(dest+'.tmp')
+        except FileNotFoundError: pass
+        os.rename(dest, dest+'.tmp')
+        extract_recursive(dest+'.tmp', dest)
+    except IsADirectoryError:
+        log.info("Recursing into %s", path)
+        extract_directory(path)
+    except codec.UnsupportedFileTypeError:
+        log.info("Can't extract %s any further", path)
+    finally:
+        try: os.rename(dest+'.tmp', dest)
+        except FileNotFoundError: pass
+
+
 def main():
     global arg_parser
     args = _setupArgs()
@@ -83,9 +122,7 @@ def main():
     if args.list_codecs: list_codecs()
     for arg in args.list: list_file(arg)
     for arg in args.extract: extract_file(*arg)
-
-    # XXX recursive extraction: try to extract each extracted file,
-    # until we find one we don't support.
+    for arg in args.extract_recursive: extract_recursive(*arg)
     return 0
 
 
