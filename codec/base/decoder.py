@@ -17,13 +17,7 @@ import logging; log = logging.getLogger()
 import io
 import os
 import sys
-
-# some type annotations
-Path      = str
-BinInput  = io.BufferedIOBase
-BinOutput = io.BufferedIOBase
-TxtOutput = io.TextIOBase
-fopenMode = str
+from .types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 
 class Decoder:
     """Base class for decoders.
@@ -37,7 +31,7 @@ class Decoder:
     For archive files, the contents are zero or more objects,
     such as files.
     """
-    #__codec_name__ = '(put a name here)'
+    #__codec_name__ = 'your decoder should put a name here'
 
     def __init__(self, input:BinInput, output:Path=None):
         """Create new decoder.
