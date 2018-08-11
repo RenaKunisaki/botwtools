@@ -45,17 +45,17 @@ class FSKL(BinaryObject):
     def readFromFile(self, file, offset=None, reader=None):
         """Read the archive from given file."""
         super().readFromFile(file, offset, reader)
-        log.debug("FSKL size: 0x%08X (0x%08X)", self.size, self.size2)
-        for name, field in self._reader.fields.items():
-            val = getattr(self, name)
-            if type(val) is int:
-                log.debug("FSKL %8s = 0x%08X", name, val)
-            else:
-                log.debug("FSKL %8s = %s", name, val)
+        self.dumpToDebugLog()
 
+        self.bones = []
+        self.bonesByName = {}
         offs = file.tell()
         for i in range(self.num_bones):
             b = Bone().readFromFile(file, offs)
+            self.bones.append(b)
+            if b.name in self.bonesByName:
+                log.warn("Duplicate bone name '%s'", b.name)
+                self.bonesByName[b.name] = b
             offs += Bone._reader._dataSize
         return self
 

@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject, readStringWithLength
 from .fskl import FSKL
+from .fvtx import FVTX
 
 class FMDL(BinaryObject):
     """FMDL object header."""
@@ -43,10 +44,11 @@ class FMDL(BinaryObject):
         ('Q',  'fskl_offset2'), # same as fskl_offset?
         ('Q',  'unk58'), # always 0?
 
+        # following are just guesses...
         ('Q',  'unk60'), # always 0?
-        ('H',  'unk68'), # FSKL count?
-        ('H',  'unk6A'), # FVTX count?
-        ('H',  'unk6C'), # FSHP count?
+        ('H',  'unk64'),
+        ('H',  'fvtx_count'), # FVTX count?
+        ('H',  'fshp_count'), # FSHP count?
         ('H',  'unk6E'), # ???? count?
 
         ('Q',  'unk70'),
@@ -55,19 +57,13 @@ class FMDL(BinaryObject):
     def readFromFile(self, file, offset=None, reader=None):
         """Read the archive from given file."""
         super().readFromFile(file, offset, reader)
-        log.debug("FMDL size: 0x%08X (0x%08X) counts=%d,%d,%d,%d,%d",
-            self.size, self.size2, self.unk68, self.unk6A,
-            self.unk6C, self.unk6E, self.unk70)
+        self.dumpToDebugLog()
 
         self.name = readStringWithLength(file, '<H', self.name_offset)
         log.debug("FMDL name: '%s'", self.name)
 
         self.skeleton = FSKL().readFromFile(file, self.fskl_offset)
-
-        #self.models = []
-        #self.file.seek(self.header.fmdl_offset)
-        #for i in range(self.header.num_objects):
-        #    self.models.append(FMDL().readFromFile(self.file))
+        FVTX().readFromFile(file, self.fvtx_offset)
 
         return self
 

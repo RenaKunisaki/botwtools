@@ -80,6 +80,8 @@ class BinaryObject:
         """Read this object from given file."""
         if offset is not None: file.seek(offset)
         self._file_offset = file.tell()
+        log.debug("Reading %s from 0x%08X",
+            type(self).__name__, self._file_offset)
         if reader is None: reader = self._reader
         data = reader._unpackFromFile(file)
         return self._unpackFromData(data)
@@ -96,6 +98,18 @@ class BinaryObject:
         after reading it.
         """
         return True
+
+    def dumpToDebugLog(self):
+        """Dump to debug log."""
+        cls = type(self).__name__
+        for name, field in self._reader.fields.items():
+            val = getattr(self, name)
+            if type(val) is int:
+                log.debug("(%04X) %s %16s: 0x%08X",
+                    field['offset'], cls, name, val)
+            else:
+                log.debug("(%04X) %s %16s: %s",
+                    field['offset'], cls, name, val)
 
 
 def readString(file, maxlen=None, encoding='shift-jis'):
@@ -116,9 +130,9 @@ def readStringWithLength(file, fmt, offset=None, encoding='shift-jis'):
     fmt: The struct format of the length.
     """
     if offset is not None: file.seek(offset)
-    log.debug("string offset: 0x%X", offset)
+    #log.debug("string offset: 0x%X", offset)
     ln = file.read(fmt)
-    log.debug("string length: 0x%x", ln)
+    #log.debug("string length: 0x%x", ln)
     s  = file.read(ln)
     if encoding is not None:
         s = s.decode(encoding)

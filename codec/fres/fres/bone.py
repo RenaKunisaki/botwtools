@@ -52,24 +52,18 @@ class Bone(BinaryObject):
 
     def readFromFile(self, file, offset=None, reader=None):
         """Read the bone from given file."""
-        log.debug("Reading bone from 0x%08X", offset)
         super().readFromFile(file, offset, reader)
         self.name = readStringWithLength(file, '<H', self.name_offset)
         #self.s60  = readStringWithLength(file, '<H', self.unk60)
         #self.s70  = readStringWithLength(file, '<H', self.unk70)
         #self.s88  = readStringWithLength(file, '<H', self.unk88)
 
-        log.debug("Bone name  = '%s'", self.name)
+        #log.debug("Bone name  = '%s'", self.name)
         #log.debug("Bone s60   = '%s'", self.s60)
         #log.debug("Bone s70   = '%s'", self.s70)
         #log.debug("Bone s88   = '%s'", self.s88)
 
-        for name, field in self._reader.fields.items():
-            val = getattr(self, name)
-            if type(val) is int:
-                log.debug("(%04X) Bone %8s = 0x%08X", field['offset'], name, val)
-            else:
-                log.debug("Bone %8s = %s", name, val)
+        #self.dumpToDebugLog()
         return self
 
 

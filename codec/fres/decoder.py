@@ -45,8 +45,10 @@ class FresDecoder(ArchiveDecoder):
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
         print("Models:", self.numObjects)
-        for obj in self.objects:
-            print(obj.name)
+        for i, obj in enumerate(self.objects):
+            print(i, obj.name)
+            for bone in obj.skeleton.bones:
+                print("  Bone:", bone.name)
 
     def unpack(self):
         """Unpack this file to `self.destPath`."""
