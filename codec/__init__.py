@@ -16,6 +16,7 @@
 from .base.exceptions import UnsupportedFileTypeError
 from .aamp.decoder import AampDecoder
 from .byml.decoder import BymlDecoder
+from .fres.decoder import FresDecoder
 from .sarc.decoder import SarcDecoder
 from .yaz0.decoder import Yaz0Decoder
 
@@ -28,6 +29,7 @@ decoders = {
     b'AAMP': AampDecoder,
     b'BY':   BymlDecoder,
     b'SARC': SarcDecoder,
+    b'FRES': FresDecoder,
     b'Yaz0': Yaz0Decoder,
     b'Yaz1': Yaz0Decoder,
     b'YB':   BymlDecoder,
