@@ -23,21 +23,11 @@ class Bone(BinaryObject):
     # I'm assuming they're 64-bit.
     _reader = StructReader(
         ('I',  'name_offset'), # u16 len, str
-        ('H',  'unk04'),
-        ('H',  'unk06'),
-        ('H',  'unk08'),
-        ('H',  'unk0A'),
-        ('H',  'unk0C'),
-        ('H',  'unk0E'),
-        ('H',  'unk10'),
-        ('H',  'unk12'),
-        ('H',  'unk14'),
-        ('H',  'unk16'),
+        ('5I',  'unk04'),
         ('H',  'bone_idx'),
         ('4h', 'parent'),
         ('H',  'unk22'),
-        ('H',  'unk24'),
-        ('H',  'unk26'),
+        ('I',  'flags'),
         ('f',  'scaleX'),
         ('f',  'scaleY'),
         ('f',  'scaleZ'),

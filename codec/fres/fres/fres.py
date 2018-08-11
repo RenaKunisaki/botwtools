@@ -26,6 +26,7 @@ class FRES:
         """Read the archive from given file."""
         self.file   = file
         self.header = Header().readFromFile(file)
+        log.debug("FRES version: 0x%08X", self.header.version)
 
         self.models = []
         self.file.seek(self.header.fmdl_offset)

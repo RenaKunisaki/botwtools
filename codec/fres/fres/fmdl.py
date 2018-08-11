@@ -15,6 +15,8 @@
 
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject, readStringWithLength
+from .fmat import FMAT
+from .fshp import FSHP
 from .fskl import FSKL
 from .fvtx import FVTX
 
@@ -30,40 +32,55 @@ class FMDL(BinaryObject):
         ('I',  'unk0C'), # always 0?
 
         ('Q',  'name_offset'), # name prefixed by u16 len
-        ('Q',  'unk18'), # always points to name table?
+        ('Q',  'str_tab_end'), # always points to name table?
 
         ('Q',  'fskl_offset'), # points to FSKL
         ('Q',  'fvtx_offset'), # points to FVTX
 
         ('Q',  'fshp_offset'), # points to FSHP
-        ('Q',  'unk38'), # points to values 0, 1, -1, 1
+        ('Q',  'fshp_dict'), # points to values 0, 1, -1, 1
 
         ('Q',  'fmat_offset'), # points to FMAT
-        ('Q',  'unk48'), # points to 0, 1, -1, 1 (not same as 38)
+        ('Q',  'fmat_dict'), # points to 0, 1, -1, 1 (not same as 38)
 
-        ('Q',  'fskl_offset2'), # same as fskl_offset?
-        ('Q',  'unk58'), # always 0?
+        ('Q',  'udata_offset'), # same as fskl_offset?
+        #('Q',  'unk58'), # always 0?
 
         # following are just guesses...
-        ('Q',  'unk60'), # always 0?
-        ('H',  'unk64'),
-        ('H',  'fvtx_count'), # FVTX count?
-        ('H',  'fshp_count'), # FSHP count?
-        ('H',  'unk6E'), # ???? count?
+        ('2Q', 'unk60'), # always 0?
+        ('H',  'fvtx_count'),
+        ('H',  'fshp_count'),
+        ('H',  'fmat_count'),
+        ('H',  'udata_count'),
 
-        ('Q',  'unk70'),
+        ('H',  'total_vtxs'),
     )
 
     def readFromFile(self, file, offset=None, reader=None):
         """Read the archive from given file."""
         super().readFromFile(file, offset, reader)
-        self.dumpToDebugLog()
 
         self.name = readStringWithLength(file, '<H', self.name_offset)
         log.debug("FMDL name: '%s'", self.name)
+        self.dumpToDebugLog()
+        self.dumpOffsets()
 
         self.skeleton = FSKL().readFromFile(file, self.fskl_offset)
-        FVTX().readFromFile(file, self.fvtx_offset)
+
+        self.fvtxs = []
+        for i in range(self.fvtx_count):
+            self.fvtxs.append(FVTX().readFromFile(file,
+                self.fvtx_offset + (i*FVTX._reader._dataSize)))
+
+        self.fshps = []
+        for i in range(self.fshp_count):
+            self.fshps.append(FSHP().readFromFile(file,
+                self.fshp_offset + (i*FSHP._reader._dataSize)))
+
+        self.fmats = []
+        for i in range(self.fmat_count):
+            self.fmats.append(FMAT().readFromFile(file,
+                self.fmat_offset + (i*FMAT._reader._dataSize)))
 
         return self
 

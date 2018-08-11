@@ -49,6 +49,13 @@ class FresDecoder(ArchiveDecoder):
             print(i, obj.name)
             for bone in obj.skeleton.bones:
                 print("  Bone:", bone.name)
+            for mat in obj.fmats:
+                print(" Material:", mat.name)
+            for vtx in obj.fvtxs:
+                print(" Vtx:", vtx)
+            for shp in obj.fshps:
+                print(" Shape:", shp.name)
+
 
     def unpack(self):
         """Unpack this file to `self.destPath`."""

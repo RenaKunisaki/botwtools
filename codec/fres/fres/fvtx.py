@@ -17,22 +17,25 @@ import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject, readStringWithLength
 
 class FVTX(BinaryObject):
-    """A FVTX in an FSKL."""
-    # offsets in this struct are relative to the beginning of
-    # the FRES file.
-    # I'm assuming they're 64-bit.
+    """A FVTX in an FMDL."""
     _reader = StructReader(
         ('4s', 'magic'),  # 'FVTX'
-        ('B',  'num_attrs'), # num attributes
-        ('B',  'num_bufs'),  # num buffers
-        ('H',  'sec_idx'), # section index
-        ('I',  'num_vtxs'),  # num vertices
-        ('B',  'skin_cnt'),# vtx skin count
-        ('3B', 'padding0D'),
-        ('i',  'attrArrayOffs'), # offset to first elem in attribute array
-        ('i',  'attrGroupOffs'), # attr index group offset
-        ('i',  'bufArrayOffs'), # offset to first elem in buffer array
-        ('I',  'user_ptr'), # always 0, changed at runtime
+        ('3I', 'unk04'),
+        ('Q',  'vtx_attrib_array_offs'),
+        ('Q',  'vtx_attrib_dict_offs'),
+        ('Q',  'unk10'),
+        ('Q',  'unk18'),
+        ('Q',  'unk20'),
+        ('Q',  'vtx_bufsize_offs'),
+        ('Q',  'vtx_stridesize_offs'),
+        ('Q',  'vtx_buf_array_offs'),
+        ('I',  'vtx_buf_offs'),
+        ('B',  'num_attrs'),
+        ('B',  'num_bufs'),
+        ('H',  'index'),
+        ('I',  'num_vtxs'),
+        ('I',  'skin_weight_influence'),
+        # size: 0x60
     )
 
     def readFromFile(self, file, offset=None, reader=None):
@@ -41,8 +44,19 @@ class FVTX(BinaryObject):
         super().readFromFile(file, offset, reader)
 
         self.dumpToDebugLog()
+        self.dumpOffsets()
+
+        self.vtxs = []
+        for i in range(self.num_vtxs):
+            vtx = {
+                'buf_offs': file.read('H', self.vtx_buf_offs + (2*i)),
+            }
+            #log.debug("Vtx: %s", vtx)
+            self.vtxs.append(vtx)
+
         return self
 
 
     def validate(self):
+        assert self.magic == b'FVTX', "Not an FVTX"
         return True

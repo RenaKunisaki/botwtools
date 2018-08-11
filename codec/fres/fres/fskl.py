@@ -28,28 +28,31 @@ class FSKL(BinaryObject):
         ('I',  'size2'),
         ('I',  'unk0C'), # always 0
 
-        ('Q',  'unk10'), # 0x730
-        ('Q',  'unk18'), # 0x6E0
+        ('Q',  'bone_idx_group_offs'),
+        ('Q',  'bone_array_offs'),
+        ('Q',  'inverse_idx_offs'),
+        ('Q',  'inverse_mtx_offs'),
 
-        ('Q',  'unk20'), # 0x730
-        ('Q',  'unk28'), # 0x730
+        ('Q',  'unk30'),
 
-        ('Q',  'unk30'), # 0
-        ('I',  'unk38'), # 0x1100
+        ('I',  'flags'),
         ('H',  'num_bones'),
-        ('H',  'unk3E'),
-
-        ('Q',  'unk40'), # 0
+        ('H',  'num_inverse_idxs'),
+        ('H',  'num_extra'),
+        ('H',  'unk42'),
+        ('I',  'unk44'),
     )
 
     def readFromFile(self, file, offset=None, reader=None):
         """Read the archive from given file."""
         super().readFromFile(file, offset, reader)
         self.dumpToDebugLog()
+        self.dumpOffsets()
 
+        # read bones
         self.bones = []
         self.bonesByName = {}
-        offs = file.tell()
+        offs = self.bone_array_offs
         for i in range(self.num_bones):
             b = Bone().readFromFile(file, offs)
             self.bones.append(b)
@@ -57,6 +60,21 @@ class FSKL(BinaryObject):
                 log.warn("Duplicate bone name '%s'", b.name)
                 self.bonesByName[b.name] = b
             offs += Bone._reader._dataSize
+
+        # read inverse indices
+        self.inverse_idxs = []
+        file.seek(self.inverse_idx_offs)
+        for i in range(self.num_inverse_idxs):
+            self.inverse_idxs.append(file.read('h'))
+        log.debug("Inverse idxs: %s", self.inverse_idxs)
+
+        # read inverse mtx
+        self.inverse_mtx = []
+        file.seek(self.inverse_mtx_offs)
+        for i in range(4):
+            self.inverse_mtx.append(file.read('4f'))
+        log.debug("Inverse mtx: %s", self.inverse_mtx)
+
         return self
 
 
