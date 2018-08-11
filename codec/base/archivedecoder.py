@@ -34,6 +34,7 @@ class ArchiveDecoder(Decoder):
         return path + '/'
 
     def unpack(self):
+        """Unpack this file to `self.destPath`."""
         nobj = self.numObjects
         for i, obj in enumerate(self.objects):
             name = getattr(obj, 'name', '%d.bin' % i)
