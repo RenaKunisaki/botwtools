@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger()
 import struct
 
+
 class StructReader:
     """Reads a struct from a binary file or buffer, and returns
     a dict with named fields.
@@ -24,22 +25,44 @@ class StructReader:
     format string used by `struct`, and name is the field name.
     """
     def __init__(self, *structDef):
-        fmt = []
+        self.fields = {}
+        self.orderedFields = []
+
         fieldSize = {}
+        offset = 0
         for field in structDef:
             typ, name = field
-            fmt.append(typ)
-            fieldSize[name] = struct.calcsize(typ)
-        fmt = ''.join(fmt)
-        self._dataSize = struct.calcsize(fmt)
+            if type(typ) is str:
+                size = struct.calcsize(typ)
+            else:
+                size = struct.calcsize(typ.fmt)
+            fieldSize[name] = size
+
+            assert name not in self.fields, \
+                "Duplicate field name '" + name + "'"
+
+            field = {
+                'name': name,
+                'size': fieldSize[name],
+                'offset': offset,
+                'struct_fmt': typ,
+            }
+            self.fields[name] = field
+            self.orderedFields.append(field)
+            offset += size
+        self._dataSize = offset
 
         def _unpack(buf, offset=0):
             """Unpack this struct from given buffer."""
             res = {}
             for field in structDef:
                 typ, name = field
-                data = struct.unpack_from(typ, buf, offset)
-                res[name] = data[0]
+                if type(typ) is str:
+                    data = struct.unpack_from(typ, buf, offset)
+                    if len(data) == 1: data = data[0]
+                else:
+                    data = typ.read(file)
+                res[name] = data
                 offset += fieldSize[name]
             return res
 
@@ -53,13 +76,20 @@ class StructReader:
 class BinaryObject:
     """Object which is instantiated by reading a struct from a file."""
 
-    def readFromFile(self, file):
+    def readFromFile(self, file, offset=None, reader=None):
         """Read this object from given file."""
-        data = self._reader._unpackFromFile(file)
+        if offset is not None: file.seek(offset)
+        self._file_offset = file.tell()
+        if reader is None: reader = self._reader
+        data = reader._unpackFromFile(file)
+        return self._unpackFromData(data)
+
+    def _unpackFromData(self, data):
         for k, v in data.items():
             setattr(self, k, v)
         self.validate()
         return self
+
 
     def validate(self):
         """Perform whatever sanity checks on this object
@@ -77,4 +107,19 @@ def readString(file, maxlen=None, encoding='shift-jis'):
         else: s.append(b)
     s = b''.join(s)
     if encoding is not None: s = s.decode()
+    return s
+
+
+def readStringWithLength(file, fmt, offset=None, encoding='shift-jis'):
+    """Read a string, prefixed with its length.
+
+    fmt: The struct format of the length.
+    """
+    if offset is not None: file.seek(offset)
+    log.debug("string offset: 0x%X", offset)
+    ln = file.read(fmt)
+    log.debug("string length: 0x%x", ln)
+    s  = file.read(ln)
+    if encoding is not None:
+        s = s.decode(encoding)
     return s
