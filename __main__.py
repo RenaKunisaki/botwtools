@@ -22,6 +22,7 @@ import sys
 import codec
 import shutil
 import argparse
+from codec.base.filereader import FileReader # XXX move this
 
 arg_parser = None # declare global
 
@@ -69,7 +70,7 @@ def list_codecs():
 
 def list_file(path):
     """Print list of given file's contents."""
-    with open(path, 'rb') as file:
+    with FileReader(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
         decoder = decoder(file, None)
         decoder.printList()
@@ -78,7 +79,7 @@ def list_file(path):
 def extract_file(path, dest):
     """Extract given file to given destination."""
     log.info("Extracting %s...", path)
-    with open(path, 'rb') as file:
+    with FileReader(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
         decoder = decoder(file, dest)
         decoder.unpack()
