@@ -24,8 +24,20 @@ class FileReader:
         'end':   2,
     }
 
-    def __init__(self, file):
+    def __init__(self, file, mode='rb'):
+        if type(file) is str: file = open(file, mode)
         self.file = file
+
+    @staticmethod
+    def open(path, mode='rb'):
+        file = open(path, mode)
+        return FileReader(file)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
 
 
     def seek(self, pos:int, whence:(int,str)=0):
@@ -53,8 +65,10 @@ class FileReader:
         """
         if pos is not None: self.seek(pos)
         if type(size) is str:
-            return struct.unpack(size,
+            r = struct.unpack(size,
                 self.file.read(struct.calcsize(size)))
+            if len(r) == 1: r = r[0]
+            return r
         return self.file.read(size)
 
 
@@ -79,3 +93,7 @@ class FileReader:
         s = b''.join(s)
         if encoding is not None: s = s.decode()
         return s
+
+    def tell(self):
+        """Get current read position."""
+        return self.file.tell()
