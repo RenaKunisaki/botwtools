@@ -124,9 +124,12 @@ class Decoder:
         Returns the file object.
         """
         path, name = os.path.split(path)
-        log.debug("mkfile name=%s, path=%s", name, path)
-        if path != '': path = self.mkdir(path)
-        return open(path+'/'+name, mode)
+        if path == '': path = '.' # don't extract archives to /
+        log.debug("mkfile name=%s, path=%s (dest=%s)", name, path,
+            self.destPath)
+        if path != '':
+            path = self.mkdir(path) + '/'
+        return open(path+name, mode)
 
     def writeFile(self, path:Path, data):
         """Write data to a file within the output directory."""
