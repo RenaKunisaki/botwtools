@@ -72,22 +72,26 @@ class FVTX(BinaryObject):
         0x1805: '3f',
     }
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the FVTX from given file."""
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the FVTX from given FRES."""
         log.debug("Reading FVTX from 0x%08X", offset)
-        super().readFromFile(file, offset, reader)
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
 
-        self.attrs = []
-        self.vtxs  = []
         self.dumpToDebugLog()
         self.dumpOffsets()
+
+        self._readBuffers()
+        self._readAttrs()
+        self._readVtxs()
 
         return self
 
 
-    def _readBuffers(self, file, rlt):
-        dataOffs = rlt.data_start + self.vtx_buf_offs
+    def _readBuffers(self):
+        dataOffs = self.fres.rlt.data_start + self.vtx_buf_offs
         self.buffers = []
+        file = self.fres.file
         for i in range(self.num_bufs):
             n = i*0x10
             size   = file.read('I', self.vtx_bufsize_offs+n)
@@ -97,16 +101,18 @@ class FVTX(BinaryObject):
             dataOffs += buf.size
 
 
-    def _readAttrs(self, file):
+    def _readAttrs(self):
+        self.attrs = []
         for i in range(self.num_attrs):
-            attr = Attribute().readFromFile(file,
+            attr = Attribute().readFromFRES(self.fres,
                 self.vtx_attrib_array_offs +
                 (i * Attribute._reader._dataSize))
             log.debug("Attr: %s", attr)
             self.attrs.append(attr)
 
 
-    def _readVtxs(self, file):
+    def _readVtxs(self):
+        self.vtxs  = []
         for i in range(self.num_vtxs):
             vtx = Vertex()
             for attr in self.attrs:

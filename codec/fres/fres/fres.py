@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger()
 from .header import Header
 from .fmdl   import FMDL
+from .rlt    import RLT
 
 class FRES:
     """Represents an FRES archive."""
@@ -28,13 +29,19 @@ class FRES:
         self.header = Header().readFromFile(file)
         log.debug("FRES version: 0x%08X", self.header.version)
 
+        if self.header.type == 'switch':
+            self.rlt = RLT().readFromFile(file, self.header.rlt_offset)
+            log.debug("RLT @%06X starts at %06X",
+                self.header.rlt_offset, self.rlt.data_start)
+        else:
+            self.rlt = None
+
         self.models = []
         self.file.seek(self.header.fmdl_offset)
         for i in range(self.header.num_objects):
             pos = self.file.tell()
             log.debug("Read FMDL from 0x%X", pos)
-            mdl = FMDL().readFromFile(self.file)
-            mdl._readVtxs(file, self.header.rlt)
+            mdl = FMDL().readFromFRES(self)
             self.models.append(mdl)
             self.file.seek(pos + mdl.size)
 

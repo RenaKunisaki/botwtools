@@ -32,18 +32,18 @@ class LODModel(BinaryObject):
         ('H',  'submesh_cnt'),
     )
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the model from given file."""
-        super().readFromFile(file, offset, reader)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the model from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
 
         self.dumpToDebugLog()
 
-        # XXX use RLT
         self.data = []
-        file.seek(self.face_offs) # + RLT.data_start
+        fres.file.seek(self.face_offs + fres.rlt.data_start)
         if self.face_type == 1:
             for i in range(self.face_cnt):
-                self.data.append(file.read('H'))
+                self.data.append(fres.file.read('H'))
 
         return self
 

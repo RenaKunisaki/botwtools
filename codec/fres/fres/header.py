@@ -121,13 +121,6 @@ class Header(BinaryObject):
             reader = self._reader_wiiu
         super().readFromFile(file, reader=reader)
 
-        if self.type == 'switch':
-            self.rlt = RLT().readFromFile(file, self.rlt_offset)
-            log.debug("RLT @%06X starts at %06X", self.rlt_offset,
-                self.rlt.data_start)
-        else:
-            self.rlt = None
-
         return self
 
 

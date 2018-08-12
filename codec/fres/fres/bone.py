@@ -40,10 +40,12 @@ class Bone(BinaryObject):
         ('f',  'posZ'),
     )
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the bone from given file."""
-        super().readFromFile(file, offset, reader)
-        self.name = readStringWithLength(file, '<H', self.name_offset)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the bone from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
+        self.name = readStringWithLength(fres.file,
+            '<H', self.name_offset)
         #self.s60  = readStringWithLength(file, '<H', self.unk60)
         #self.s70  = readStringWithLength(file, '<H', self.unk70)
         #self.s88  = readStringWithLength(file, '<H', self.unk88)

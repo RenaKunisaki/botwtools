@@ -108,7 +108,6 @@ class FresDecoder(ArchiveDecoder):
                     d = struct.unpack_from(fmt, buf.data, i*sz)
                     if func: d = func(d)
                     for item in d: data.append(item)
-                log.debug("data: %s", data)
 
                 # XXX use attr.format instead of always float
                 arr = src.Child('float_array',
@@ -161,14 +160,14 @@ class FresDecoder(ArchiveDecoder):
             name = 'untitled',
         )
         node = scene.Child('node',
-            id = 'node0',
+            id   = 'node0',
             name = 'some_node',
         )
         inst = node.Child('instance_geometry',
             url = '#geometry%d' % id(model),
         )
         scene = root.Child('scene')
-        inst = scene.Child('instance_visual_scene',
+        inst  = scene.Child('instance_visual_scene',
             url = '#scene0',
         )
         with self.mkfile(name) as file:

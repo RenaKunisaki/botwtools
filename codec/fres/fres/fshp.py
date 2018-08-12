@@ -55,19 +55,21 @@ class FSHP(BinaryObject):
         # size: 0x70
     )
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the FSHP from given file."""
-        super().readFromFile(file, offset, reader)
-        self.name = readStringWithLength(file, '<H', self.name_offset)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the FSHP from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
+        self.name = readStringWithLength(fres.file,
+            '<H', self.name_offset)
         log.debug("FSHP name='%s'", self.name)
 
         self.dumpToDebugLog()
         self.dumpOffsets()
 
-        FVTX().readFromFile(file, self.fvtx_offset)
+        FVTX().readFromFRES(fres, self.fvtx_offset)
         self.lods = []
         for i in range(self.lod_cnt):
-            self.lods.append(LODModel().readFromFile(file,
+            self.lods.append(LODModel().readFromFRES(fres,
                 self.lod_offset + (i * 56)))
 
         return self

@@ -54,10 +54,12 @@ class FMAT(BinaryObject):
         ('I',  'unkB4'),
     )
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the FMAT from given file."""
-        super().readFromFile(file, offset, reader)
-        self.name = readStringWithLength(file, '<H', self.name_offset)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the FMAT from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
+        self.name = readStringWithLength(fres.file,
+            '<H', self.name_offset)
         log.debug("FMAT name='%s'", self.name)
         self.dumpToDebugLog()
         self.dumpOffsets()

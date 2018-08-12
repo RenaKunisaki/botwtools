@@ -49,39 +49,40 @@ class FMDL(BinaryObject):
         ('H',  'total_vtxs'),
     )
 
-    def readFromFile(self, file, offset=None, reader=None):
-        """Read the archive from given file."""
-        super().readFromFile(file, offset, reader)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the archive from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
 
-        self.name = readStringWithLength(file, '<H', self.name_offset)
+        self.name = readStringWithLength(fres.file,
+            '<H', self.name_offset)
         log.debug("FMDL name: '%s'", self.name)
         self.dumpToDebugLog()
         self.dumpOffsets()
 
-        self.skeleton = FSKL().readFromFile(file, self.fskl_offset)
-        self.fvtxs = []
+        # read skeleton
+        self.skeleton = FSKL().readFromFRES(fres, self.fskl_offset)
 
+        # read vertex objects
+        self.fvtxs = []
+        for i in range(self.fvtx_count):
+            vtx = FVTX().readFromFRES(fres,
+                self.fvtx_offset + (i*FVTX._reader._dataSize))
+            self.fvtxs.append(vtx)
+
+        # read shapes
         self.fshps = []
         for i in range(self.fshp_count):
-            self.fshps.append(FSHP().readFromFile(file,
+            self.fshps.append(FSHP().readFromFRES(fres,
                 self.fshp_offset + (i*FSHP._reader._dataSize)))
 
+        # read materials
         self.fmats = []
         for i in range(self.fmat_count):
-            self.fmats.append(FMAT().readFromFile(file,
+            self.fmats.append(FMAT().readFromFRES(fres,
                 self.fmat_offset + (i*FMAT._reader._dataSize)))
 
         return self
-
-
-    def _readVtxs(self, file, rlt):
-        for i in range(self.fvtx_count):
-            vtx = FVTX().readFromFile(file,
-                self.fvtx_offset + (i*FVTX._reader._dataSize))
-            vtx._readBuffers(file, rlt)
-            vtx._readAttrs(file)
-            vtx._readVtxs(file)
-            self.fvtxs.append(vtx)
 
 
     def validate(self):
@@ -94,6 +95,6 @@ class FMDL(BinaryObject):
         #        log.debug("FMDL[%04X] %16s = %s", field['offset'],
         #            field['name'], val)
 
-        assert self.magic[0:4] == b'FMDL', "Not a FMDL file"
+        assert self.magic[0:4] == b'FMDL', "Not a FMDL"
 
         return True
