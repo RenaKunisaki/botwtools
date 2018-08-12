@@ -17,7 +17,7 @@ import logging; log = logging.getLogger()
 import io
 import sys
 import struct
-from lxml import etree as ET
+import myxml
 from ..base import ArchiveDecoder, FileReader, UnsupportedFileTypeError, TxtOutput
 from ..base.types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 from .fres import FRES
@@ -68,32 +68,32 @@ class FresDecoder(ArchiveDecoder):
 
     def _extractModel(self, model):
         name = model.name + '.dae'
-        root = ET.Element('COLLADA')
-        root.set('xmlns', "http://www.collada.org/2005/11/COLLADASchema")
-        root.set('version', "1.4.1")
+        document = myxml.Document('COLLADA',
+            myxml.Element('library_cameras'),
+            myxml.Element('library_lights'),
+            myxml.Element('library_materials'),
+            myxml.Element('library_effects'),
 
-        root.append(ET.Element('library_cameras'))
-        root.append(ET.Element('library_lights'))
-        root.append(ET.Element('library_materials'))
-        root.append(ET.Element('library_effects'))
+            xmlns="http://www.collada.org/2005/11/COLLADASchema",
+            version="1.4.1",
+        )
+        root = document.root
 
-        geoms = ET.Element('library_geometries')
-        root.append(geoms)
-        geom  = ET.Element('geometry')
-        geoms.append(geom)
-        geom.set('id', 'geometry%d' % id(model))
-        geom.set('name', model.name)
+        geoms = root.Child('library_geometries')
+        geom  = geoms.Child('geometry',
+            id = 'geometry%d' % id(model),
+            name = model.name,
+        )
 
-        mesh = ET.Element('mesh')
-        geom.append(mesh)
+        mesh = geom.Child('mesh')
         for fvtx in model.fvtxs:
             for attr in fvtx.attrs:
-                src = ET.Element('source')
-                mesh.append(src)
-                src.set('id', 'src_' + attr.name)
-                src.set('name', attr.name)
-                #src.set('unk04', '0x%08X' % attr.unk04)
-                #src.set('unk0A', '0x%04X' % attr.unk0A)
+                src = mesh.Child('source',
+                    id = 'src_' + attr.name,
+                    name = attr.name,
+                    #unk04 = '0x%08X' % attr.unk04,
+                    #unk0A = '0x%04X' % attr.unk0A,
+                )
 
                 buf  = fvtx.buffers[attr.buf_idx]
                 offs = attr.buf_offs #* buf.stride
@@ -111,89 +111,68 @@ class FresDecoder(ArchiveDecoder):
                 log.debug("data: %s", data)
 
                 # XXX use attr.format instead of always float
-                arr = ET.Element('float_array')
-                src.append(arr)
-                arr.set('id', 'array%d' % id(attr))
-                arr.set('count', str(len(data)))
+                arr = src.Child('float_array',
+                    id = 'array%d' % id(attr),
+                    count = len(data),
+                )
                 arr.text = ' '.join(map(str, data))
 
                 # XXX support more types of accessor/technique
-                tech = ET.Element('technique_common')
-                src.append(tech)
-                acc  = ET.Element('accessor')
-                tech.append(acc)
-                acc.set('count', str(len(data)*3)) # XXX what is this
-                acc.set('offset', str(offs))
-                #acc.set('stride', str(buf.stride))
-                acc.set('stride', '3')
-                acc.set('source', '#array%d' % id(attr))
+                tech = src.Child('technique_common')
+                acc  = tech.Child('accessor',
+                    count  = len(data)*3, # XXX what is this
+                    offset = offs,
+                    #stride = str(buf.stride),
+                    stride = '3', # XXX
+                    source = '#array%d' % id(attr),
+                )
 
                 for p in ('X', 'Y', 'Z'):
-                    param = ET.Element('param')
-                    acc.append(param)
-                    param.set('name', p)
-                    param.set('type', 'float')
+                    param = acc.Child('param',
+                        name = p,
+                        type = 'float',
+                    )
             # attrs done...
 
-            vtxs = ET.Element('vertices')
-            mesh.append(vtxs)
-            vtxs.set('id', 'vertices%d' % id(vtxs))
-            input = ET.Element('input')
-            vtxs.append(input)
-            input.set('semantic', 'POSITION')
-            input.set('source', '#src_' + attr.name)
-
-            plist = ET.Element('polylist')
-            mesh.append(plist)
-            plist.set('count', str(len(fvtx.vtxs))) # XXX probably wrong
-
-            inp_vtx = ET.Element('input')
-            plist.append(inp_vtx)
-            inp_vtx.set('offset', '0')
-            inp_vtx.set('semantic', 'VERTEX')
-            inp_vtx.set('source', '#vertices%d' % id(vtxs))
-
-            vcount = ET.Element('vcount')
-            plist.append(vcount)
+            vtxs = mesh.Child('vertices',
+                id = 'vertices%d' % id(mesh),
+            )
+            input = vtxs.Child('input',
+                semantic = 'POSITION',
+                source = '#src_' + attr.name,
+            )
+            plist = mesh.Child('polylist',
+                count = len(fvtx.vtxs), # XXX probably wrong
+            )
+            inp_vtx = plist.Child('input',
+                offset = '0',
+                semantic = 'VERTEX',
+                source = '#vertices%d' % id(mesh),
+            )
+            vcount = plist.Child('vcount')
             vcount.text = '4' # XXX
 
-            p = ET.Element('p')
-            plist.append(p)
+            p = plist.Child('p')
             p.text = '0 1 2 3' # XXX
 
-        scenes = ET.Element('library_visual_scenes')
-        root.append(scenes)
-
-        scene = ET.Element('visual_scene')
-        scenes.append(scene)
-        scene.set('id', 'scene0')
-        scene.set('name', 'untitled')
-
-        node = ET.Element('node')
-        scene.append(node)
-        node.set('id', 'node0')
-        node.set('name', 'some_node')
-
-        inst = ET.Element('instance_geometry')
-        node.append(inst)
-        inst.set('url', '#geometry%d' % id(model))
-
-        scene = ET.Element('scene')
-        root.append(scene)
-
-        inst = ET.Element('instance_visual_scene')
-        scene.append(inst)
-        inst.set('url', '#scene0')
-
-
-
-        tree = ET.ElementTree(root)
+        scenes = root.Child('library_visual_scenes')
+        scene  = scenes.Child('visual_scene',
+            id   = 'scene0',
+            name = 'untitled',
+        )
+        node = scene.Child('node',
+            id = 'node0',
+            name = 'some_node',
+        )
+        inst = node.Child('instance_geometry',
+            url = '#geometry%d' % id(model),
+        )
+        scene = root.Child('scene')
+        inst = scene.Child('instance_visual_scene',
+            url = '#scene0',
+        )
         with self.mkfile(name) as file:
-            tree.write(file,
-                encoding='utf-8',
-                xml_declaration=True,
-                pretty_print=True,
-            )
+            document.writeToFile(file, pretty_print=True)
 
 
     def _old_extractModel(self, model):

@@ -45,6 +45,5 @@ class Buffer:
             'char':   'c',
         }
         for name, fmt in fmts.items():
-            log.debug("buffer fmt '%s'", fmt)
             view = memoryview(self.data).cast(fmt)
             setattr(self, name, view)

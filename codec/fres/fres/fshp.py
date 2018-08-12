@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject, readStringWithLength
 from .fvtx import FVTX
+from .lod import LODModel
 
 class FSHP(BinaryObject):
     """A FSHP in an FMDL."""
@@ -34,6 +35,7 @@ class FSHP(BinaryObject):
         ('Q',  'unk30'), # 0
         ('Q',  'unk38'), # 0
 
+        # bounding box and bounding radius
         ('Q',  'bbox_offset'), # => about 24 floats, or 8 Vec3s, or 6 Vec4s
         ('Q',  'bradius_offset'), # => => 3F03ADA8 3EFC1658 00000000 00000D14  00000000 00000000 00000000 00000000
 
@@ -62,8 +64,11 @@ class FSHP(BinaryObject):
         self.dumpToDebugLog()
         self.dumpOffsets()
 
-        self.vertices = []
         FVTX().readFromFile(file, self.fvtx_offset)
+        self.lods = []
+        for i in range(self.lod_cnt):
+            self.lods.append(LODModel().readFromFile(file,
+                self.lod_offset + (i * 56)))
 
         return self
 

@@ -79,5 +79,5 @@ class Vertex:
         # XXX _u1 (u16 x2)
 
         else:
-            log.warn("Unknown attribute '%s'", attr.name)
+            #log.warn("Unknown attribute '%s'", attr.name)
             self.extra[attr.name] = val
