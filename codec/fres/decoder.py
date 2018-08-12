@@ -67,6 +67,136 @@ class FresDecoder(ArchiveDecoder):
 
 
     def _extractModel(self, model):
+        name = model.name + '.dae'
+        root = ET.Element('COLLADA')
+        root.set('xmlns', "http://www.collada.org/2005/11/COLLADASchema")
+        root.set('version', "1.4.1")
+
+        root.append(ET.Element('library_cameras'))
+        root.append(ET.Element('library_lights'))
+        root.append(ET.Element('library_materials'))
+        root.append(ET.Element('library_effects'))
+
+        geoms = ET.Element('library_geometries')
+        root.append(geoms)
+        geom  = ET.Element('geometry')
+        geoms.append(geom)
+        geom.set('id', 'geometry%d' % id(model))
+        geom.set('name', model.name)
+
+        mesh = ET.Element('mesh')
+        geom.append(mesh)
+        for fvtx in model.fvtxs:
+            for attr in fvtx.attrs:
+                src = ET.Element('source')
+                mesh.append(src)
+                src.set('id', 'src_' + attr.name)
+                src.set('name', attr.name)
+                #src.set('unk04', '0x%08X' % attr.unk04)
+                #src.set('unk0A', '0x%04X' % attr.unk0A)
+
+                buf  = fvtx.buffers[attr.buf_idx]
+                offs = attr.buf_offs #* buf.stride
+                fmt  = fvtx.attrFmts.get(attr.format)
+                func = None
+                if type(fmt) is dict:
+                    func = fmt['func']
+                    fmt  = fmt['fmt']
+                data = []
+                sz   = struct.calcsize(fmt)
+                for i in range(int(buf.size / sz)):
+                    d = struct.unpack_from(fmt, buf.data, i*sz)
+                    if func: d = func(d)
+                    for item in d: data.append(item)
+                log.debug("data: %s", data)
+
+                # XXX use attr.format instead of always float
+                arr = ET.Element('float_array')
+                src.append(arr)
+                arr.set('id', 'array%d' % id(attr))
+                arr.set('count', str(len(data)))
+                arr.text = ' '.join(map(str, data))
+
+                # XXX support more types of accessor/technique
+                tech = ET.Element('technique_common')
+                src.append(tech)
+                acc  = ET.Element('accessor')
+                tech.append(acc)
+                acc.set('count', str(len(data)*3)) # XXX what is this
+                acc.set('offset', str(offs))
+                #acc.set('stride', str(buf.stride))
+                acc.set('stride', '3')
+                acc.set('source', '#array%d' % id(attr))
+
+                for p in ('X', 'Y', 'Z'):
+                    param = ET.Element('param')
+                    acc.append(param)
+                    param.set('name', p)
+                    param.set('type', 'float')
+            # attrs done...
+
+            vtxs = ET.Element('vertices')
+            mesh.append(vtxs)
+            vtxs.set('id', 'vertices%d' % id(vtxs))
+            input = ET.Element('input')
+            vtxs.append(input)
+            input.set('semantic', 'POSITION')
+            input.set('source', '#src_' + attr.name)
+
+            plist = ET.Element('polylist')
+            mesh.append(plist)
+            plist.set('count', str(len(fvtx.vtxs))) # XXX probably wrong
+
+            inp_vtx = ET.Element('input')
+            plist.append(inp_vtx)
+            inp_vtx.set('offset', '0')
+            inp_vtx.set('semantic', 'VERTEX')
+            inp_vtx.set('source', '#vertices%d' % id(vtxs))
+
+            vcount = ET.Element('vcount')
+            plist.append(vcount)
+            vcount.text = '4' # XXX
+
+            p = ET.Element('p')
+            plist.append(p)
+            p.text = '0 1 2 3' # XXX
+
+        scenes = ET.Element('library_visual_scenes')
+        root.append(scenes)
+
+        scene = ET.Element('visual_scene')
+        scenes.append(scene)
+        scene.set('id', 'scene0')
+        scene.set('name', 'untitled')
+
+        node = ET.Element('node')
+        scene.append(node)
+        node.set('id', 'node0')
+        node.set('name', 'some_node')
+
+        inst = ET.Element('instance_geometry')
+        node.append(inst)
+        inst.set('url', '#geometry%d' % id(model))
+
+        scene = ET.Element('scene')
+        root.append(scene)
+
+        inst = ET.Element('instance_visual_scene')
+        scene.append(inst)
+        inst.set('url', '#scene0')
+
+
+
+        tree = ET.ElementTree(root)
+        with self.mkfile(name) as file:
+            tree.write(file,
+                encoding='utf-8',
+                xml_declaration=True,
+                pretty_print=True,
+            )
+
+
+    def _old_extractModel(self, model):
         name = model.name + '.xml'
         root = ET.Element('model')
 
