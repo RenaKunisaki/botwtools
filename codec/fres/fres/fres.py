@@ -48,6 +48,7 @@ class FRES:
 
         return self
 
+
     def readStr(self, offset):
         """Read string (prefixed with length) from given offset."""
         return readStringWithLength(self.file, '<H', offset)

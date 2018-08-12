@@ -18,8 +18,9 @@ from structreader import StructReader, BinaryObject
 
 class FMAT(BinaryObject):
     """A FMAT in an FMDL."""
+    _magic = b'FMAT'
     _reader = StructReader(
-        ('4s', 'magic'),  # 'FMAT'
+        ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
         ('I',  'unk0C'),
@@ -67,5 +68,5 @@ class FMAT(BinaryObject):
 
 
     def validate(self):
-        assert self.magic == b'FMAT', "Not an FMAT"
+        super().validate()
         return True

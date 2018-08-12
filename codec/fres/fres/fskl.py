@@ -22,8 +22,9 @@ class FSKL(BinaryObject):
     # offsets in this struct are relative to the beginning of
     # the FRES file.
     # I'm assuming they're 64-bit.
+    _magic = b'FSKL'
     _reader = StructReader(
-        ('4s', 'magic'), # 'FSKL'
+        ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
         ('I',  'unk0C'), # always 0
@@ -60,7 +61,7 @@ class FSKL(BinaryObject):
             if b.name in self.bonesByName:
                 log.warn("Duplicate bone name '%s'", b.name)
                 self.bonesByName[b.name] = b
-            offs += Bone._reader._dataSize
+            offs += Bone._reader.size
 
         # read inverse indices
         self.inverse_idxs = []
@@ -89,6 +90,5 @@ class FSKL(BinaryObject):
         #        log.debug("FMDL[%04X] %16s = %s", field['offset'],
         #            field['name'], val)
 
-        assert self.magic[0:4] == b'FSKL', "Not a FSKL"
-
+        super().validate()
         return True

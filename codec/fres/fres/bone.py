@@ -59,4 +59,5 @@ class Bone(BinaryObject):
 
 
     def validate(self):
+        super().validate()
         return True

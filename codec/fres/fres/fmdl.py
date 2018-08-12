@@ -25,8 +25,9 @@ class FMDL(BinaryObject):
     # offsets in this struct are relative to the beginning of
     # the FRES file.
     # I'm assuming they're 64-bit.
+    _magic = b'FMDL'
     _reader = StructReader(
-        ('4s', 'magic'), # 'FMDL'
+        ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
         ('I',  'unk0C'), # padding?
@@ -66,34 +67,24 @@ class FMDL(BinaryObject):
         self.fvtxs = []
         for i in range(self.fvtx_count):
             vtx = FVTX().readFromFRES(fres,
-                self.fvtx_offset + (i*FVTX._reader._dataSize))
+                self.fvtx_offset + (i*FVTX._reader.size))
             self.fvtxs.append(vtx)
 
         # read shapes
         self.fshps = []
         for i in range(self.fshp_count):
             self.fshps.append(FSHP().readFromFRES(fres,
-                self.fshp_offset + (i*FSHP._reader._dataSize)))
+                self.fshp_offset + (i*FSHP._reader.size)))
 
         # read materials
         self.fmats = []
         for i in range(self.fmat_count):
             self.fmats.append(FMAT().readFromFRES(fres,
-                self.fmat_offset + (i*FMAT._reader._dataSize)))
+                self.fmat_offset + (i*FMAT._reader.size)))
 
         return self
 
 
     def validate(self):
-        #for field in self._reader.fields.values():
-        #    val = getattr(self, field['name'])
-        #    if type(val) is int:
-        #        log.debug("FMDL[%04X] %16s = 0x%08X", field['offset'],
-        #            field['name'], val)
-        #    else:
-        #        log.debug("FMDL[%04X] %16s = %s", field['offset'],
-        #            field['name'], val)
-
-        assert self.magic[0:4] == b'FMDL', "Not a FMDL"
-
+        super().validate()
         return True

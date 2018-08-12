@@ -49,4 +49,5 @@ class LODModel(BinaryObject):
 
 
     def validate(self):
+        super().validate()
         return True

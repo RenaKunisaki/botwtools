@@ -39,4 +39,5 @@ class Attribute(BinaryObject):
 
 
     def validate(self):
+        super().validate()
         return True

@@ -89,50 +89,52 @@ class StructReader:
     def __init__(self, *structDef):
         self.fields = {}
         self.orderedFields = []
-
-        fieldSize = {}
         offset = 0
         for field in structDef:
             typ, name = field
-            if type(typ) is str:
-                size = struct.calcsize(typ)
-            else:
-                size = struct.calcsize(typ.fmt)
-            fieldSize[name] = size
-
             assert name not in self.fields, \
                 "Duplicate field name '" + name + "'"
 
+            if type(typ) is str:
+                size = struct.calcsize(typ)
+                func = self._makeReader(typ)
+            else:
+                size = typ.size
+                func = typ.read
+
             field = {
-                'name': name,
-                'size': fieldSize[name],
+                'name':   name,
+                'size':   size,
                 'offset': offset,
-                'struct_fmt': typ,
+                'type':   typ,
+                'read':   func,
             }
             self.fields[name] = field
             self.orderedFields.append(field)
             offset += size
-        self._dataSize = offset
+        self.size = offset
 
-        def _unpack(buf, offset=0):
-            """Unpack this struct from given buffer."""
-            res = {}
-            for field in structDef:
-                typ, name = field
-                if type(typ) is str:
-                    data = struct.unpack_from(typ, buf, offset)
-                    if len(data) == 1: data = data[0]
-                else:
-                    data = typ.read(file)
-                res[name] = data
-                offset += fieldSize[name]
-            return res
+    def _makeReader(self, typ):
+        """Necessary because lolscope"""
+        return lambda buf, offs: struct.unpack_from(typ, buf, offs)
 
-        self._unpack = _unpack
 
-    def _unpackFromFile(self, file):
+    def unpackFromData(self, buf, offset=0):
+        """Read this struct from given data buffer."""
+        res = {}
+        for field in self.orderedFields:
+            func = field['read']
+            data = func(buf, offset)
+            if type(data) is tuple and len(data) == 1:
+                data = data[0] # grumble
+            res[field['name']] = data
+            offset += field['size']
+        return res
+
+
+    def unpackFromFile(self, file):
         """Read this struct from given file."""
-        return self._unpack(file.read(self._dataSize))
+        return self.unpackFromData(file.read(self.size))
 
 
 class BinaryObject:
@@ -140,6 +142,7 @@ class BinaryObject:
     def __init__(self):
         self._file = None
         self._file_offset = None
+
 
     def readFromFile(self, file, offset=None, reader=None):
         """Read this object from given file."""
@@ -149,8 +152,9 @@ class BinaryObject:
         log.debug("Reading %s from 0x%08X",
             type(self).__name__, self._file_offset)
         if reader is None: reader = self._reader
-        data = reader._unpackFromFile(file)
+        data = reader.unpackFromFile(file)
         return self._unpackFromData(data)
+
 
     def _unpackFromData(self, data):
         for k, v in data.items():
@@ -163,7 +167,19 @@ class BinaryObject:
         """Perform whatever sanity checks on this object
         after reading it.
         """
+        if hasattr(self, '_magic'):
+            if not self._checkMagic():
+                raise TypeError("%s invalid magic: %s" %
+                    (type(self).__name__, self.magic))
         return True
+
+
+    def _checkMagic(self):
+        magic = self._magic
+        if type(magic) not in (list, tuple):
+            magic = (magic,)
+        return self.magic in magic
+
 
     def dumpToDebugLog(self):
         """Dump to debug log."""
@@ -171,10 +187,11 @@ class BinaryObject:
         log.debug("%s dump:", cls)
         for name, field in self._reader.fields.items():
             val = getattr(self, name)
-            typ = field['struct_fmt']
+            typ = field['type']
             tp, vs = fmtStructField(typ, val)
             log.debug("[%04X] %12s %28s: %10s",
                 field['offset'], tp, name, vs)
+
 
     def dumpOffsets(self):
         """Dump the values found at each field treated as an offset."""

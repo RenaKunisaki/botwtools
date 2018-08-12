@@ -23,8 +23,9 @@ from .vertex import Vertex
 class FVTX(BinaryObject):
     """A FVTX in an FMDL."""
     # vertex buffer object attributes
+    _magic = b'FVTX'
     _reader = StructReader(
-        ('4s', 'magic'),  # 'FVTX'
+        ('4s', 'magic'),
         ('3I', 'unk04'),
         ('Q',  'vtx_attrib_array_offs'),
         ('Q',  'vtx_attrib_dict_offs'),
@@ -106,7 +107,7 @@ class FVTX(BinaryObject):
         for i in range(self.num_attrs):
             attr = Attribute().readFromFRES(self.fres,
                 self.vtx_attrib_array_offs +
-                (i * Attribute._reader._dataSize))
+                (i * Attribute._reader.size))
             log.debug("Attr: %s", attr)
             self.attrs.append(attr)
 
@@ -136,5 +137,5 @@ class FVTX(BinaryObject):
 
 
     def validate(self):
-        assert self.magic == b'FVTX', "Not an FVTX"
+        super().validate()
         return True

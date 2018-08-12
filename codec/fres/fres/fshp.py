@@ -20,8 +20,9 @@ from .lod import LODModel
 
 class FSHP(BinaryObject):
     """A FSHP in an FMDL."""
+    _magic = b'FSHP'
     _reader = StructReader(
-        ('4s', 'magic'),  # 'FSHP'
+        ('4s', 'magic'),
         ('I',  'unk04'),
         ('I',  'unk08'),
         ('I',  'unk0C'),
@@ -75,5 +76,5 @@ class FSHP(BinaryObject):
 
 
     def validate(self):
-        assert self.magic == b'FSHP', "Not an FSHP"
+        super().validate()
         return True

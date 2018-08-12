@@ -22,6 +22,8 @@ def isPowerOf2(n):
 
 class Header(BinaryObject):
     """FRES file header."""
+    _magic = (b'FRES', b'FRES    ')
+
     _reader_wiiu = StructReader( # WiiU header
         ('4s', 'magic'), # 'FRES'
         ('I',  'version'),
@@ -125,16 +127,8 @@ class Header(BinaryObject):
 
 
     def validate(self):
-        #for field in self._reader_switch.fields.values():
-        #    val = getattr(self, field['name'])
-        #    if type(val) is int:
-        #        log.debug("FRES[%04X] %16s = 0x%08X", field['offset'],
-        #            field['name'], val)
-        #    else:
-        #        log.debug("FRES[%04X] %16s = %s", field['offset'],
-        #            field['name'], val)
+        super().validate()
 
-        assert self.magic[0:4] == b'FRES', "Not a FRES file"
         assert self.byte_order in (0xFEFF, 0xFFFE), \
             "Invalid byte order mark: 0x%04X" % self.byte_order
 

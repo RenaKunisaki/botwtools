@@ -18,8 +18,9 @@ from structreader import StructReader, BinaryObject
 
 class RLT(BinaryObject):
     """FRES relocation table."""
+    _magic = b'_RLT'
     _reader = StructReader(
-        ('4s', 'magic'), # '_RLT'
+        ('4s', 'magic'),
         ('I',  'unk04'), # offset of the RLT?
         ('I',  'unk08'), # 5
         ('I',  'unk0C'), # 0
@@ -40,5 +41,5 @@ class RLT(BinaryObject):
 
 
     def validate(self):
-        assert self.magic == b'_RLT', "Not an RLT"
+        super().validate()
         return True
