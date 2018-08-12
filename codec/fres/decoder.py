@@ -17,6 +17,7 @@ import logging; log = logging.getLogger()
 import io
 import sys
 import struct
+from lxml import etree as ET
 from ..base import ArchiveDecoder, FileReader, UnsupportedFileTypeError, TxtOutput
 from ..base.types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 from .fres import FRES
@@ -60,8 +61,160 @@ class FresDecoder(ArchiveDecoder):
     def unpack(self):
         """Unpack this file to `self.destPath`."""
         nobj = len(self.archive.models)
-        for i, obj in enumerate(self.archive.models):
-            name = 'FMDL%d.bin' % i
-            log.info("[%3d/%3d] Extracting %s...", i+1, nobj, name)
-            self.input.seek(obj._file_offset)
-            self.writeFile(name, self.input.read(obj._reader._dataSize))
+        for i, model in enumerate(self.archive.models):
+            log.info("[%3d/%3d] Extracting %s...", i+1, nobj, model.name)
+            self._extractModel(model)
+
+
+    def _extractModel(self, model):
+        name = model.name + '.xml'
+        root = ET.Element('model')
+
+        eSkel = ET.Element('skeleton')
+        root.append(eSkel)
+        for bone in model.skeleton.bones:
+            eSkel.append(self._extractBone(bone))
+
+        eFvtxs = ET.Element('buffers')
+        root.append(eFvtxs)
+        for fvtx in model.fvtxs:
+            eFvtxs.append(self._extractFVTX(fvtx))
+
+        eShapes = ET.Element('shapes')
+        root.append(eShapes)
+        for fshp in model.fshps:
+            eShapes.append(self._extractFSHP(fshp))
+
+        eMats = ET.Element('materials')
+        root.append(eMats)
+        for fmat in model.fmats:
+            eMats.append(self._extractFMAT(fmat))
+
+        tree = ET.ElementTree(root)
+        with self.mkfile(name) as file:
+            tree.write(file,
+                encoding='utf-8',
+                xml_declaration=True,
+                pretty_print=True,
+            )
+
+
+    def _extractFVTX(self, fvtx):
+        elem = ET.Element('FVTX')
+        # XXX the actual VTX attrib array/dict, attrs, etc
+        attrs = {
+            'idx': fvtx.index,
+            'nvtxs': fvtx.num_vtxs,
+            'nattrs': fvtx.num_attrs,
+            'nbuffers': fvtx.num_bufs,
+            'skin_weight_influence': fvtx.skin_weight_influence,
+            'unk04': fvtx.unk04,
+            'unk10': '0x%08X' % fvtx.unk10,
+            'unk18': '0x%08X' % fvtx.unk18,
+            'unk20': '0x%08X' % fvtx.unk20,
+        }
+        for k, v in attrs.items(): elem.set(k, str(v))
+        for attr in fvtx.attrs:
+            e = ET.Element('attribute')
+            e.set('name',   attr.name)
+            e.set('fmt',    '0x%04X' % attr.format)
+            e.set('offset', '0x%04X' % attr.buf_offs)
+            e.set('idx',    '0x%04X' % attr.buf_idx)
+            e.set('unk04',  '0x%08X' % attr.unk04)
+            e.set('unk0A',  '0x%04X' % attr.unk0A)
+            elem.append(e)
+        for vtx in fvtx.vtxs:
+            e = ET.Element('vtx')
+            e.set('position', '%f, %f, %f, %f' % (
+                vtx.pos.x, vtx.pos.y, vtx.pos.z, vtx.pos.w))
+            e.set('normal', '%f, %f, %f, %f' % (
+                vtx.normal.x, vtx.normal.y, vtx.normal.z, vtx.normal.w))
+            e.set('color', '%f, %f, %f, %f' % (
+                vtx.color.r, vtx.color.g, vtx.color.b, vtx.color.a))
+            e.set('uv', '%f, %f' % (
+                vtx.texcoord.u, vtx.texcoord.v))
+            e.set('idx', '0x%X, 0x%X, 0x%X, 0x%X, 0x%X' % (
+                vtx.idx[0], vtx.idx[1], vtx.idx[2], vtx.idx[3], vtx.idx[4]
+            ))
+            e.set('weight', '%f, %f, %f, %f' % (
+                vtx.weight[0], vtx.weight[1], vtx.weight[2], vtx.weight[3]
+            ))
+            for k, v in vtx.extra.items():
+                e.set(k, str(v))
+            elem.append(e)
+        return elem
+
+
+    def _extractFMAT(self, fmat):
+        elem = ET.Element('FMAT')
+        attrs = {
+            'name': fmat.name,
+            'unk0C': fmat.unk0C,
+            'flags': fmat.mat_flags,
+            'section_idx': fmat.section_idx,
+            'render_info_cnt': fmat.render_info_cnt,
+            'tex_ref_cnt': fmat.tex_ref_cnt,
+            'sampler_cnt': fmat.sampler_cnt,
+            'shader_param_volatile_cnt': fmat.shader_param_volatile_cnt,
+            'source_param_data_size': fmat.source_param_data_size,
+            'unkB2': fmat.unkB2,
+            'unkB4': fmat.unkB4,
+        }
+        for k, v in attrs.items(): elem.set(k, str(v))
+        return elem
+
+
+    def _extractFSHP(self, fshp):
+        elem = ET.Element('FSHP')
+        attrs = {
+            'idx':   fshp.index,
+            'name':  fshp.name,
+            'unk04': fshp.unk04,
+            'unk08': fshp.unk08,
+            'unk0C': fshp.unk0C,
+            'unk30': fshp.unk30,
+            'unk38': fshp.unk38,
+            'unk50': fshp.unk50,
+            'flags': '0x%08X' % fshp.flags,
+            'single_bind': fshp.single_bind,
+            'fvtx_idx': fshp.fvtx_idx,
+            'skin_bone_idx_cnt': fshp.skin_bone_idx_cnt,
+            'vtx_skin_cnt': fshp.vtx_skin_cnt,
+            'lod_cnt': fshp.lod_cnt,
+            'vis_group_cnt': fshp.vis_group_cnt,
+            'fskl_array_cnt': fshp.fskl_array_cnt,
+        }
+        for k, v in attrs.items(): elem.set(k, str(v))
+        return elem
+
+
+    def _extractBone(self, bone):
+        elem = ET.Element('bone')
+
+        ePos = ET.Element('position')
+        ePos.text = '%f, %f, %f' % (bone.posX, bone.posY, bone.posZ)
+        elem.append(ePos)
+
+        eScl = ET.Element('scale')
+        eScl.text = '%f, %f, %f' % (
+            bone.scaleX, bone.scaleY, bone.scaleZ)
+        elem.append(eScl)
+
+        eRot = ET.Element('rotation')
+        eRot.text = '%f, %f, %f, %f' % (
+            bone.rotX, bone.rotY, bone.rotZ, bone.rotW)
+        elem.append(eRot)
+
+        ePrt = ET.Element('parents')
+        ePrt.text = '%d, %d, %d, %d' % bone.parent
+        elem.append(ePrt)
+
+        attrs = {
+            'idx':   bone.bone_idx,
+            'name':  bone.name,
+            'flags': '0x%08X' % bone.unk22,
+            'unk04': bone.unk04,
+            'unk22': bone.unk22,
+        }
+        for k, v in attrs.items(): elem.set(k, str(v))
+        return elem

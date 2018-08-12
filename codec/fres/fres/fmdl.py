@@ -29,30 +29,23 @@ class FMDL(BinaryObject):
         ('4s', 'magic'), # 'FMDL'
         ('I',  'size'),
         ('I',  'size2'),
-        ('I',  'unk0C'), # always 0?
+        ('I',  'unk0C'), # padding?
+        ('Q',  'name_offset'),
+        ('Q',  'str_tab_end'),
+        ('Q',  'fskl_offset'),
 
-        ('Q',  'name_offset'), # name prefixed by u16 len
-        ('Q',  'str_tab_end'), # always points to name table?
+        ('Q',  'fvtx_offset'),
+        ('Q',  'fshp_offset'),
+        ('Q',  'fshp_dict'),
+        ('Q',  'fmat_offset'),
+        ('Q',  'fmat_dict'),
+        ('Q',  'udata_offset'),
+        ('2Q', 'unk60'),
 
-        ('Q',  'fskl_offset'), # points to FSKL
-        ('Q',  'fvtx_offset'), # points to FVTX
-
-        ('Q',  'fshp_offset'), # points to FSHP
-        ('Q',  'fshp_dict'), # points to values 0, 1, -1, 1
-
-        ('Q',  'fmat_offset'), # points to FMAT
-        ('Q',  'fmat_dict'), # points to 0, 1, -1, 1 (not same as 38)
-
-        ('Q',  'udata_offset'), # same as fskl_offset?
-        #('Q',  'unk58'), # always 0?
-
-        # following are just guesses...
-        ('2Q', 'unk60'), # always 0?
         ('H',  'fvtx_count'),
         ('H',  'fshp_count'),
         ('H',  'fmat_count'),
         ('H',  'udata_count'),
-
         ('H',  'total_vtxs'),
     )
 
@@ -66,11 +59,7 @@ class FMDL(BinaryObject):
         self.dumpOffsets()
 
         self.skeleton = FSKL().readFromFile(file, self.fskl_offset)
-
         self.fvtxs = []
-        for i in range(self.fvtx_count):
-            self.fvtxs.append(FVTX().readFromFile(file,
-                self.fvtx_offset + (i*FVTX._reader._dataSize)))
 
         self.fshps = []
         for i in range(self.fshp_count):
@@ -83,6 +72,16 @@ class FMDL(BinaryObject):
                 self.fmat_offset + (i*FMAT._reader._dataSize)))
 
         return self
+
+
+    def _readVtxs(self, file, rlt):
+        for i in range(self.fvtx_count):
+            vtx = FVTX().readFromFile(file,
+                self.fvtx_offset + (i*FVTX._reader._dataSize))
+            vtx._readBuffers(file, rlt)
+            vtx._readAttrs(file)
+            vtx._readVtxs(file)
+            self.fvtxs.append(vtx)
 
 
     def validate(self):

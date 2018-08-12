@@ -15,6 +15,7 @@
 
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject
+from .rlt import RLT
 
 def isPowerOf2(n):
     return bool(n and not (n&(n-1)))
@@ -118,7 +119,16 @@ class Header(BinaryObject):
         else:
             self.type = 'wiiu'
             reader = self._reader_wiiu
-        return super().readFromFile(file, reader=reader)
+        super().readFromFile(file, reader=reader)
+
+        if self.type == 'switch':
+            self.rlt = RLT().readFromFile(file, self.rlt_offset)
+            log.debug("RLT @%06X starts at %06X", self.rlt_offset,
+                self.rlt.data_start)
+        else:
+            self.rlt = None
+
+        return self
 
 
     def validate(self):

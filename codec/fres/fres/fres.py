@@ -34,6 +34,7 @@ class FRES:
             pos = self.file.tell()
             log.debug("Read FMDL from 0x%X", pos)
             mdl = FMDL().readFromFile(self.file)
+            mdl._readVtxs(file, self.header.rlt)
             self.models.append(mdl)
             self.file.seek(pos + mdl.size)
 
