@@ -14,6 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from structreader import readStringWithLength
 from .header import Header
 from .fmdl   import FMDL
 from .rlt    import RLT
@@ -46,3 +47,7 @@ class FRES:
             self.file.seek(pos + mdl.size)
 
         return self
+
+    def readStr(self, offset):
+        """Read string (prefixed with length) from given offset."""
+        return readStringWithLength(self.file, '<H', offset)

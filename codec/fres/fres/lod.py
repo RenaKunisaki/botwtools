@@ -14,7 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 
 class LODModel(BinaryObject):
     """A Level-of-Detail Model."""

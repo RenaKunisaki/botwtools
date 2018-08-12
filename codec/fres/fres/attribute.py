@@ -14,7 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 
 class Attribute(BinaryObject):
     """An attribute in a FRES."""
@@ -31,8 +31,7 @@ class Attribute(BinaryObject):
         """Read the attribute from given FRES."""
         super().readFromFile(fres.file, offset, reader)
         self.fres = fres
-        self.name = readStringWithLength(fres.file,
-            '<H', self.name_offset)
+        self.name = fres.readStr(self.name_offset)
         log.debug("Attr name = '%s', fmt=%04X", self.name, self.format)
 
         self.dumpToDebugLog()

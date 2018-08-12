@@ -14,7 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 from .fvtx import FVTX
 from .lod import LODModel
 
@@ -59,8 +59,7 @@ class FSHP(BinaryObject):
         """Read the FSHP from given FRES."""
         super().readFromFile(fres.file, offset, reader)
         self.fres = fres
-        self.name = readStringWithLength(fres.file,
-            '<H', self.name_offset)
+        self.name = fres.readStr(self.name_offset)
         log.debug("FSHP name='%s'", self.name)
 
         self.dumpToDebugLog()

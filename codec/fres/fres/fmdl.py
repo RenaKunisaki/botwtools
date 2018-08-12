@@ -14,7 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 from .fmat import FMAT
 from .fshp import FSHP
 from .fskl import FSKL
@@ -54,8 +54,7 @@ class FMDL(BinaryObject):
         super().readFromFile(fres.file, offset, reader)
         self.fres = fres
 
-        self.name = readStringWithLength(fres.file,
-            '<H', self.name_offset)
+        self.name = fres.readStr(self.name_offset)
         log.debug("FMDL name: '%s'", self.name)
         self.dumpToDebugLog()
         self.dumpOffsets()

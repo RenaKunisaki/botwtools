@@ -15,7 +15,7 @@
 
 import logging; log = logging.getLogger()
 import struct
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 from .attribute import Attribute
 from .buffer import Buffer
 from .vertex import Vertex
