@@ -14,9 +14,11 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 
-class FMAT(BinaryObject):
+class FMAT(FresObject):
     """A FMAT in an FMDL."""
     _magic = b'FMAT'
     _reader = StructReader(
@@ -24,24 +26,25 @@ class FMAT(BinaryObject):
         ('I',  'size'),
         ('I',  'size2'),
         ('I',  'unk0C'),
-        ('Q',  'name_offset'),
-        ('Q',  'render_info_offs'),
-        ('Q',  'render_info_dict_offs'),
-        ('Q',  'shader_assign_offs'),
-        ('Q',  'unk30_offs'),
-        ('Q',  'tex_ref_array_offs'),
-        ('Q',  'unk40_offs'),
-        ('Q',  'sampler_list_offs'),
-        ('Q',  'sampler_dict_offs'),
-        ('Q',  'shader_param_array_offs'),
-        ('Q',  'shader_param_dict_offs'),
-        ('Q',  'source_param_data_offs'),
-        ('Q',  'user_data_offs'),
-        ('Q',  'user_data_dict_offs'),
-        ('Q',  'volatile_flag_offs'),
-        ('Q',  'user_offs'),
-        ('Q',  'sampler_slot_offs'),
-        ('Q',  'tex_slot_offs'),
+        StrOffs('name'),
+        Padding(4),
+        Offset64('render_info_offs'),
+        Offset64('render_info_dict_offs'),
+        Offset64('shader_assign_offs'),
+        Offset64('unk30_offs'),
+        Offset64('tex_ref_array_offs'),
+        Offset64('unk40_offs'),
+        Offset64('sampler_list_offs'),
+        Offset64('sampler_dict_offs'),
+        Offset64('shader_param_array_offs'),
+        Offset64('shader_param_dict_offs'),
+        Offset64('source_param_data_offs'),
+        Offset64('user_data_offs'),
+        Offset64('user_data_dict_offs'),
+        Offset64('volatile_flag_offs'),
+        Offset64('user_offs'),
+        Offset64('sampler_slot_offs'),
+        Offset64('tex_slot_offs'),
         ('I',  'mat_flags'),
         ('H',  'section_idx'),
         ('H',  'render_info_cnt'),
@@ -51,18 +54,16 @@ class FMAT(BinaryObject):
         ('H',  'source_param_data_size'),
         ('H',  'raw_param_data_size'),
         ('H',  'user_data_cnt'),
-        ('H',  'unkB2'),
+        Padding(2),
         ('I',  'unkB4'),
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the FMAT from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
-        self.name = fres.readStr(self.name_offset)
-        log.debug("FMAT name='%s'", self.name)
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+        super().readFromFRES(fres, offset, reader)
+        #log.debug("FMAT name='%s'", self.name)
+        #self.dumpToDebugLog()
+        #self.dumpOffsets()
 
         return self
 

@@ -14,10 +14,12 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .bone import Bone
 
-class FSKL(BinaryObject):
+class FSKL(FresObject):
     """FSKL object header."""
     # offsets in this struct are relative to the beginning of
     # the FRES file.
@@ -29,27 +31,26 @@ class FSKL(BinaryObject):
         ('I',  'size2'),
         ('I',  'unk0C'), # always 0
 
-        ('Q',  'bone_idx_group_offs'),
-        ('Q',  'bone_array_offs'),
-        ('Q',  'inverse_idx_offs'),
-        ('Q',  'inverse_mtx_offs'),
+        Offset64('bone_idx_group_offs'),
+        Offset64('bone_array_offs'),
+        Offset64('inverse_idx_offs'),
+        Offset64('inverse_mtx_offs'),
 
-        ('Q',  'unk30'),
+        Offset64('unk30'),
 
         ('I',  'flags'),
         ('H',  'num_bones'),
         ('H',  'num_inverse_idxs'),
         ('H',  'num_extra'),
-        ('H',  'unk42'),
+        Padding(2),
         ('I',  'unk44'),
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the skeleton from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+        super().readFromFRES(fres, offset, reader)
+        #self.dumpToDebugLog()
+        #self.dumpOffsets()
 
         # read bones
         self.bones = []

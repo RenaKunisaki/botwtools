@@ -15,18 +15,20 @@
 
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 
-class Bone(BinaryObject):
+class Bone(FresObject):
     """A bone in an FSKL."""
     # offsets in this struct are relative to the beginning of
     # the FRES file.
     # I'm assuming they're 64-bit.
     _reader = StructReader(
-        ('I',  'name_offset'), # u16 len, str
+        StrOffs('name'),
         ('5I',  'unk04'),
         ('H',  'bone_idx'),
         ('4h', 'parent'),
-        ('H',  'unk22'),
+        Padding(2),
         ('I',  'flags'),
         ('f',  'scaleX'),
         ('f',  'scaleY'),
@@ -42,9 +44,7 @@ class Bone(BinaryObject):
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the bone from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
-        self.name = fres.readStr(self.name_offset)
+        super().readFromFRES(fres, offset, reader)
         #self.s60  = readStringWithLength(file, '<H', self.unk60)
         #self.s70  = readStringWithLength(file, '<H', self.unk70)
         #self.s88  = readStringWithLength(file, '<H', self.unk88)

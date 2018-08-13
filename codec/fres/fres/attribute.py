@@ -15,26 +15,25 @@
 
 import logging; log = logging.getLogger()
 from structreader import StructReader, BinaryObject
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 
-class Attribute(BinaryObject):
+class Attribute(FresObject):
     """An attribute in a FRES."""
     _reader = StructReader(
-        ('I',  'name_offset'), # u16 len, str
+        StrOffs('name'),
         ('I',  'unk04'),
         ('H',  'format'),
-        ('H',  'unk0A'),
+        Padding(2),
         ('H',  'buf_offs'),
         ('H',  'buf_idx'),
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the attribute from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
-        self.name = fres.readStr(self.name_offset)
-        log.debug("Attr name = '%s', fmt=%04X", self.name, self.format)
-
-        self.dumpToDebugLog()
+        super().readFromFRES(fres, offset, reader)
+        #log.debug("Attr name = '%s', fmt=%04X", self.name, self.format)
+        #self.dumpToDebugLog()
         return self
 
 

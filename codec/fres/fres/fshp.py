@@ -14,11 +14,13 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .fvtx import FVTX
 from .lod import LODModel
 
-class FSHP(BinaryObject):
+class FSHP(FresObject):
     """A FSHP in an FMDL."""
     _magic = b'FSHP'
     _reader = StructReader(
@@ -27,20 +29,21 @@ class FSHP(BinaryObject):
         ('I',  'unk08'),
         ('I',  'unk0C'),
 
-        ('Q',  'name_offset'), # => string prefixed by u16 len
-        ('Q',  'fvtx_offset'), # => FVTX
+        StrOffs('name'),
+        Padding(4),
+        Offset64('fvtx_offset'), # => FVTX
 
-        ('Q',  'lod_offset'), # => 000018B0 00000000 0001E000 00000000  000018B8 00000000 00001900 00000000
-        ('Q',  'fskl_idx_array_offs'), # => 00030002 00050004 00070006 00090008  000B000A 000D000C 000F000E 00110010
+        Offset64('lod_offset'), # => 000018B0 00000000 0001E000 00000000  000018B8 00000000 00001900 00000000
+        Offset64('fskl_idx_array_offs'), # => 00030002 00050004 00070006 00090008  000B000A 000D000C 000F000E 00110010
 
-        ('Q',  'unk30'), # 0
-        ('Q',  'unk38'), # 0
+        Offset64('unk30'), # 0
+        Offset64('unk38'), # 0
 
         # bounding box and bounding radius
-        ('Q',  'bbox_offset'), # => about 24 floats, or 8 Vec3s, or 6 Vec4s
-        ('Q',  'bradius_offset'), # => => 3F03ADA8 3EFC1658 00000000 00000D14  00000000 00000000 00000000 00000000
+        Offset64('bbox_offset'), # => about 24 floats, or 8 Vec3s, or 6 Vec4s
+        Offset64('bradius_offset'), # => => 3F03ADA8 3EFC1658 00000000 00000D14  00000000 00000000 00000000 00000000
 
-        ('Q',  'unk50'),
+        Offset64('unk50'),
         ('I',  'flags'),
         ('H',  'index'),
         ('H',  'fmat_idx'),
@@ -52,19 +55,16 @@ class FSHP(BinaryObject):
         ('B',  'lod_cnt'),
         ('I',  'vis_group_cnt'),
         ('H',  'fskl_array_cnt'),
-        ('H',  'padding6E'),
+        Padding(2),
         # size: 0x70
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the FSHP from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
-        self.name = fres.readStr(self.name_offset)
-        log.debug("FSHP name='%s'", self.name)
-
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+        super().readFromFRES(fres, offset, reader)
+        #log.debug("FSHP name='%s'", self.name)
+        #self.dumpToDebugLog()
+        #self.dumpOffsets()
 
         FVTX().readFromFRES(fres, self.fvtx_offset)
         self.lods = []

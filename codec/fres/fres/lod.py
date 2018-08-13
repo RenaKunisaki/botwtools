@@ -14,16 +14,18 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 
-class LODModel(BinaryObject):
+class LODModel(FresObject):
     """A Level-of-Detail Model."""
     _reader = StructReader(
         ('I',  'submesh_array_offs'),
-        ('I',  'padding04'),
-        ('Q',  'unk08'),
-        ('Q',  'unk10'),
-        ('Q',  'idx_buf_offs'),
+        Padding(4),
+        Offset64('unk08'),
+        Offset64('unk10'),
+        Offset64('idx_buf_offs'),
         ('I',  'face_offs'),
         ('I',  'prim_fmt'),
         ('I',  'face_type'),
@@ -34,10 +36,9 @@ class LODModel(BinaryObject):
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the model from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
+        super().readFromFRES(fres, offset, reader)
 
-        self.dumpToDebugLog()
+        #self.dumpToDebugLog()
 
         self.data = []
         fres.file.seek(self.face_offs + fres.rlt.data_start)

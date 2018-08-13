@@ -15,33 +15,35 @@
 
 import logging; log = logging.getLogger()
 import struct
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .attribute import Attribute
 from .buffer import Buffer
 from .vertex import Vertex
 
-class FVTX(BinaryObject):
+class FVTX(FresObject):
     """A FVTX in an FMDL."""
     # vertex buffer object attributes
     _magic = b'FVTX'
     _reader = StructReader(
         ('4s', 'magic'),
         ('3I', 'unk04'),
-        ('Q',  'vtx_attrib_array_offs'),
-        ('Q',  'vtx_attrib_dict_offs'),
-        ('Q',  'unk10'),
-        ('Q',  'unk18'),
-        ('Q',  'unk20'),
-        ('Q',  'vtx_bufsize_offs'),
-        ('Q',  'vtx_stridesize_offs'),
-        ('Q',  'vtx_buf_array_offs'),
-        ('I',  'vtx_buf_offs'),
+        Offset64('vtx_attrib_array_offs'),
+        Offset64('vtx_attrib_dict_offs'),
+        Offset64('unk10'),
+        Offset64('unk18'),
+        Offset64('unk20'),
+        Offset64('vtx_bufsize_offs'),
+        Offset64('vtx_stridesize_offs'),
+        Offset64('vtx_buf_array_offs'),
+        Offset('vtx_buf_offs'),
         ('B',  'num_attrs'),
         ('B',  'num_bufs'),
         ('H',  'index'),
         ('I',  'num_vtxs'),
         ('I',  'skin_weight_influence'),
-        # size: 0x60
+        size = 0x60,
     )
 
     def unpack10bit(val):
@@ -75,12 +77,10 @@ class FVTX(BinaryObject):
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the FVTX from given FRES."""
-        log.debug("Reading FVTX from 0x%08X", offset)
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
+        super().readFromFRES(fres, offset, reader)
 
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+        #self.dumpToDebugLog()
+        #self.dumpOffsets()
 
         self._readBuffers()
         self._readAttrs()
@@ -108,7 +108,7 @@ class FVTX(BinaryObject):
             attr = Attribute().readFromFRES(self.fres,
                 self.vtx_attrib_array_offs +
                 (i * Attribute._reader.size))
-            log.debug("Attr: %s", attr)
+            #log.debug("Attr: %s", attr)
             self.attrs.append(attr)
 
 

@@ -25,10 +25,10 @@ class Buffer:
         self.offset = offset
         self.data   = file.read(size, offset)
 
-        log.debug("Buffer size=%04X stride=%04X offs=%06X: %s %s",
-            size, stride, offset,
-            ' '.join(map(lambda b: '%02X'%b, self.data[0:16])),
-            self.data[0:16])
+        #log.debug("Buffer size=%04X stride=%04X offs=%06X: %s %s",
+        #    size, stride, offset,
+        #    ' '.join(map(lambda b: '%02X'%b, self.data[0:16])),
+        #    self.data[0:16])
 
         fmts = {
               'int8': 'b',

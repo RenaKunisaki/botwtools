@@ -13,35 +13,20 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging; log = logging.getLogger()
-from .fresobject import FresObject
-from .types import Offset, Offset64, StrOffs, Padding
+from .types import Offset, Offset64, StrOffs
 from structreader import StructReader, BinaryObject
 
-class RLT(FresObject):
-    """FRES relocation table."""
-    _magic = b'_RLT'
-    _reader = StructReader(
-        ('4s', 'magic'),
-        ('I',  'unk04'), # offset of the RLT?
-        ('I',  'unk08'), # 5
-        ('I',  'unk0C'), # 0
+class FresObject(BinaryObject):
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the object from given FRES."""
+        super().readFromFile(fres.file, offset, reader)
+        self.fres = fres
 
-        ('I',  'unk10'), # 0
-        ('I',  'unk14'), # 0
-        ('I',  'unk18'), # 0
-        ('I',  'unk1C'), # D49E
-
-        ('I',  'unk20'), # 0
-        ('I',  'unk24'), # 3D
-        ('I',  'unk28'), # 0
-        ('I',  'unk2C'), # 0
-
-        Offset('data_start'),
-    )
-
-
-
-    def validate(self):
-        super().validate()
-        return True
+        # read strings.
+        for name, field in self._reader.fields.items():
+            typ = field['type']
+            if isinstance(typ, StrOffs):
+                offs = getattr(self, name)
+                data = typ.readStr(self.fres.file, offs)
+                setattr(self, name+'_offset', offs)
+                setattr(self, name, data)

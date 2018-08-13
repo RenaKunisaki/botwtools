@@ -14,13 +14,15 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .fmat import FMAT
 from .fshp import FSHP
 from .fskl import FSKL
 from .fvtx import FVTX
 
-class FMDL(BinaryObject):
+class FMDL(FresObject):
     """FMDL object header."""
     # offsets in this struct are relative to the beginning of
     # the FRES file.
@@ -30,18 +32,20 @@ class FMDL(BinaryObject):
         ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
-        ('I',  'unk0C'), # padding?
-        ('Q',  'name_offset'),
-        ('Q',  'str_tab_end'),
-        ('Q',  'fskl_offset'),
+        Padding(4),
+        StrOffs('name'),
+        Padding(4),
+        Offset64('str_tab_end'),
+        Offset64('fskl_offset'),
 
-        ('Q',  'fvtx_offset'),
-        ('Q',  'fshp_offset'),
-        ('Q',  'fshp_dict'),
-        ('Q',  'fmat_offset'),
-        ('Q',  'fmat_dict'),
-        ('Q',  'udata_offset'),
-        ('2Q', 'unk60'),
+        Offset64('fvtx_offset'),
+        Offset64('fshp_offset'),
+        Offset64('fshp_dict'),
+        Offset64('fmat_offset'),
+        Offset64('fmat_dict'),
+        Offset64('udata_offset'),
+        Offset64('unk60'),
+        Offset64('unk68'),
 
         ('H',  'fvtx_count'),
         ('H',  'fshp_count'),
@@ -52,13 +56,11 @@ class FMDL(BinaryObject):
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the archive from given FRES."""
-        super().readFromFile(fres.file, offset, reader)
-        self.fres = fres
+        super().readFromFRES(fres, offset, reader)
 
-        self.name = fres.readStr(self.name_offset)
-        log.debug("FMDL name: '%s'", self.name)
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+        #log.debug("FMDL name: '%s'", self.name)
+        #self.dumpToDebugLog()
+        #self.dumpOffsets()
 
         # read skeleton
         self.skeleton = FSKL().readFromFRES(fres, self.fskl_offset)

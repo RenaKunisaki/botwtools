@@ -40,6 +40,7 @@ _fmts = {
     'L': lambda v: '%10d (%08X)' % (v, v),
     # these sould use %20d but I don't expect to see values that
     # large, and the extra space is ugly.
+    # same goes for the shorter fields above.
     'q': lambda v: '%10d (%08X %08X)' % (v, v >> 32, v & 0xFFFFFFFF),
     'Q': lambda v: '%10d (%08X %08X)' % (v, v >> 32, v & 0xFFFFFFFF),
     'n': lambda v: '%10d (%08X %08X)' % (v, v >> 32, v & 0xFFFFFFFF),
@@ -69,6 +70,9 @@ _fmtNames = {
     's': 'char',
 }
 def fmtStructField(fmt, val):
+    if type(fmt) is not str:
+        return fmt.name, val
+
     func = _fmts.get(fmt, str)
     cnt  = 0
     while fmt[0] in '0123456789':
@@ -79,6 +83,12 @@ def fmtStructField(fmt, val):
     return name, func(val)
 
 
+BaseTypes = {
+    int:    'I',
+    float:  'f',
+}
+
+
 class StructReader:
     """Reads a struct from a binary file or buffer, and returns
     a dict with named fields.
@@ -86,16 +96,22 @@ class StructReader:
     structDef: a list of (format, name) pairs, where format is the
     format string used by `struct`, and name is the field name.
     """
-    def __init__(self, *structDef):
+    def __init__(self, *structDef, size=None):
+        _checkSize = size
         self.fields = {}
         self.orderedFields = []
         offset = 0
         for field in structDef:
-            typ, name = field
+            if type(field) is tuple:
+                typ, name = field
+            else:
+                typ, name = field, field.name
+
             assert name not in self.fields, \
                 "Duplicate field name '" + name + "'"
 
             if type(typ) is str:
+                if typ in BaseTypes: typ = BaseTypes[typ]
                 size = struct.calcsize(typ)
                 func = self._makeReader(typ)
             else:
@@ -113,6 +129,12 @@ class StructReader:
             self.orderedFields.append(field)
             offset += size
         self.size = offset
+
+        if _checkSize is not None:
+            assert _checkSize == self.size, \
+                "Struct size is 0x%X but should be 0x%X" % (
+                    self.size, _checkSize)
+
 
     def _makeReader(self, typ):
         """Necessary because lolscope"""
@@ -149,9 +171,11 @@ class BinaryObject:
         if offset is not None: file.seek(offset)
         self._file = file
         self._file_offset = file.tell()
-        log.debug("Reading %s from 0x%08X",
-            type(self).__name__, self._file_offset)
+        #log.debug("Reading %s from 0x%08X",
+        #    type(self).__name__, self._file_offset)
         if reader is None: reader = self._reader
+        log.debug("Struct %s size is 0x%X", type(self).__name__,
+            reader.size)
         data = reader.unpackFromFile(file)
         return self._unpackFromData(data)
 
@@ -216,7 +240,7 @@ def readString(file, maxlen=None, encoding='shift-jis'):
         if b == b'\0': break
         else: s.append(b)
     s = b''.join(s)
-    if encoding is not None: s = s.decode()
+    if encoding is not None: s = s.decode(encoding)
     return s
 
 

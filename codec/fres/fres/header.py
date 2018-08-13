@@ -14,13 +14,15 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+from .fresobject import FresObject
+from .types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .rlt import RLT
 
 def isPowerOf2(n):
     return bool(n and not (n&(n-1)))
 
-class Header(BinaryObject):
+class Header(FresObject):
     """FRES file header."""
     _magic = (b'FRES', b'FRES    ')
 
@@ -31,42 +33,46 @@ class Header(BinaryObject):
         ('H',  'header_len'), # always 0x10
         ('I',  'file_size'),
         ('I',  'alignment'), # memory alignment to load this file to
-        ('I',  'name_offset'), # offset of file name without extension
+        StrOffs('name', None), # offset of file name without extension
         ('I',  'str_tab_len'), # bytes, string table size
-        ('I',  'str_tab_offset'), # string table offset
+        Offset('str_tab_offset'), # string table offset
         ('12I','group_offset'), # offset of each group (0=not present)
         ('12H','group_nfiles'), # num files in each group (excl root)
         ('I',  'user_ptr'), # always 0, changed in memory at runtime
-        # total size: 0x6C
+        size = 0x6C,
     )
 
     _reader_switch = StructReader( # Switch header
+        # `name` is the offset of a null-terminated string.
+        # `name2` is the offset of a length-prefixed string.
+        # Both seem to be the filename without extension.
+
         ('8s', 'magic'),      # 'FRES    ' (four spaces)
-        ('I',  'version'),    # 0005 0003
+        ('I',  'version'),
         ('H',  'byte_order'), # FFFE=little, FEFF=big
         ('H',  'header_len'), # always 0x0C
 
-        ('I',  'name_offset'),# offset of file name without extension
+        StrOffs('name', None),
         ('I',  'unk14'),      # 00D00000 u16 full header size?
-        ('I',  'rlt_offset'), # 00021300 offset of _RLT
+        Offset('rlt_offset'),
         ('I',  'file_size'),  # size of this file
 
-        ('I',  'name_offset2'),# 0001CDA2 ptr to filename prefixed by len
-        ('I',  'unk24'),       # 00000000
-        ('I',  'fmdl_offset'), # 000000D0 offset of FMDL (group 0)
-        ('I',  'unk2C'), # 00000000
+        StrOffs('name2'),
+        Padding(4),
+        Offset('fmdl_offset'),
+        Padding(4),
 
-        ('I',  'unk30'), # 00000448 points to: 0, #objs, -1, 1
+        Offset('unk30'), # 00000448 points to: 0, #objs, -1, 1
         ('I',  'unk34'), # 00000000
         ('I',  'unk38'), # 00000000
         ('I',  'unk3C'), # 00000000
 
         ('I',  'unk40'), # 00000000
         ('I',  'unk44'), # 00000000
-        ('I',  'fmaa_offset'), # 000003A0 offset of FMAA (group 8?)
-        ('I',  'unk4C'), # 00000000
+        Offset('fmaa_offset'),
+        Padding(4),
 
-        ('I',  'unk50'), # 000004C0 points to: 0, 1, -1, 1
+        Offset('unk50'), # 000004C0 points to: 0, 1, -1, 1
         ('I',  'unk54'), # 00000000
         ('I',  'unk58'), # 00000000
         ('I',  'unk5C'), # 00000000
@@ -105,7 +111,8 @@ class Header(BinaryObject):
         ('I',  'unkC4'), # 00000000
         ('I',  'unkC8'), # 00000001
         ('I',  'unkCC'), # 00000000
-        #FMDL starts at 0xD0
+
+        size = 0xD0,
     )
 
     def readFromFile(self, file):
