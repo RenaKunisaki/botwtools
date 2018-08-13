@@ -18,7 +18,8 @@ import io
 import sys
 import struct
 import myxml
-from ..base import ArchiveDecoder, FileReader, UnsupportedFileTypeError, TxtOutput
+from filereader import FileReader
+from ..base import ArchiveDecoder, UnsupportedFileTypeError, TxtOutput
 from ..base.types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 from .fres import FRES
 

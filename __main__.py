@@ -22,7 +22,7 @@ import sys
 import codec
 import shutil
 import argparse
-from codec.base.filereader import FileReader # XXX move this
+from filereader import FileReader
 
 arg_parser = None # declare global
 

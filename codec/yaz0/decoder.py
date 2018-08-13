@@ -24,7 +24,8 @@
 import logging; log = logging.getLogger()
 import io
 import struct
-from ..base import Decoder, FileReader, UnsupportedFileTypeError, BinInput
+from filereader import FileReader
+from ..base import Decoder, UnsupportedFileTypeError, BinInput
 
 class Yaz0Stream(io.RawIOBase):
     """Yaz0 byte stream.

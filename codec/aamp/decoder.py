@@ -17,7 +17,8 @@ import logging; log = logging.getLogger()
 import io
 import os
 import struct
-from ..base import Decoder, FileReader, UnsupportedFileTypeError, BinInput
+from filereader import FileReader
+from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from .aamp import Header, Node, RootNode
 
 class AampDecoder(Decoder):

@@ -17,7 +17,8 @@ import logging; log = logging.getLogger()
 import io
 import sys
 import struct
-from ..base import ArchiveDecoder, FileReader, UnsupportedFileTypeError, TxtOutput
+from filereader import FileReader
+from ..base import ArchiveDecoder, UnsupportedFileTypeError, TxtOutput
 from .reader import SARC
 
 class SarcDecoder(ArchiveDecoder):

@@ -21,7 +21,8 @@ import io
 import os
 import struct
 import yaml
-from ..base import Decoder, FileReader, UnsupportedFileTypeError, BinInput
+from filereader import FileReader
+from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from . import byml
 
 def byml_to_yml(root, output) -> None:
