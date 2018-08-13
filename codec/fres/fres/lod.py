@@ -21,30 +21,30 @@ from structreader import StructReader, BinaryObject
 class LODModel(FresObject):
     """A Level-of-Detail Model."""
     _reader = StructReader(
-        ('I',  'submesh_array_offs'),
-        Padding(4),
+        ('I',    'submesh_array_offs'),
+        Padding( 4),
         Offset64('unk08'),
         Offset64('unk10'),
         Offset64('idx_buf_offs'),
-        ('I',  'face_offs'),
-        ('I',  'prim_fmt'),
-        ('I',  'face_type'),
-        ('I',  'face_cnt'),
-        ('H',  'vis_grp'),
-        ('H',  'submesh_cnt'),
+        Offset(  'face_offs'),
+        ('I',    'prim_fmt'),
+        ('I',    'face_type'),
+        ('I',    'face_cnt'),
+        ('H',    'visibility_group'),
+        ('H',    'submesh_cnt'),
+        size = 0x34,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the model from given FRES."""
         super().readFromFRES(fres, offset, reader)
-
         #self.dumpToDebugLog()
 
-        self.data = []
-        fres.file.seek(self.face_offs + fres.rlt.data_start)
         if self.face_type == 1:
-            for i in range(self.face_cnt):
-                self.data.append(fres.file.read('H'))
+            self.data = fres.read('H',
+                pos=self.face_offs, count=self.face_cnt, use_rlt=True)
+        else:
+            log.error("Unsupported face type %d", self.face_type)
 
         return self
 

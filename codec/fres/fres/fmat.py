@@ -56,6 +56,7 @@ class FMAT(FresObject):
         ('H',  'user_data_cnt'),
         Padding(2),
         ('I',  'unkB4'),
+        size = 0xB8,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):

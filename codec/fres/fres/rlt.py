@@ -38,6 +38,7 @@ class RLT(FresObject):
         ('I',  'unk2C'), # 0
 
         Offset('data_start'),
+        size = 0x34,
     )
 
 

@@ -52,6 +52,7 @@ class FMDL(FresObject):
         ('H',  'fmat_count'),
         ('H',  'udata_count'),
         ('H',  'total_vtxs'),
+        size = 0x72,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):

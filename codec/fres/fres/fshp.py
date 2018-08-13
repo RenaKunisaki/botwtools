@@ -56,7 +56,7 @@ class FSHP(FresObject):
         ('I',  'vis_group_cnt'),
         ('H',  'fskl_array_cnt'),
         Padding(2),
-        # size: 0x70
+        size = 0x70,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):

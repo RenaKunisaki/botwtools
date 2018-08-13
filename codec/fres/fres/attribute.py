@@ -27,6 +27,7 @@ class Attribute(FresObject):
         Padding(2),
         ('H',  'buf_offs'),
         ('H',  'buf_idx'),
+        size = 0x10,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):

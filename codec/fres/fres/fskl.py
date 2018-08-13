@@ -44,6 +44,7 @@ class FSKL(FresObject):
         ('H',  'num_extra'),
         Padding(2),
         ('I',  'unk44'),
+        size = 0x48,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):
@@ -65,18 +66,15 @@ class FSKL(FresObject):
             offs += Bone._reader.size
 
         # read inverse indices
-        self.inverse_idxs = []
-        fres.file.seek(self.inverse_idx_offs)
-        for i in range(self.num_inverse_idxs):
-            self.inverse_idxs.append(fres.file.read('h'))
-        log.debug("Inverse idxs: %s", self.inverse_idxs)
+        self.inverse_idxs = fres.read('h',
+            pos   = self.inverse_idx_offs,
+            count = self.num_inverse_idxs)
+        #log.debug("Inverse idxs: %s", self.inverse_idxs)
 
-        # read inverse mtx
-        self.inverse_mtx = []
-        fres.file.seek(self.inverse_mtx_offs)
-        for i in range(4):
-            self.inverse_mtx.append(fres.file.read('4f'))
-        log.debug("Inverse mtx: %s", self.inverse_mtx)
+        # read inverse mtx (which I assume is 4x4)
+        self.inverse_mtx = fres.read('4f', count = 4,
+            pos = self.inverse_mtx_offs)
+        #log.debug("Inverse mtx: %s", self.inverse_mtx)
 
         return self
 

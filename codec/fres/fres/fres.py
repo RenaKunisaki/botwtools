@@ -49,6 +49,34 @@ class FRES:
         return self
 
 
+    def read(self, size:(int,str)=-1, pos:int=None, count:int=1,
+    use_rlt:bool=False):
+        """Read data from the file.
+
+        size:    Number of bytes, or struct format string.
+        pos:     Position to seek to before reading.
+        count:   Number of items to read. If not 1, returns a list.
+        use_rlt: Whether to add the RLT offset (if any) to the
+            file read position.
+
+        Returns the data.
+        """
+        if use_rlt and (self.rlt is not None):
+            if pos is None: pos = self.file.tell()
+            pos += self.rlt.data_start
+        if count < 0:
+            raise ValueError("Count cannot be negative")
+        elif count == 0: return []
+        elif count == 1:
+            return self.file.read(size, pos)
+        else:
+            res = []
+            if pos is not None: self.file.seek(pos)
+            for i in range(count):
+                res.append(self.file.read(size))
+            return res
+
+
     def readStr(self, offset):
         """Read string (prefixed with length) from given offset."""
         return readStringWithLength(self.file, '<H', offset)

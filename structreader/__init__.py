@@ -174,8 +174,8 @@ class BinaryObject:
         #log.debug("Reading %s from 0x%08X",
         #    type(self).__name__, self._file_offset)
         if reader is None: reader = self._reader
-        log.debug("Struct %s size is 0x%X", type(self).__name__,
-            reader.size)
+        #log.debug("Struct %s size is 0x%X", type(self).__name__,
+        #    reader.size)
         data = reader.unpackFromFile(file)
         return self._unpackFromData(data)
 
