@@ -33,7 +33,7 @@ class FSHP(FresObject):
         Padding(4),
         Offset64('fvtx_offset'), # => FVTX
 
-        Offset64('lod_offset'), # => 000018B0 00000000 0001E000 00000000  000018B8 00000000 00001900 00000000
+        Offset64('lod_offset'), # => LOD models
         Offset64('fskl_idx_array_offs'), # => 00030002 00050004 00070006 00090008  000B000A 000D000C 000F000E 00110010
 
         Offset64('unk30'), # 0
@@ -63,14 +63,16 @@ class FSHP(FresObject):
         """Read the FSHP from given FRES."""
         super().readFromFRES(fres, offset, reader)
         #log.debug("FSHP name='%s'", self.name)
-        #self.dumpToDebugLog()
+        self.dumpToDebugLog()
         #self.dumpOffsets()
 
-        FVTX().readFromFRES(fres, self.fvtx_offset)
+        self.fvtx = FVTX().readFromFRES(fres, self.fvtx_offset)
         self.lods = []
         for i in range(self.lod_cnt):
-            self.lods.append(LODModel().readFromFRES(fres,
-                self.lod_offset + (i * 56)))
+            model = LODModel().readFromFRES(fres,
+                self.lod_offset + (i * LODModel._reader.size))
+            model.readFaces(self.fvtx)
+            self.lods.append(model)
 
         return self
 

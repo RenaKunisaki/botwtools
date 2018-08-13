@@ -118,7 +118,7 @@ class FVTX(FresObject):
             vtx = Vertex()
             for attr in self.attrs:
                 buf  = self.buffers[attr.buf_idx]
-                offs = attr.buf_offs * buf.stride
+                offs = attr.buf_offs + (i * buf.stride)
                 fmt  = self.attrFmts.get(attr.format, None)
                 if fmt is None:
                     log.error("Unsupported attribute data type: 0x%04X",
@@ -131,6 +131,7 @@ class FVTX(FresObject):
                     fmt  = fmt['fmt']
                 data = struct.unpack_from(fmt, buf.data, offs)
                 if func: data = func(data)
+                log.debug("vtx %d attr %s = %s", i, attr.name, data)
                 vtx.setAttr(attr, data)
 
             self.vtxs.append(vtx)

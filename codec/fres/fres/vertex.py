@@ -81,3 +81,8 @@ class Vertex:
         else:
             #log.warn("Unknown attribute '%s'", attr.name)
             self.extra[attr.name] = val
+
+    def __str__(self):
+        return "<Vertex(%1.2f, %1.2f, %1.2f) at 0x%X>" % (
+            self.pos.x, self.pos.y, self.pos.z,
+            id(self))

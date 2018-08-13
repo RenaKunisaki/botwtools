@@ -110,12 +110,24 @@ class FresDecoder(ArchiveDecoder):
                     if func: d = func(d)
                     for item in d: data.append(item)
 
+                # stupid
+                # vertices are stored X, Y, Z, W but Blender refuses
+                # to import them this way.
+                # if this is a position, strip the Ws.
+                # they seem to be always 1 anyway...
+                if attr.name == '_p0':
+                    data2 = []
+                    for i in range(0, len(data), 4):
+                        data2 += data[i:i+3] # skip every 4th item
+                    data = data2
+
                 # XXX use attr.format instead of always float
                 arr = src.Child('float_array',
                     id = 'array%d' % id(attr),
                     count = len(data),
                 )
                 arr.text = ' '.join(map(str, data))
+
 
                 # XXX support more types of accessor/technique
                 tech = src.Child('technique_common')
@@ -139,21 +151,30 @@ class FresDecoder(ArchiveDecoder):
             )
             input = vtxs.Child('input',
                 semantic = 'POSITION',
-                source = '#src_' + attr.name,
+                source = '#src__p0',
             )
-            plist = mesh.Child('polylist',
-                count = len(fvtx.vtxs), # XXX probably wrong
-            )
-            inp_vtx = plist.Child('input',
-                offset = '0',
-                semantic = 'VERTEX',
-                source = '#vertices%d' % id(mesh),
-            )
-            vcount = plist.Child('vcount')
-            vcount.text = '4' # XXX
 
-            p = plist.Child('p')
-            p.text = '0 1 2 3' # XXX
+            for fshp in model.fshps:
+                for lod in fshp.lods:
+                    plist = mesh.Child('polylist',
+                        count = len(lod.faces),
+                    )
+                    inp_vtx = plist.Child('input',
+                        offset = '0',
+                        semantic = 'VERTEX',
+                        source = '#vertices%d' % id(mesh),
+                    )
+
+                    sizes = []
+                    faces = []
+                    for face in lod.faces:
+                        sizes.append(len(face))
+                        faces += face
+
+                    vcount = plist.Child('vcount')
+                    vcount.text = ' '.join(map(str, sizes))
+                    p = plist.Child('p')
+                    p.text = ' '.join(map(str, faces))
 
         scenes = root.Child('library_visual_scenes')
         scene  = scenes.Child('visual_scene',
@@ -162,7 +183,7 @@ class FresDecoder(ArchiveDecoder):
         )
         node = scene.Child('node',
             id   = 'node0',
-            name = 'some_node',
+            name = model.name,
         )
         inst = node.Child('instance_geometry',
             url = '#geometry%d' % id(model),

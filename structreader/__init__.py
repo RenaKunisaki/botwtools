@@ -71,7 +71,9 @@ _fmtNames = {
 }
 def fmtStructField(fmt, val):
     if type(fmt) is not str:
-        return fmt.name, val
+        if hasattr(fmt, 'tostring'):
+            return type(fmt).__name__, fmt.tostring(val)
+        else: return fmt.name, val
 
     func = _fmts.get(fmt, str)
     cnt  = 0
@@ -171,8 +173,8 @@ class BinaryObject:
         if offset is not None: file.seek(offset)
         self._file = file
         self._file_offset = file.tell()
-        #log.debug("Reading %s from 0x%08X",
-        #    type(self).__name__, self._file_offset)
+        log.debug("Reading %s from 0x%08X",
+            type(self).__name__, self._file_offset)
         if reader is None: reader = self._reader
         #log.debug("Struct %s size is 0x%X", type(self).__name__,
         #    reader.size)
@@ -213,8 +215,9 @@ class BinaryObject:
             val = getattr(self, name)
             typ = field['type']
             tp, vs = fmtStructField(typ, val)
-            log.debug("[%04X] %12s %28s: %10s",
-                field['offset'], tp, name, vs)
+            if not tp.startswith('padding_'):
+                log.debug("[%04X] %12s %28s: %10s",
+                    field['offset'], tp, name, vs)
 
 
     def dumpOffsets(self):

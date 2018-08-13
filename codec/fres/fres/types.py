@@ -29,6 +29,9 @@ class Offset(BaseType):
     size = 4
     fmt  = 'I'
 
+    def tostring(self, val):
+        return '%10d (%08X)' % (val, val)
+
 
 class Offset64(Offset):
     """A 64-bit offset in an FRES file."""
@@ -74,13 +77,11 @@ class StrOffs(Offset):
         file.seek(pos)
         return data
 
-
-class BaseType:
-    def __init__(self, name):
-        self.name = name
-
-    def read(self, buffer, offset):
-        return struct.unpack_from(self.fmt, buffer, offset)
+    def tostring(self, val):
+        if type(val) is str: # we already replaced with actual string
+            return val
+        else: # it's still the offset
+            return super().tostring(val)
 
 
 class Padding(BaseType):

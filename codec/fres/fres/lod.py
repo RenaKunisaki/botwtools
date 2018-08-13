@@ -21,32 +21,89 @@ from structreader import StructReader, BinaryObject
 class LODModel(FresObject):
     """A Level-of-Detail Model."""
     _reader = StructReader(
-        ('I',    'submesh_array_offs'),
-        Padding( 4),
+        Offset64('submesh_array_offs'),
         Offset64('unk08'),
         Offset64('unk10'),
         Offset64('idx_buf_offs'),
-        Offset(  'face_offs'),
-        ('I',    'prim_fmt'),
-        ('I',    'face_type'),
-        ('I',    'face_cnt'),
+        ('I',    'face_offs'),# offset into index buffer
+        ('I',    'prim_fmt'), # how to draw the faces
+        ('I',    'idx_type'), # data type of index buffer entries
+        ('I',    'idx_cnt'),  # total number of indices
         ('H',    'visibility_group'),
         ('H',    'submesh_cnt'),
-        size = 0x34,
+        ('I',    'unk34'),
+        size = 0x38,
     )
+
+    primTypes = {
+        # id: (min, incr, name)
+        0x01: (1, 1, 'points'),
+        0x02: (2, 2, 'lines'),
+        0x03: (2, 1, 'line_strip'),
+        0x04: (3, 3, 'triangles'),
+        0x05: (3, 1, 'triangle_fan'),
+        0x06: (3, 1, 'triangle_strip'),
+        0x0A: (4, 4, 'lines_adjacency'),
+        0x0B: (4, 1, 'line_strip_adjacency'),
+        0x0C: (6, 1, 'triangles_adjacency'),
+        0x0D: (6, 6, 'triangle_strip_adjacency'),
+        0x11: (3, 3, 'rects'),
+        0x12: (2, 1, 'line_loop'),
+        0x13: (4, 4, 'quads'),
+        0x14: (4, 2, 'quad_strip'),
+        0x82: (2, 2, 'tesselate_lines'),
+        0x83: (2, 1, 'tesselate_line_strip'),
+        0x84: (3, 3, 'tesselate_triangles'),
+        0x86: (3, 1, 'tesselate_triangle_strip'),
+        0x93: (4, 4, 'tesselate_quads'),
+        0x94: (4, 2, 'tesselate_quad_strip'),
+    }
+    idxFormats = {
+        0x00: '<I', # I/H are backward from gx2Enum.h???
+        0x01: '<H',
+        0x02: '<I',
+        0x04: '>I',
+        0x09: '>H',
+    }
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the model from given FRES."""
         super().readFromFRES(fres, offset, reader)
-        #self.dumpToDebugLog()
+        self.dumpToDebugLog()
 
-        if self.face_type == 1:
-            self.data = fres.read('H',
-                pos=self.face_offs, count=self.face_cnt, use_rlt=True)
-        else:
-            log.error("Unsupported face type %d", self.face_type)
+        self.prim_fmt = 4 # XXX why is this wrong?
+        self.prim_fmt_id = self.prim_fmt
+        self.prim_min, self.prim_size, self.prim_fmt = \
+            self.primTypes[self.prim_fmt]
+        self.idx_fmt = self.idxFormats[self.idx_type]
+        log.debug("prim fmt: 0x%02X (%s), idx type: 0x%02X (%s) (min=%d inc=%d)",
+            self.prim_fmt_id, self.prim_fmt,
+            self.idx_type, self.idx_fmt,
+            self.prim_min, self.prim_size)
+
+        self.idxs = fres.read(self.idx_type,
+            pos=self.idx_buf_offs, count=self.idx_cnt, use_rlt=True)
 
         return self
+
+
+    def readFaces(self, buffer):
+        log.debug("buffer size: %d", buffer.buffers[0].size)
+        self.faces = []
+        idx = self.face_offs
+        for i in range(0, self.idx_cnt, self.prim_size):
+            #vtxs = buffer.vtxs[i:i+self.prim_size]
+            face = []
+            for j in range(self.prim_min):
+                face.append(idx + j + self.face_offs)
+            self.faces.append(face)
+            idx += self.prim_size
+
+        log.debug("LOD model has %d faces", len(self.faces))
+        #for i, face in enumerate(self.faces):
+        #    for j, vtx in enumerate(face):
+        #        log.debug("%d.%d: %d: %s", i, j, vtx,
+        #            buffer.vtxs[vtx])
 
 
     def validate(self):
