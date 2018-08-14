@@ -125,7 +125,10 @@ def extract_recursive(path, dest, _depth=0):
         log.info("Can't extract %s any further", path)
 
     except FileNotFoundError:
-        log.warning("Nothing extracted from %s", path)
+        if _depth > 0:
+            log.warning("Nothing extracted from %s", path)
+        else:
+            raise
 
 
 def main():

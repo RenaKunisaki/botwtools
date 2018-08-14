@@ -105,7 +105,8 @@ class Header(FresObject):
         ('I',  'unkB0'), # 0001A224 just before name table
         ('I',  'unkB4'), # 00000000
         ('I',  'unkB8'), # 00003570 size of string table?
-        ('I',  'num_objects'), # 00000006 number of models?
+        ('H',  'num_objects'),
+        ('H',  'unkBC'),
 
         ('I',  'unkC0'), # 00000001
         ('I',  'unkC4'), # 00000000
