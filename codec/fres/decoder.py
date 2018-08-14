@@ -68,83 +68,38 @@ class FresDecoder(ArchiveDecoder):
 
 
     def _extractModel(self, model):
+        """Export model to COLLADA file."""
         name = model.name + '.dae'
+
+        # initial document structure
         document = myxml.Document('COLLADA',
             myxml.Element('library_cameras'),
             myxml.Element('library_lights'),
             myxml.Element('library_materials'),
             myxml.Element('library_effects'),
-
             xmlns="http://www.collada.org/2005/11/COLLADASchema",
             version="1.4.1",
         )
         root = document.root
 
+        # geometries
         geoms = root.Child('library_geometries')
-        geom  = geoms.Child('geometry',
-            id = 'geometry%d' % id(model),
-            name = model.name,
-        )
 
-        mesh = geom.Child('mesh')
+
+        # mesh
+        geom_ids = []
+        model_names = []
         for fvtx in model.fvtxs:
+            gid = 'geometry%d' % id(fvtx)
+            geom_ids.append(gid)
+            geom  = geoms.Child('geometry',
+                id = gid,
+                name = model.name,
+            )
+            mesh = geom.Child('mesh')
+
             for attr in fvtx.attrs:
-                src = mesh.Child('source',
-                    id = 'src_' + attr.name,
-                    name = attr.name,
-                    #unk04 = '0x%08X' % attr.unk04,
-                    #unk0A = '0x%04X' % attr.unk0A,
-                )
-
-                buf  = fvtx.buffers[attr.buf_idx]
-                offs = attr.buf_offs #* buf.stride
-                fmt  = fvtx.attrFmts.get(attr.format)
-                func = None
-                if type(fmt) is dict:
-                    func = fmt['func']
-                    fmt  = fmt['fmt']
-                data = []
-                sz   = struct.calcsize(fmt)
-                for i in range(int(buf.size / sz)):
-                    d = struct.unpack_from(fmt, buf.data, i*sz)
-                    if func: d = func(d)
-                    for item in d: data.append(item)
-
-                # stupid
-                # vertices are stored X, Y, Z, W but Blender refuses
-                # to import them this way.
-                # if this is a position, strip the Ws.
-                # they seem to be always 1 anyway...
-                if attr.name == '_p0':
-                    data2 = []
-                    for i in range(0, len(data), 4):
-                        data2 += data[i:i+3] # skip every 4th item
-                    data = data2
-
-                # XXX use attr.format instead of always float
-                arr = src.Child('float_array',
-                    id = 'array%d' % id(attr),
-                    count = len(data),
-                )
-                arr.text = ' '.join(map(str, data))
-
-
-                # XXX support more types of accessor/technique
-                tech = src.Child('technique_common')
-                acc  = tech.Child('accessor',
-                    count  = len(data)*3, # XXX what is this
-                    offset = offs,
-                    #stride = str(buf.stride),
-                    stride = '3', # XXX
-                    source = '#array%d' % id(attr),
-                )
-
-                for p in ('X', 'Y', 'Z'):
-                    param = acc.Child('param',
-                        name = p,
-                        type = 'float',
-                    )
-            # attrs done...
+                self._exportAttribute(mesh, fvtx, attr)
 
             vtxs = mesh.Child('vertices',
                 id = 'vertices%d' % id(mesh),
@@ -153,210 +108,129 @@ class FresDecoder(ArchiveDecoder):
                 semantic = 'POSITION',
                 source = '#src__p0',
             )
-
+            # XXX export each LOD as a separate model
+            # but how do we share the buffers?
             for fshp in model.fshps:
+                model_names.append(fshp.name)
                 for lod in fshp.lods:
-                    # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
-                    if lod.prim_fmt in ('line_strip', 'line_loop'):
-                        #elem = 'lines'
-                        elem = 'triangles'
-                    elif lod.prim_fmt == 'triangles':
-                        elem = 'triangles'
-                    else:
-                        log.error("Unsupported prim fmt %s", lod.prim_fmt)
-                        break
-                    plist = mesh.Child(elem,
-                        count = len(lod.faces),
-                    )
-                    inp_vtx = plist.Child('input',
-                        offset = '0',
-                        semantic = 'VERTEX',
-                        source = '#vertices%d' % id(mesh),
-                    )
-
-                    sizes = []
-                    faces = []
-                    for face in lod.faces:
-                        sizes.append(len(face))
-                        faces += face
-                    #faces = lod.idxs
-
-                    vcount = plist.Child('vcount')
-                    vcount.text = ' '.join(map(str, sizes))
-                    p = plist.Child('p')
-                    p.text = ' '.join(map(str, faces))
+                    self._exportLod(mesh, lod)
                     #break # only export first model
                 #break
 
+        # define a scene containing the model
         scenes = root.Child('library_visual_scenes')
         scene  = scenes.Child('visual_scene',
             id   = 'scene0',
             name = 'untitled',
         )
-        node = scene.Child('node',
-            id   = 'node0',
-            name = model.name,
-        )
-        inst = node.Child('instance_geometry',
-            url = '#geometry%d' % id(model),
-        )
+        for i, gid in enumerate(geom_ids):
+            node = scene.Child('node',
+                id   = 'node_'+gid,
+                name = model_names[i],
+            )
+            node.Child('instance_geometry',
+                url = '#'+gid,
+            )
         scene = root.Child('scene')
         inst  = scene.Child('instance_visual_scene',
             url = '#scene0',
         )
+
+        # write document to file
         with self.mkfile(name) as file:
             document.writeToFile(file, pretty_print=True)
 
 
-    def _old_extractModel(self, model):
-        name = model.name + '.xml'
-        root = ET.Element('model')
+    def _exportAttribute(self, parent, fvtx, attr):
+        src = parent.Child('source',
+            id = 'src_' + attr.name,
+            name = attr.name,
+            #unk04 = '0x%08X' % attr.unk04,
+            #unk0A = '0x%04X' % attr.unk0A,
+        )
+        buf  = fvtx.buffers[attr.buf_idx]
+        fmt  = fvtx.attrFmts.get(attr.format)
+        func = None
+        if type(fmt) is dict:
+            func = fmt['func']
+            fmt  = fmt['fmt']
+        data = []
+        sz   = struct.calcsize(fmt)
+        for i in range(int(buf.size / sz)):
+            d = struct.unpack_from(fmt, buf.data, i*sz)
+            if func: d = func(d)
+            for item in d: data.append(item)
 
-        eSkel = ET.Element('skeleton')
-        root.append(eSkel)
-        for bone in model.skeleton.bones:
-            eSkel.append(self._extractBone(bone))
+        # stupid
+        if attr.name == '_p0':
+            data = self._fixBufferForBlender(data)
 
-        eFvtxs = ET.Element('buffers')
-        root.append(eFvtxs)
-        for fvtx in model.fvtxs:
-            eFvtxs.append(self._extractFVTX(fvtx))
-
-        eShapes = ET.Element('shapes')
-        root.append(eShapes)
-        for fshp in model.fshps:
-            eShapes.append(self._extractFSHP(fshp))
-
-        eMats = ET.Element('materials')
-        root.append(eMats)
-        for fmat in model.fmats:
-            eMats.append(self._extractFMAT(fmat))
-
-        tree = ET.ElementTree(root)
-        with self.mkfile(name) as file:
-            tree.write(file,
-                encoding='utf-8',
-                xml_declaration=True,
-                pretty_print=True,
-            )
+        self._makeArrayForAttribute(src, attr, data)
+        self._makeAccessorForAttribute(src, attr, data)
 
 
-    def _extractFVTX(self, fvtx):
-        elem = ET.Element('FVTX')
-        # XXX the actual VTX attrib array/dict, attrs, etc
-        attrs = {
-            'idx': fvtx.index,
-            'nvtxs': fvtx.num_vtxs,
-            'nattrs': fvtx.num_attrs,
-            'nbuffers': fvtx.num_bufs,
-            'skin_weight_influence': fvtx.skin_weight_influence,
-            'unk04': fvtx.unk04,
-            'unk10': '0x%08X' % fvtx.unk10,
-            'unk18': '0x%08X' % fvtx.unk18,
-            'unk20': '0x%08X' % fvtx.unk20,
-        }
-        for k, v in attrs.items(): elem.set(k, str(v))
-        for attr in fvtx.attrs:
-            e = ET.Element('attribute')
-            e.set('name',   attr.name)
-            e.set('fmt',    '0x%04X' % attr.format)
-            e.set('offset', '0x%04X' % attr.buf_offs)
-            e.set('idx',    '0x%04X' % attr.buf_idx)
-            e.set('unk04',  '0x%08X' % attr.unk04)
-            e.set('unk0A',  '0x%04X' % attr.unk0A)
-            elem.append(e)
-        for vtx in fvtx.vtxs:
-            e = ET.Element('vtx')
-            e.set('position', '%f, %f, %f, %f' % (
-                vtx.pos.x, vtx.pos.y, vtx.pos.z, vtx.pos.w))
-            e.set('normal', '%f, %f, %f, %f' % (
-                vtx.normal.x, vtx.normal.y, vtx.normal.z, vtx.normal.w))
-            e.set('color', '%f, %f, %f, %f' % (
-                vtx.color.r, vtx.color.g, vtx.color.b, vtx.color.a))
-            e.set('uv', '%f, %f' % (
-                vtx.texcoord.u, vtx.texcoord.v))
-            e.set('idx', '0x%X, 0x%X, 0x%X, 0x%X, 0x%X' % (
-                vtx.idx[0], vtx.idx[1], vtx.idx[2], vtx.idx[3], vtx.idx[4]
-            ))
-            e.set('weight', '%f, %f, %f, %f' % (
-                vtx.weight[0], vtx.weight[1], vtx.weight[2], vtx.weight[3]
-            ))
-            for k, v in vtx.extra.items():
-                e.set(k, str(v))
-            elem.append(e)
-        return elem
+
+    def _fixBufferForBlender(self, data):
+        """Take `data` and return a copy with every 4th element removed.
+        This is necessary to remove the W position from vertices
+        because Blender refuses to import a Collada file whose
+        vertices don't have a stride of 3.
+        """
+        res = []
+        for i in range(0, len(data), 4):
+            res += data[i:i+3] # skip every 4th item
+        return res
 
 
-    def _extractFMAT(self, fmat):
-        elem = ET.Element('FMAT')
-        attrs = {
-            'name': fmat.name,
-            'unk0C': fmat.unk0C,
-            'flags': fmat.mat_flags,
-            'section_idx': fmat.section_idx,
-            'render_info_cnt': fmat.render_info_cnt,
-            'tex_ref_cnt': fmat.tex_ref_cnt,
-            'sampler_cnt': fmat.sampler_cnt,
-            'shader_param_volatile_cnt': fmat.shader_param_volatile_cnt,
-            'source_param_data_size': fmat.source_param_data_size,
-            'unkB2': fmat.unkB2,
-            'unkB4': fmat.unkB4,
-        }
-        for k, v in attrs.items(): elem.set(k, str(v))
-        return elem
+    def _makeArrayForAttribute(self, parent, attr, data):
+        # XXX use attr.format instead of always float
+        arr = parent.Child('float_array',
+            id = 'array%d' % id(attr),
+            count = len(data),
+        )
+        arr.text = ' '.join(map(str, data))
 
 
-    def _extractFSHP(self, fshp):
-        elem = ET.Element('FSHP')
-        attrs = {
-            'idx':   fshp.index,
-            'name':  fshp.name,
-            'unk04': fshp.unk04,
-            'unk08': fshp.unk08,
-            'unk0C': fshp.unk0C,
-            'unk30': fshp.unk30,
-            'unk38': fshp.unk38,
-            'unk50': fshp.unk50,
-            'flags': '0x%08X' % fshp.flags,
-            'single_bind': fshp.single_bind,
-            'fvtx_idx': fshp.fvtx_idx,
-            'skin_bone_idx_cnt': fshp.skin_bone_idx_cnt,
-            'vtx_skin_cnt': fshp.vtx_skin_cnt,
-            'lod_cnt': fshp.lod_cnt,
-            'vis_group_cnt': fshp.vis_group_cnt,
-            'fskl_array_cnt': fshp.fskl_array_cnt,
-        }
-        for k, v in attrs.items(): elem.set(k, str(v))
-        return elem
+    def _makeAccessorForAttribute(self, parent, attr, data):
+        # XXX support more types of accessor/technique
+        offs = attr.buf_offs #* buf.stride
+        tech = parent.Child('technique_common')
+        acc  = tech.Child('accessor',
+            count  = len(data)*3, # XXX what is this
+            offset = offs,
+            stride = '3',
+            source = '#array%d' % id(attr),
+        )
+        for p in ('X', 'Y', 'Z'):
+            acc.Child('param', name=p, type='float')
 
 
-    def _extractBone(self, bone):
-        elem = ET.Element('bone')
+    def _exportLod(self, parent, lod):
+        # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
+        if lod.prim_fmt in ('line_strip', 'line_loop'):
+            #elem = 'lines'
+            elem = 'triangles'
+        elif lod.prim_fmt == 'triangles':
+            elem = 'triangles'
+        else:
+            log.error("Unsupported prim fmt %s", lod.prim_fmt)
+            return
+        plist = parent.Child(elem,
+            count = len(lod.faces),
+        )
+        inp_vtx = plist.Child('input',
+            offset = '0',
+            semantic = 'VERTEX',
+            source = '#vertices%d' % id(parent),
+        )
 
-        ePos = ET.Element('position')
-        ePos.text = '%f, %f, %f' % (bone.posX, bone.posY, bone.posZ)
-        elem.append(ePos)
+        sizes = []
+        faces = []
+        for face in lod.faces:
+            sizes.append(len(face))
+            faces += face
 
-        eScl = ET.Element('scale')
-        eScl.text = '%f, %f, %f' % (
-            bone.scaleX, bone.scaleY, bone.scaleZ)
-        elem.append(eScl)
-
-        eRot = ET.Element('rotation')
-        eRot.text = '%f, %f, %f, %f' % (
-            bone.rotX, bone.rotY, bone.rotZ, bone.rotW)
-        elem.append(eRot)
-
-        ePrt = ET.Element('parents')
-        ePrt.text = '%d, %d, %d, %d' % bone.parent
-        elem.append(ePrt)
-
-        attrs = {
-            'idx':   bone.bone_idx,
-            'name':  bone.name,
-            'flags': '0x%08X' % bone.unk22,
-            'unk04': bone.unk04,
-            'unk22': bone.unk22,
-        }
-        for k, v in attrs.items(): elem.set(k, str(v))
-        return elem
+        vcount = plist.Child('vcount')
+        vcount.text = ' '.join(map(str, sizes))
+        p = plist.Child('p')
+        p.text = ' '.join(map(str, faces))

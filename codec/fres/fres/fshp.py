@@ -74,7 +74,7 @@ class FSHP(FresObject):
             model.readFaces(self.fvtx)
             self.lods.append(model)
 
-        self.lods = [self.lods[0]] # XXX DEBUG only keep last model
+        #self.lods = [self.lods[1]] # XXX DEBUG only keep one model
 
         return self
 
