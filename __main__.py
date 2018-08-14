@@ -103,7 +103,7 @@ def extract_recursive(path, dest, _depth=0):
     log.info("Recursively extracting %s to %s...", path, dest)
     try:
         # extract the input file
-        with open(path, 'rb') as file:
+        with FileReader(path, 'rb') as file:
             decoder = codec.getDecoderForFile(file)
             name    = os.path.normpath(decoder.suggestOutputName(dest))
             log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
@@ -123,6 +123,9 @@ def extract_recursive(path, dest, _depth=0):
 
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
+
+    except FileNotFoundError:
+        log.warning("Nothing extracted from %s", path)
 
 
 def main():
