@@ -53,7 +53,8 @@ class Header(FresObject):
         ('H',  'header_len'), # always 0x0C
 
         StrOffs('name', None),
-        ('I',  'unk14'),      # 00D00000 u16 full header size?
+        Padding(2),
+        ('H',  'str_tab_offset'), # wtf?
         Offset('rlt_offset'),
         ('I',  'file_size'),  # size of this file
 
@@ -97,7 +98,7 @@ class Header(FresObject):
         ('I',  'unk98'), # 00000438
         ('I',  'unk9C'), # 00000000
 
-        ('I',  'unkA0'), # 000004E8
+        ('I',  'unkA0'), # 000004E8 - BNTX ptr?
         ('I',  'unkA4'), # 00000000
         ('I',  'unkA8'), # 00000000
         ('I',  'unkAC'), # 00000000

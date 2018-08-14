@@ -37,12 +37,20 @@ class FresObject(BinaryObject):
     def _dumpOffset(self, name, offs):
         try:
             data = []
+            text = []
             for i in range(8):
                 data.append(self._file.read('I', offs + (i*4)))
+                for j in range(4):
+                    c = self._file.read('B', offs + (i*4) + j)
+                    if c < 0x20 or c > 0x7E: c = '.'
+                    else: c = chr(c)
+                    text.append(c)
             data = ' '.join(map(lambda v: '%08X' % v, data))
+            text = ''.join(text)
         except struct.error:
             data = "<out of range>"
-        log.debug("%28s %06X => %s", name, offs, data)
+            text = ''
+        log.debug("%16s %06X => %s '%s'", name, offs, data, text)
 
 
     def dumpOffsets(self):

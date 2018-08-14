@@ -19,6 +19,7 @@ from structreader import readStringWithLength, readString
 from .header import Header
 from .fmdl   import FMDL
 from .rlt    import RLT
+from .strtab import StringTable
 
 class FRES:
     """Represents an FRES archive."""
@@ -32,8 +33,6 @@ class FRES:
         self.header.fres = self # for dumpOffsets
         self.rlt    = None # for dumpOffsets
         log.debug("FRES version: 0x%08X", self.header.version)
-        self.header.dumpToDebugLog()
-        self.header.dumpOffsets()
 
         # name is NOT length-prefixed but name2 is.
         # usually they both point to the same string, just with
@@ -55,6 +54,12 @@ class FRES:
             self.rlt.dumpOffsets()
         else:
             self.rlt = None
+
+        self.header.dumpToDebugLog()
+        self.header.dumpOffsets()
+
+        self.strtab = StringTable().readFromFRES(self,
+            self.header.str_tab_offset)
 
         self.models = []
         self.file.seek(self.header.fmdl_offset)
