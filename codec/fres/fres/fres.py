@@ -15,7 +15,7 @@
 
 import logging; log = logging.getLogger(__name__)
 import struct
-from structreader import readStringWithLength
+from structreader import readStringWithLength, readString
 from .header import Header
 from .fmdl   import FMDL
 from .rlt    import RLT
@@ -29,8 +29,19 @@ class FRES:
         """Read the archive from given file."""
         self.file   = file
         self.header = Header().readFromFile(file)
+        self.header.fres = self # for dumpOffsets
+        self.rlt    = None # for dumpOffsets
         log.debug("FRES version: 0x%08X", self.header.version)
         self.header.dumpToDebugLog()
+        self.header.dumpOffsets()
+
+        # name is NOT length-prefixed but name2 is.
+        # usually they both point to the same string, just with
+        # name skipping the prefix.
+        self.name = readString(self.file, self.header.name)
+        log.debug("FRES name='%s'", self.name)
+        self.name2 = self.readStr(self.header.name2)
+        log.debug("FRES name2='%s'", self.name2)
 
         if self.header.type == 'switch':
             self.rlt = RLT().readFromFile(file, self.header.rlt_offset)

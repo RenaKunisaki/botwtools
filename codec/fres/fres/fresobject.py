@@ -51,4 +51,5 @@ class FresObject(BinaryObject):
             val = getattr(self, name)
             if type(val) is int and val > 0xD0 and val < 0xFFFFFF:
                 self._dumpOffset(name, val)
-                self._dumpOffset(" reloc", val+self.fres.rlt.data_start)
+                if self.fres.rlt:
+                    self._dumpOffset(" reloc", val+self.fres.rlt.data_start)

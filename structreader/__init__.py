@@ -235,8 +235,9 @@ class BinaryObject:
                 log.debug("%28s %06X => %s", name, val, data)
 
 
-def readString(file, maxlen=None, encoding='shift-jis'):
+def readString(file, offset=None, maxlen=None, encoding='shift-jis'):
     """Read null-terminated string from file."""
+    if offset is not None: file.seek(offset)
     s = []
     while maxlen == None or len(s) < maxlen:
         b = file.read(1)
