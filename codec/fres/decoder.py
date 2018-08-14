@@ -156,7 +156,16 @@ class FresDecoder(ArchiveDecoder):
 
             for fshp in model.fshps:
                 for lod in fshp.lods:
-                    plist = mesh.Child('polylist',
+                    # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
+                    if lod.prim_fmt in ('line_strip', 'line_loop'):
+                        #elem = 'lines'
+                        elem = 'triangles'
+                    elif lod.prim_fmt == 'triangles':
+                        elem = 'triangles'
+                    else:
+                        log.error("Unsupported prim fmt %s", lod.prim_fmt)
+                        break
+                    plist = mesh.Child(elem,
                         count = len(lod.faces),
                     )
                     inp_vtx = plist.Child('input',
@@ -170,11 +179,14 @@ class FresDecoder(ArchiveDecoder):
                     for face in lod.faces:
                         sizes.append(len(face))
                         faces += face
+                    #faces = lod.idxs
 
                     vcount = plist.Child('vcount')
                     vcount.text = ' '.join(map(str, sizes))
                     p = plist.Child('p')
                     p.text = ' '.join(map(str, faces))
+                    #break # only export first model
+                #break
 
         scenes = root.Child('library_visual_scenes')
         scene  = scenes.Child('visual_scene',

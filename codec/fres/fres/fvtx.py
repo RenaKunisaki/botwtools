@@ -131,7 +131,7 @@ class FVTX(FresObject):
                     fmt  = fmt['fmt']
                 data = struct.unpack_from(fmt, buf.data, offs)
                 if func: data = func(data)
-                log.debug("vtx %d attr %s = %s", i, attr.name, data)
+                #log.debug("vtx %d attr %s = %s", i, attr.name, data)
                 vtx.setAttr(attr, data)
 
             self.vtxs.append(vtx)

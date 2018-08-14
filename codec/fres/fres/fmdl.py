@@ -85,6 +85,8 @@ class FMDL(FresObject):
             self.fmats.append(FMAT().readFromFRES(fres,
                 self.fmat_offset + (i*FMAT._reader.size)))
 
+        self.fshps = [self.fshps[1]] # XXX DEBUG only keep first model
+
         return self
 
 

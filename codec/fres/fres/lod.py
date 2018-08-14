@@ -70,8 +70,16 @@ class LODModel(FresObject):
         """Read the model from given FRES."""
         super().readFromFRES(fres, offset, reader)
         self.dumpToDebugLog()
+        self.dumpOffsets()
 
-        self.prim_fmt = 4 # XXX why is this wrong?
+        #self.groups = []
+        ##fres.file.seek(self.face_offs)
+        #for i in range(self.visibility_group):
+        #    offs, count = fres.read('2I')
+        #    log.debug("group %2d: 0x%X, %d", i, offs, count)
+        #    self.groups.append((offs, count))
+
+        #self.prim_fmt = 4 # XXX why is this wrong?
         self.prim_fmt_id = self.prim_fmt
         self.prim_min, self.prim_size, self.prim_fmt = \
             self.primTypes[self.prim_fmt]
@@ -81,29 +89,39 @@ class LODModel(FresObject):
             self.idx_type, self.idx_fmt,
             self.prim_min, self.prim_size)
 
-        self.idxs = fres.read(self.idx_type,
-            pos=self.idx_buf_offs, count=self.idx_cnt, use_rlt=True)
+        log.debug("Read %d idxs in fmt %s from 0x%X; idx_buf_offs=0x%X",
+            self.idx_cnt, self.idx_fmt, self.face_offs,
+            self.idx_buf_offs)
+        self.idxs = fres.read(self.idx_fmt,
+            pos=self.face_offs, count=self.idx_cnt, use_rlt=True)
+        #log.debug("idxs(%d): %s", len(self.idxs), self.idxs)
+
+        self.faces = []
+        for i in range(0, self.idx_cnt, self.prim_fmt_id):
+            face = []
+            for j in range(self.prim_fmt_id):
+                face.append(self.idxs[i+j] + self.visibility_group)
+            self.faces.append(face)
 
         return self
 
 
     def readFaces(self, buffer):
-        log.debug("buffer size: %d", buffer.buffers[0].size)
-        self.faces = []
-        idx = self.face_offs
-        for i in range(0, self.idx_cnt, self.prim_size):
-            #vtxs = buffer.vtxs[i:i+self.prim_size]
-            face = []
-            for j in range(self.prim_min):
-                face.append(idx + j + self.face_offs)
-            self.faces.append(face)
-            idx += self.prim_size
+        #self.faces = []
+        #idx = self.face_offs #+ self.prim_min
+        #for i in range(0, self.idx_cnt, self.prim_min):
+        #    #vtxs = buffer.vtxs[i:i+self.prim_size:]
+        #    face = []
+        #    for j in range(self.prim_min):
+        #        face.append(idx + j)
+        #    self.faces.append(face)
+        #    idx += self.prim_size
 
         log.debug("LOD model has %d faces", len(self.faces))
         #for i, face in enumerate(self.faces):
         #    for j, vtx in enumerate(face):
-        #        log.debug("%d.%d: %d: %s", i, j, vtx,
-        #            buffer.vtxs[vtx])
+        #        log.debug("%d.%d: %d", i, j, vtx)
+        #            #buffer.vtxs[vtx])
 
 
     def validate(self):

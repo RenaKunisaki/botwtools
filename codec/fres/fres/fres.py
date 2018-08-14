@@ -14,6 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger()
+import struct
 from structreader import readStringWithLength
 from .header import Header
 from .fmdl   import FMDL
@@ -29,11 +30,18 @@ class FRES:
         self.file   = file
         self.header = Header().readFromFile(file)
         log.debug("FRES version: 0x%08X", self.header.version)
+        self.header.dumpToDebugLog()
 
         if self.header.type == 'switch':
             self.rlt = RLT().readFromFile(file, self.header.rlt_offset)
             log.debug("RLT @%06X starts at %06X",
                 self.header.rlt_offset, self.rlt.data_start)
+            assert self.rlt.data_start < self.file.size, \
+                "RlT start 0x%X is beyond EOF 0x%X" % (
+                    self.rlt.data_start, self.file.size)
+            self.rlt.fres = self
+            self.rlt.dumpToDebugLog()
+            self.rlt.dumpOffsets()
         else:
             self.rlt = None
 
@@ -62,8 +70,23 @@ class FRES:
         Returns the data.
         """
         if use_rlt and (self.rlt is not None):
+            # apply RLT offset
             if pos is None: pos = self.file.tell()
+            log.debug("read: 0x%X + RLT 0x%X = 0x%X (size=0x%X)",
+                pos,  self.rlt.data_start,
+                pos + self.rlt.data_start,
+                self.file.size)
             pos += self.rlt.data_start
+
+        # validate range
+        if type(size) is str: sz = struct.calcsize(size)
+        else: sz = size
+        if sz > 0 and pos + (sz * count) >= self.file.size:
+            log.error("Reading beyond EOF "
+                "(pos 0x%X size 0x%X => 0x%X, EOF is 0x%X)",
+                pos, (sz*count), pos+(sz*count), self.file.size)
+
+        # read data
         if count < 0:
             raise ValueError("Count cannot be negative")
         elif count == 0: return []

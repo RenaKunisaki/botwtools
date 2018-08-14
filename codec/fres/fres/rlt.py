@@ -42,7 +42,6 @@ class RLT(FresObject):
     )
 
 
-
     def validate(self):
         super().validate()
         return True

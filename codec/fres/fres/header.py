@@ -128,6 +128,7 @@ class Header(FresObject):
         else:
             self.type = 'wiiu'
             reader = self._reader_wiiu
+        self._reader = reader
         super().readFromFile(file, reader=reader)
 
         return self
