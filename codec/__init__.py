@@ -15,6 +15,7 @@
 
 from .base.exceptions import UnsupportedFileTypeError
 from .aamp.decoder import AampDecoder
+from .bntx.decoder import BntxDecoder
 from .byml.decoder import BymlDecoder
 from .fres.decoder import FresDecoder
 from .sarc.decoder import SarcDecoder
@@ -27,6 +28,7 @@ encoders = {
 # File magic => decoder class
 decoders = {
     b'AAMP': AampDecoder,
+    b'BNTX': BntxDecoder,
     b'BY':   BymlDecoder,
     b'SARC': SarcDecoder,
     b'FRES': FresDecoder,

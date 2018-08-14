@@ -42,25 +42,54 @@ class FRES:
         self.name2 = self.readStr(self.header.name2)
         log.debug("FRES name2='%s'", self.name2)
 
-        if self.header.type == 'switch':
-            self.rlt = RLT().readFromFile(file, self.header.rlt_offset)
-            log.debug("RLT @%06X starts at %06X",
-                self.header.rlt_offset, self.rlt.data_start)
-            assert self.rlt.data_start < self.file.size, \
-                "RlT start 0x%X is beyond EOF 0x%X" % (
-                    self.rlt.data_start, self.file.size)
-            self.rlt.fres = self
-            self.rlt.dumpToDebugLog()
-            self.rlt.dumpOffsets()
-        else:
-            self.rlt = None
+        if self.header.type == 'switch': self.readRLT()
+        else: self.rlt = None
 
         self.header.dumpToDebugLog()
         self.header.dumpOffsets()
 
-        self.strtab = StringTable().readFromFRES(self,
-            self.header.str_tab_offset)
+        self.strtab = self.readStringTable(self.header.str_tab_offset)
+        self.readTextures()
+        self.readModels()
 
+        return self
+
+
+    def readRLT(self):
+        self.rlt = RLT().readFromFile(self.file, self.header.rlt_offset)
+        log.debug("RLT @%06X starts at %06X",
+            self.header.rlt_offset, self.rlt.data_start)
+        assert self.rlt.data_start < self.file.size, \
+            "RlT start 0x%X is beyond EOF 0x%X" % (
+                self.rlt.data_start, self.file.size)
+        self.rlt.fres = self
+        self.rlt.dumpToDebugLog()
+        self.rlt.dumpOffsets()
+
+
+    def readStringTable(self, offset):
+        return StringTable().readFromFRES(self, offset)
+
+
+    def readTextures(self):
+        self.textures = []
+        cnt = 0
+        while True:
+            offs, unk4, size, unkC = self.file.read('IIII',
+                self.header.bntx_list_offs + (cnt*16))
+            log.debug("Texture at 0x%X, size 0x%X, unk=0x%X, 0x%X",
+                offs, size, unk4, unkC)
+            if size == 0xFFFFFFFF: break
+            self.textures.append({
+                'offset': offs,
+                'size':   size,
+                'unk04':  unk4,
+                'unk0C':  unkC,
+            })
+            cnt += 1
+
+
+    def readModels(self):
         self.models = []
         self.file.seek(self.header.fmdl_offset)
         for i in range(self.header.num_objects):
@@ -69,8 +98,6 @@ class FRES:
             mdl = FMDL().readFromFRES(self)
             self.models.append(mdl)
             self.file.seek(pos + mdl.size)
-
-        return self
 
 
     def read(self, size:(int,str)=-1, pos:int=None, count:int=1,

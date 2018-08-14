@@ -15,7 +15,7 @@
 
 import logging; log = logging.getLogger(__name__)
 from .fresobject import FresObject
-from .types import Offset, Offset64, StrOffs, Padding
+from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .rlt import RLT
 
@@ -95,10 +95,9 @@ class Header(FresObject):
 
         ('I',  'unk90'), # 00000418
         ('I',  'unk94'), # 00000000
-        ('I',  'unk98'), # 00000438
-        ('I',  'unk9C'), # 00000000
+        Offset64('bntx_list_offs'),
 
-        ('I',  'unkA0'), # 000004E8 - BNTX ptr?
+        ('I',  'unkA0'), # 000004E8
         ('I',  'unkA4'), # 00000000
         ('I',  'unkA8'), # 00000000
         ('I',  'unkAC'), # 00000000

@@ -15,7 +15,7 @@
 
 import logging; log = logging.getLogger(__name__)
 import struct
-from .types import Offset, Offset64, StrOffs
+from codec.base.types import Offset, Offset64, StrOffs
 from structreader import StructReader, BinaryObject
 
 class FresObject(BinaryObject):

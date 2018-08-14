@@ -15,7 +15,7 @@
 
 import logging; log = logging.getLogger(__name__)
 from .fresobject import FresObject
-from .types import Offset, Offset64, StrOffs, Padding
+from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .fvtx import FVTX
 from .lod import LODModel

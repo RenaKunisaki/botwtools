@@ -16,7 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 from structreader import StructReader, BinaryObject
 from .fresobject import FresObject
-from .types import Offset, Offset64, StrOffs, Padding
+from codec.base.types import Offset, Offset64, StrOffs, Padding
 
 class Attribute(FresObject):
     """An attribute in a FRES."""

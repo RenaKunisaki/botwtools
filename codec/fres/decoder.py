@@ -63,7 +63,8 @@ class FresDecoder(ArchiveDecoder):
     def _read(self):
         """Read the input file, upon opening it."""
         self.archive = FRES().readFromFile(self.input)
-        log.debug("FRES contains %d models", len(self.archive.models))
+        log.debug("FRES contains %d models, %d textures",
+            len(self.archive.models), len(self.archive.textures))
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""
@@ -88,15 +89,32 @@ class FresDecoder(ArchiveDecoder):
             for vtx in obj.fvtxs:
                 print(" Vtx:", vtx)
             for shp in obj.fshps:
+
                 print(" Shape:", shp.name)
 
 
     def unpack(self):
         """Unpack this file to `self.destPath`."""
-        nobj = len(self.archive.models)
+        nobj = len(self.archive.models) + len(self.archive.textures)
+        objc = 1
         for i, model in enumerate(self.archive.models):
-            log.info("[%3d/%3d] Extracting %s...", i+1, nobj, model.name)
+            log.info("[%3d/%3d] Extracting model %s...",
+                objc, nobj, model.name)
             self._extractModel(model)
+            objc += 1
+
+        for i, texture in enumerate(self.archive.textures):
+            log.info("[%3d/%3d] Extracting texture %d...",
+                objc, nobj, i)
+            self._extractTexture(texture, 'texture%d.bntx' % i)
+            objc += 1
+
+
+    def _extractTexture(self, texture, name):
+        """Export texture to BNTX file."""
+        self.archive.file.seek(texture['offset'])
+        data = self.archive.file.read(texture['size'])
+        self.writeFile(name, data)
 
 
     def _extractModel(self, model):
