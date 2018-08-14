@@ -52,6 +52,8 @@ class FSKL(FresObject):
         super().readFromFRES(fres, offset, reader)
         #self.dumpToDebugLog()
         #self.dumpOffsets()
+        log.info("Skeleton contains %d bones, %d inverse idxs, %d extras",
+            self.num_bones, self.num_inverse_idxs, self.num_extra)
 
         # read bones
         self.bones = []

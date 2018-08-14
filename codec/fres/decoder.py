@@ -101,6 +101,11 @@ class FresDecoder(ArchiveDecoder):
 
     def _extractModel(self, model):
         """Export model to COLLADA file."""
+        log.info("Model contains %d FVTXs", len(model.fvtxs))
+        if len(model.fvtxs) == 0:
+            log.warn("Model '%s' is empty", model.name)
+            return
+
         name = model.name + '.dae'
 
         # initial document structure
