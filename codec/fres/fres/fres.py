@@ -19,7 +19,7 @@ from structreader import readStringWithLength, readString
 from .header import Header
 from .fmdl   import FMDL
 from .rlt    import RLT
-from .strtab import StringTable
+from codec.base.strtab import StringTable
 
 class FRES:
     """Represents an FRES archive."""
@@ -68,7 +68,7 @@ class FRES:
 
 
     def readStringTable(self, offset):
-        return StringTable().readFromFRES(self, offset)
+        return StringTable().readFromFile(self.file, offset)
 
 
     def readTextures(self):
