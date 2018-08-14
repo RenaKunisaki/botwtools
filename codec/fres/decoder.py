@@ -23,6 +23,38 @@ from ..base import ArchiveDecoder, UnsupportedFileTypeError, TxtOutput
 from ..base.types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 from .fres import FRES
 
+attr_types = {
+    # [TEX}BINORMAL, CONTINUITY, IMAGE, INPUT, WEIGHT,
+    # INTERPOLATION, INV_BIND_MATRIX, UV, VERTEX, JOINT,
+    # LINEAR_STEPS, NORMAL, OUTPUT, TEXCOORD, POSITION,
+    # MORPH_{TARGET, WEIGHT}, {TEX}TANGENT,
+    # {IN, OUT}_TANGENT
+    #'_i0': {
+    #    'semantic':'COLOR',
+    #    'params': ('R', 'G', 'B', 'A'),
+    #},
+    '_n0': {
+        'semantic':'NORMAL',
+        'params': ('X', 'Y', 'Z'),
+    },
+    '_p0': {
+        'semantic':'POSITION',
+        'params': ('X', 'Y', 'Z'),
+    },
+    '_u0': {
+        'semantic':'UV',
+        'params': ('U', 'V'),
+    },
+    '_u1': {
+        'semantic':'UV',
+        'params': ('U', 'V'),
+    },
+    '_w0': {
+        'semantic':'WEIGHT',
+        'params': ('W',),
+    },
+}
+
 
 class FresDecoder(ArchiveDecoder):
     """Decoder for FRES archive."""
@@ -97,17 +129,14 @@ class FresDecoder(ArchiveDecoder):
                 name = model.name,
             )
             mesh = geom.Child('mesh')
-
-            for attr in fvtx.attrs:
-                self._exportAttribute(mesh, fvtx, attr)
-
             vtxs = mesh.Child('vertices',
                 id = 'vertices%d' % id(mesh),
             )
-            input = vtxs.Child('input',
-                semantic = 'POSITION',
-                source = '#src__p0',
-            )
+
+            for attr in fvtx.attrs:
+                self._exportAttribute(mesh, vtxs, fvtx, attr)
+
+
             # XXX export each LOD as a separate model
             # but how do we share the buffers?
             for fshp in model.fshps:
@@ -141,9 +170,9 @@ class FresDecoder(ArchiveDecoder):
             document.writeToFile(file, pretty_print=True)
 
 
-    def _exportAttribute(self, parent, fvtx, attr):
+    def _exportAttribute(self, parent, vtxs, fvtx, attr):
         src = parent.Child('source',
-            id = 'src_' + attr.name,
+            id = 'src' + attr.name,
             name = attr.name,
             #unk04 = '0x%08X' % attr.unk04,
             #unk0A = '0x%04X' % attr.unk0A,
@@ -167,6 +196,12 @@ class FresDecoder(ArchiveDecoder):
 
         self._makeArrayForAttribute(src, attr, data)
         self._makeAccessorForAttribute(src, attr, data)
+
+        if attr.name in attr_types:
+            vtxs.Child('input',
+                semantic = attr_types[attr.name]['semantic'],
+                source = '#src'+attr.name,
+            )
 
 
 
@@ -193,15 +228,17 @@ class FresDecoder(ArchiveDecoder):
 
     def _makeAccessorForAttribute(self, parent, attr, data):
         # XXX support more types of accessor/technique
+        if attr.name not in attr_types: return
         offs = attr.buf_offs #* buf.stride
         tech = parent.Child('technique_common')
+        params = attr_types[attr.name]['params']
         acc  = tech.Child('accessor',
-            count  = len(data)*3, # XXX what is this
+            count  = len(data)*len(params), # XXX what is this
             offset = offs,
-            stride = '3',
+            stride = len(params),
             source = '#array%d' % id(attr),
         )
-        for p in ('X', 'Y', 'Z'):
+        for p in params:
             acc.Child('param', name=p, type='float')
 
 
