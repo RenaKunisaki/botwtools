@@ -16,7 +16,7 @@
 # This file also contains code from byml-v2 which is
 # published under the GPLv2+ license.
 
-import logging; log = logging.getLogger()
+import logging; log = logging.getLogger(__name__)
 import io
 import os
 import struct

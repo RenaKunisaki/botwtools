@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging; log = logging.getLogger()
+import logging; log = logging.getLogger(__name__)
 
 class TexCoord2f:
     def __init__(self, u=0, v=0):

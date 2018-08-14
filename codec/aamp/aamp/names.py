@@ -16,7 +16,7 @@
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
-import logging; log = logging.getLogger()
+import logging; log = logging.getLogger(__name__)
 from .crc32 import crc32
 
 # keep a log of all unknown hashes.

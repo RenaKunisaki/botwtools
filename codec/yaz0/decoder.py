@@ -21,7 +21,7 @@
 # Technically, `Yaz` is the file marker, and the 0 (or 1) tells if it
 # comes from the original media or an expansion disk.
 # Yaz1 is identical to Yaz0 and is rarely seen.
-import logging; log = logging.getLogger()
+import logging; log = logging.getLogger(__name__)
 import io
 import struct
 from filereader import FileReader

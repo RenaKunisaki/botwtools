@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
-import logging; log = logging.getLogger()
+import logging; log = logging.getLogger(__name__)
 from lxml import etree as ET
 from structreader import StructReader, BinaryObject
 from .types import read_aamp_type, get_type_name
