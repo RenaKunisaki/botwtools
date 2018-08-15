@@ -37,8 +37,10 @@ class StructReader:
         self.orderedFields = []
         offset = 0
         for field in structDef:
+            conv = None
             if type(field) is tuple:
-                typ, name = field
+                typ, name = field[0], field[1]
+                if len(field) > 2: conv = field[2]
             else:
                 typ, name = field, field.name
 
@@ -59,6 +61,7 @@ class StructReader:
                 'offset': offset,
                 'type':   typ,
                 'read':   func,
+                'conv':   conv,
             }
             self.fields[name] = field
             self.orderedFields.append(field)
@@ -84,6 +87,7 @@ class StructReader:
             data = func(buf, offset)
             if type(data) is tuple and len(data) == 1:
                 data = data[0] # grumble
+            if field['conv']: data = field['conv'](data)
             res[field['name']] = data
             offset += field['size']
         return res
