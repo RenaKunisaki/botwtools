@@ -14,38 +14,19 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger(__name__)
-from .fresobject import FresObject
+#from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.strtab import StringTable
 from structreader import StructReader, BinaryObject
 
-class StringTable(FresObject):
-    """FRES string table."""
-    _magic = b'_STR'
+class NX(BinaryObject):
+    """A 'NX' texture in a BNTX."""
+    _magic = b'NX  '
     _reader = StructReader(
         ('4s',   'magic'),
-        ('I',    'unk04'), # 0
-        Offset64('unk08'),
-
-        ('I',  'num_strs'),
-        Padding(4),
-        size = 0x18,
+        ('I',    'num_textures'),
+        Offset64('info_ptrs_offset'),
+        Offset64('data_blk_offset'),
+        Offset64('dict_offset'),
+        ('I',    'str_dict_len'),
     )
-
-    def readFromFRES(self, fres, offset=None, reader=None):
-        """Read the table from given FRES."""
-        super().readFromFRES(fres, offset, reader)
-        self.dumpToDebugLog()
-        self.dumpOffsets()
-
-        self.strings = []
-        self.fres.file.seek(self._file_offset + self._reader.size)
-        for i in range(self.num_strs):
-            offs = self.fres.file.tell()
-            self.strings.append(self.fres.readStr(offs))
-            log.debug('Str 0x%02X: "%s"', i, self.strings[-1])
-        return self
-
-
-    def validate(self):
-        super().validate()
-        return True

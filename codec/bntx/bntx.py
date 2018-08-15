@@ -16,30 +16,14 @@
 import logging; log = logging.getLogger(__name__)
 #from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.strtab import StringTable
 from structreader import StructReader, BinaryObject
-
-class Texture_NX(BinaryObject):
-    """A 'NX' texture in a BNTX."""
-    _magic = b'NX  '
-    _reader = StructReader(
-        ('4s',   'magic'),
-        ('I',    'num_textures'),
-        Offset64('info_ptrs_offset'),
-        Offset64('data_blk_offset'),
-        Offset64('dict_offset'),
-        ('I',    'str_dict_len'),
-    )
-
-    def readFromFRES(self, fres, offset=None, reader=None):
-        """Read the table from given FRES."""
-        super().readFromFRES(fres, offset, reader)
-        self.dumpToDebugLog()
-        self.dumpOffsets()
-        return self
+from .nx import NX
+from .brti import BRTI
 
 
 class BNTX(BinaryObject):
-    """A BNTX in a FRES."""
+    """BNTX texture pack."""
     _magic = b'BNTX'
     _reader = StructReader(
         ('4s',   'magic'),
@@ -55,17 +39,23 @@ class BNTX(BinaryObject):
         size = 0x20,
     )
 
-    def readFromFRES(self, fres, offset=None, reader=None):
-        """Read the table from given FRES."""
-        super().readFromFRES(fres, offset, reader)
-        self.dumpToDebugLog()
-        self.dumpOffsets()
+    def _unpackFromData(self, data):
+        super()._unpackFromData(data)
 
-        self.strings = self.fres.readStringTable(
-            self._file_offset + self.strings_offs)
+        self.strings = StringTable().readFromFile(
+            self._file, self._file_offset + self.strings_offs)
 
-        self.nx = Texture_NX().readFromFRES(self.fres,
+        self.nx = NX().readFromFile(self._file,
             self._file_offset + self._reader.size)
+        self.nx.dumpToDebugLog()
+
+        self.textures = []
+        for i in range(self.nx.num_textures):
+            offs = self._file.read('Q',
+                self.nx.info_ptrs_offset+(i*8))
+            brti = BRTI().readFromFile(self._file, offs)
+            log.debug("Tex %d = %s", i, brti)
+            self.textures.append(brti)
 
         return self
 

@@ -30,10 +30,9 @@ class BntxDecoder(Decoder):
     __codec_name__ = 'BNTX'
     defaultFileExt = 'ntx'
 
-    #def _read(self):
-    #    """Read the input file, upon opening it."""
-    #    self.byml = byml.Byml(self.input.read())
-    #    self.root = self.byml.parse()
+    def _read(self):
+        """Read the input file, upon opening it."""
+        self.bntx = bntx.BNTX().readFromFile(self.input)
 
     #def _iter_objects(self):
     #    """Iterate over the objects in this file."""
