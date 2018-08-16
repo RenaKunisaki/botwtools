@@ -15,6 +15,7 @@
 
 import logging; log = logging.getLogger(__name__)
 import struct
+from enum import Enum
 
 def escape(c):
     if type(c) is str: c = ord(c)
@@ -81,7 +82,15 @@ def fmtStructField(fmt, val):
         fmt = fmt[1:]
     name = _fmtNames.get(fmt, fmt)
     if cnt > 1: name = '%s[%d]' % (name, cnt)
-    return name, func(val)
+
+    if isinstance(val, Enum):
+        return name, '%s (%d)' % (val.name, val.value)
+    else:
+        try:
+            return name, func(val)
+        except TypeError:
+            # probably the value was converted to some object type.
+            return name, str(val)
 
 
 class BinaryObject:

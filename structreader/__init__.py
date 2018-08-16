@@ -120,7 +120,8 @@ def readStringWithLength(file, fmt, offset=None, encoding='shift-jis'):
     #log.debug("string offset: 0x%X", offset)
     ln = file.read(fmt)
     #log.debug("string length: 0x%x", ln)
-    s  = file.read(ln+1) # +1 for null byte
+    s  = file.read(ln)
+    file.seek(1, 1) # +1 for null byte
     if encoding is not None:
         s = s.decode(encoding)
     return s

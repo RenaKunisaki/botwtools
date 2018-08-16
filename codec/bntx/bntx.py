@@ -17,7 +17,7 @@ import logging; log = logging.getLogger(__name__)
 #from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from codec.base.strtab import StringTable
-from structreader import StructReader, BinaryObject
+from structreader import StructReader, BinaryObject, readString
 from .nx import NX
 from .brti import BRTI
 
@@ -41,6 +41,7 @@ class BNTX(BinaryObject):
 
     def _unpackFromData(self, data):
         super()._unpackFromData(data)
+        self.name = readString(self._file, self.name)
 
         self.strings = StringTable().readFromFile(
             self._file, self._file_offset + self.strings_offs)
@@ -63,3 +64,7 @@ class BNTX(BinaryObject):
     def validate(self):
         super().validate()
         return True
+
+
+    def __str__(self):
+        return "<BNTX '%s' at 0x%X>" % (self.name, id(self))

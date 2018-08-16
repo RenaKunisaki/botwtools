@@ -23,6 +23,7 @@ import struct
 from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from . import bntx
+from .png import PNG
 
 
 class BntxDecoder(Decoder):
@@ -34,11 +35,19 @@ class BntxDecoder(Decoder):
         """Read the input file, upon opening it."""
         self.bntx = bntx.BNTX().readFromFile(self.input)
 
-    #def _iter_objects(self):
-    #    """Iterate over the objects in this file."""
-    #    yield self.root
+    def _iter_objects(self):
+        """Iterate over the objects in this file."""
+        yield self.bntx
 
-    #def unpack(self):
-    #    """Unpack this file to `self.destPath`."""
-    #    with open(self.destPath, 'wb') as file:
-    #        byml_to_yml(self.root, file)
+    def unpack(self):
+        """Unpack this file to `self.destPath`."""
+        for i, tex in enumerate(self.bntx.textures):
+            pixels, depth = tex.decode()
+            log.debug("Texture depth is %d", depth)
+            with self.mkfile(tex.name + '.data') as file:
+                file.write(pixels)
+            png = PNG(width=tex.width, height=tex.height,
+                pixels=pixels, bpp=depth)
+            log.debug("Writing PNG, size %dx%d", tex.width, tex.height)
+            with self.mkfile(tex.name + '.png') as file:
+                png.writeToFile(file)
