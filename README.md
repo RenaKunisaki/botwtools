@@ -29,5 +29,6 @@ Uses third-party libraries:
 - Currently does not support little-endian (WiiU) SARC files.
 - Does not handle AAMP files with multiple roots.
 - Since AAMP only stores the hashes of element names, many elements come out named `unknown_xxxxxxxx`.
+- Recursive extraction can be wonky with its output paths. Should be safe, but sometimes creates unnecessary folders, etc.
 - This program is only tested on Linux, but probably works fine on Windows too.
 - This program only operates on files extracted from the game image. It cannot unpack the `.xci` image file. Use `nxtools` for that. I will not help you obtain the game image/files.

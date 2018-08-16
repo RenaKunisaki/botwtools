@@ -68,7 +68,7 @@ class FresDecoder(ArchiveDecoder):
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""
-        return iter(self.archive.models)
+        return iter(self.archive.models + self.archive.textures)
 
     def _get_num_objects(self) -> (int, None):
         """Get number of objects in this file.
@@ -79,8 +79,13 @@ class FresDecoder(ArchiveDecoder):
 
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
-        print("Models:", self.numObjects)
-        for i, obj in enumerate(self.objects):
+        self.listModels()
+        self.listTextures()
+
+
+    def listModels(self):
+        print("Models:", len(self.archive.models))
+        for i, obj in enumerate(self.archive.models):
             print(i, obj.name)
             for bone in obj.skeleton.bones:
                 print("  Bone:", bone.name)
@@ -89,8 +94,12 @@ class FresDecoder(ArchiveDecoder):
             for vtx in obj.fvtxs:
                 print(" Vtx:", vtx)
             for shp in obj.fshps:
-
                 print(" Shape:", shp.name)
+
+    def listTextures(self):
+        print("Textures:", len(self.archive.textures))
+        for i, obj in enumerate(self.archive.textures):
+            print('  ', i, obj)
 
 
     def unpack(self):
