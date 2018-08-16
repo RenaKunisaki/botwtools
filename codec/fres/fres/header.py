@@ -108,7 +108,7 @@ class Header(FresObject):
         ('H',  'num_objects'),
         ('H',  'unkBC'),
 
-        ('I',  'unkC0'), # 00000001
+        ('I',  'flags'), # 00000001
         ('I',  'unkC4'), # 00000000
         ('I',  'unkC8'), # 00000001
         ('I',  'unkCC'), # 00000000

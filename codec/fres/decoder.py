@@ -97,7 +97,7 @@ class FresDecoder(ArchiveDecoder):
                 print(" Shape:", shp.name)
 
     def listTextures(self):
-        print("Textures:", len(self.archive.textures))
+        print("Texture packs:", len(self.archive.textures))
         for i, obj in enumerate(self.archive.textures):
             print('  ', i, obj)
 

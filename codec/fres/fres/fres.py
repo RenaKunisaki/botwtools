@@ -48,7 +48,11 @@ class FRES:
         self.header.dumpToDebugLog()
         self.header.dumpOffsets()
 
-        self.strtab = self.readStringTable(self.header.str_tab_offset)
+        # huge assumption here...
+        if self.header.flags & 1 == 0:
+            self.strtab = self.readStringTable(self.header.str_tab_offset)
+        else:
+            self.strtab = None
         self.readTextures()
         self.readModels()
 
