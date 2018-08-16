@@ -19,9 +19,10 @@
 import logging; log = logging.getLogger(__name__)
 import io
 import os
+import sys
 import struct
 from filereader import FileReader
-from ..base import Decoder, UnsupportedFileTypeError, BinInput
+from ..base import Decoder, UnsupportedFileTypeError, BinInput, TxtOutput
 from . import bntx
 from .png import PNG
 
@@ -39,6 +40,18 @@ class BntxDecoder(Decoder):
         """Iterate over the objects in this file."""
         yield self.bntx
 
+    def printList(self, dest:TxtOutput=sys.stdout):
+        """Print nicely formatted list of this file's objects."""
+        print("%3d textures" % len(self.bntx.textures))
+        print("  Num   Dimensions Fmt  M S Name")
+        for i, tex in enumerate(self.bntx.textures):
+            print('  %3d: %4dx%4dx%d %-4s %d %d "%s"' % (i,
+                tex.width, tex.height, tex.depth,
+                type(tex.fmt_type).__name__,
+                tex.mipmap_cnt, tex.multisample_cnt,
+                tex.name))
+        print("M=mipmap count, S=multisample count")
+
     def unpack(self):
         """Unpack this file to `self.destPath`."""
         for i, tex in enumerate(self.bntx.textures):
@@ -52,6 +65,5 @@ class BntxDecoder(Decoder):
 
             png = PNG(width=tex.width, height=tex.height,
                 pixels=pixels, bpp=depth)
-            log.debug("Writing PNG, size %dx%d", tex.width, tex.height)
             with self.mkfile(tex.name + '.png') as file:
                 png.writeToFile(file)
