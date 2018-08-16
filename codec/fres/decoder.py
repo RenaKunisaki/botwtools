@@ -73,12 +73,6 @@ class FresDecoder(ArchiveDecoder):
                 log.debug('extracting "%s" as "%s"', file['name'], name)
                 self.writeFile(name, file['data'])
 
-        #for i, texture in enumerate(self.archive.textures):
-        #    log.info("[%3d/%3d] Extracting texture %d...",
-        #        objc, nobj, i)
-        #    self._extractTexture(texture, 'texture%d.bntx' % i)
-        #    objc += 1
-
 
     def _extractTexture(self, texture, name):
         """Export texture to BNTX file."""
