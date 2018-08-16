@@ -99,7 +99,7 @@ class BRTI(BinaryObject):
         #    self.fmt_type.bytesPerPixel,
         #    self.block_height)
 
-        self._readMimpaps()
+        self._readMipmaps()
         self._readData()
 
         log.debug("Texture '%s' size %dx%dx%d, len=%d: %s", self.name,
@@ -109,7 +109,7 @@ class BRTI(BinaryObject):
         return self
 
 
-    def _readMimpaps(self):
+    def _readMipmaps(self):
         self.mipOffsets = []
         for i in range(self.mipmap_cnt):
             offs  = self.ptrs_offset + (i*8)
