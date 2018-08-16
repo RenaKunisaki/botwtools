@@ -14,35 +14,29 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger(__name__)
+from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
-from structreader import StructReader, BinaryObject, readStringWithLength
+from structreader import StructReader, BinaryObject
 
-class StringTable(BinaryObject):
-    """String table."""
-    _magic = b'_STR'
+class EmbeddedFile(FresObject):
+    """Generic file embedded in FRES archive."""
     _reader = StructReader(
-        ('4s',   'magic'),
-        ('I',    'unk04'), # 0
-        Offset64('unk08'),
-
-        ('I',  'num_strs'),
+        Offset64('data_offset'),
+        ('I',    'size'),
         Padding(4),
-        size = 0x18,
+        size = 0x10,
     )
 
-    def _unpackFromData(self, data):
-        super()._unpackFromData(data)
+    def readFromFRES(self, fres, offset=None, reader=None):
+        """Read the archive from given FRES."""
+        super().readFromFRES(fres, offset, reader)
 
-        self.strings = []
-        self._file.seek(self._file_offset + self._reader.size)
-        for i in range(self.num_strs):
-            offs = self._file.tell()
-            offs += (offs & 1) # pad to u16
-            self.strings.append(readStringWithLength(self._file, '<H', offs))
-            #log.debug('Str 0x%04X: "%s"', i, self.strings[-1])
+        self.dumpToDebugLog()
+        #self.dumpOffsets()
+
         return self
 
 
-    def validate(self):
-        super().validate()
-        return True
+    def getFiles(self):
+        data = self.fres.file.read(self.size, self.data_offset)
+        return ({'name':self.name, 'data':data},)

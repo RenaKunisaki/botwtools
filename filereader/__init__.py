@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
+import logging; log = logging.getLogger(__name__)
 import io
 import struct
 
@@ -75,25 +76,34 @@ class FileReader:
         return self.file.read(size)
 
 
-    def readString(self, pos:int=None, maxlen:int=None,
+    def readString(self, pos:int=None, length:(int,str)=None,
     encoding:str='shift-jis') -> (str, bytes):
         """Read null-terminated string from file.
 
         pos: Position to seek to first. (optional)
-        maxlen: Maximum number of bytes to read. (optional)
+        length: Length to read.
         encoding: What to decode the string as.
             If None, do not decode (return as bytes).
+
+        If `length` is None, it reads a null-terminated string.
+        If `length` is an integer, it reads that many bytes,
+            even if there are embeded nulls.
+        If `length` is a string, it specifies a `struct` format
+            string; this value is read and used as the string length.
 
         Returns the string.
         """
         if pos is not None: self.seek(pos)
         s = []
-        while maxlen == None or len(s) < maxlen:
-            b = self.file.read(1)
-            if b == b'\0': break
-            else: s.append(b)
-
-        s = b''.join(s)
+        if type(length) is str: length = self.read(length)
+        if length is None:
+            while True:
+                b = self.file.read(1)
+                if b == b'\0': break
+                else: s.append(b)
+            s = b''.join(s)
+        else:
+            s = self.file.read(length)
         if encoding is not None: s = s.decode()
         return s
 

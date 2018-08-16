@@ -121,7 +121,7 @@ def readStringWithLength(file, fmt, offset=None, encoding='shift-jis'):
     ln = file.read(fmt)
     #log.debug("string length: 0x%x", ln)
     s  = file.read(ln)
-    file.seek(1, 1) # +1 for null byte
+    #file.seek(1, 1) # +1 for null byte
     if encoding is not None:
         s = s.decode(encoding)
     return s

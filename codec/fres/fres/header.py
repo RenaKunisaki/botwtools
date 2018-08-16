@@ -52,66 +52,43 @@ class Header(FresObject):
         ('H',  'byte_order'), # FFFE=little, FEFF=big
         ('H',  'header_len'), # always 0x0C
 
-        StrOffs('name', None),
-        Padding(2),
-        ('H',  'str_tab_offset'), # wtf?
-        Offset('rlt_offset'),
-        ('I',  'file_size'),  # size of this file
+        Offset(  'name_offset'),
+        Offset(  'alignment'),
+        Offset(  'rlt_offset'),
+        Offset(  'file_size'),  # size of this file
+        StrOffs( 'name2'),
+        Offset(  'unk24'),
 
-        StrOffs('name2'),
-        Padding(4),
-        Offset('fmdl_offset'),
-        Padding(4),
-
-        Offset('unk30'), # 00000448 points to: 0, #objs, -1, 1
-        ('I',  'unk34'), # 00000000
-        ('I',  'unk38'), # 00000000
-        ('I',  'unk3C'), # 00000000
-
-        ('I',  'unk40'), # 00000000
-        ('I',  'unk44'), # 00000000
-        Offset('fmaa_offset'),
-        Padding(4),
-
-        Offset('unk50'), # 000004C0 points to: 0, 1, -1, 1
-        ('I',  'unk54'), # 00000000
-        ('I',  'unk58'), # 00000000
-        ('I',  'unk5C'), # 00000000
-
-        ('I',  'unk60'), # 00000000
-        ('I',  'unk64'), # 00000000
-        ('I',  'unk68'), # 00000000
-        ('I',  'unk6C'), # 00000000
-
-        ('I',  'unk70'), # 00000000
-        ('I',  'unk74'), # 00000000
-        ('I',  'unk78'), # 00000000
-        ('I',  'unk7C'), # 00000000
-
-        ('I',  'unk80'), # 00000000
-        ('I',  'unk84'), # 00000000
-        ('I',  'unk88'), # 00021000
-        ('I',  'unk8C'), # 00000000
-
-        ('I',  'unk90'), # 00000418
-        ('I',  'unk94'), # 00000000
-        Offset64('bntx_list_offs'),
-
-        ('I',  'unkA0'), # 000004E8
-        ('I',  'unkA4'), # 00000000
-        ('I',  'unkA8'), # 00000000
-        ('I',  'unkAC'), # 00000000
-
-        ('I',  'unkB0'), # 0001A224 just before name table
-        ('I',  'unkB4'), # 00000000
-        ('I',  'unkB8'), # 00003570 size of string table?
-        ('H',  'num_objects'),
-        ('H',  'unkBC'),
-
-        ('I',  'flags'), # 00000001
-        ('I',  'unkC4'), # 00000000
-        ('I',  'unkC8'), # 00000001
-        ('I',  'unkCC'), # 00000000
+        #Padding(4),
+        Offset64('fmdl_offset'),
+        Offset64('fmdl_dict_offset'),
+        Offset64('fska_offset'),
+        Offset64('fska_dict_offset'),
+        Offset64('fmaa_offset'),
+        Offset64('fmaa_dict_offset'),
+        Offset64('fvis_offset'),
+        Offset64('fvis_dict_offset'),
+        Offset64('fshu_offset'),
+        Offset64('fshu_dict_offset'),
+        Offset64('fscn_offset'),
+        Offset64('fscn_dict_offset'),
+        Offset64('buf_mem_pool'),
+        Offset64('buf_mem_pool_info'),
+        Offset64('embed_offset'),
+        Offset64('embed_dict_offset'),
+        Offset64('unkA8'),
+        Offset64('str_tab_offset'),
+        Offset  ('unkB8'),
+        ('H',    'fmdl_cnt'),
+        ('H',    'fska_cnt'),
+        ('H',    'fmaa_cnt'),
+        ('H',    'fvis_cnt'),
+        ('H',    'fshu_cnt'),
+        ('H',    'fscn_cnt'),
+        ('H',    'embed_cnt'),
+        ('H',    'unkCA'),
+        ('H',    'unkCC'),
+        ('H',    'unkCE'),
 
         size = 0xD0,
     )

@@ -16,15 +16,31 @@
 import logging; log = logging.getLogger(__name__)
 import struct
 from structreader import readStringWithLength, readString
-from .header import Header
-from .fmdl   import FMDL
-from .rlt    import RLT
+from .header   import Header
+from .idxgrp   import IndexGroup
+from .embedded import EmbeddedFile
+from .fmdl     import FMDL
+from .rlt      import RLT
 from codec.base.strtab import StringTable
 
 class FRES:
     """Represents an FRES archive."""
+
+    object_types = (
+        # types of objects embedded in FRES.
+        # (name, class)
+        ('fmdl', FMDL),
+        #('fska', FSKA),
+        #('fmaa', FMAA),
+        #('fvis', FVIS),
+        #('fscn', FSCN),
+        #('fshu', FSHU),
+        ('embed',  EmbeddedFile),
+    )
+
     def __init__(self):
-        pass
+        self.objects = []
+
 
     def readFromFile(self, file):
         """Read the archive from given file."""
@@ -37,7 +53,7 @@ class FRES:
         # name is NOT length-prefixed but name2 is.
         # usually they both point to the same string, just with
         # name skipping the prefix.
-        self.name = readString(self.file, self.header.name)
+        self.name = readString(self.file, self.header.name_offset)
         log.debug("FRES name='%s'", self.name)
         self.name2 = self.readStr(self.header.name2)
         log.debug("FRES name2='%s'", self.name2)
@@ -48,16 +64,45 @@ class FRES:
         self.header.dumpToDebugLog()
         self.header.dumpOffsets()
 
-        # huge assumption here...
-        if self.header.flags & 1 == 0:
-            self.strtab = self.readStringTable(self.header.str_tab_offset)
-        else:
-            self.strtab = None
-            
-        self.readTextures()
-        self.readModels()
+        self.strtab = self.readStringTable(
+            self.header.str_tab_offset - 0x14) # WTF?
+
+        for typ in self.object_types:
+            self.readObjects(*typ)
+
+        #self.readTextures()
+        #self.readModels()
 
         return self
+
+    def getNumObjects(self, typ):
+        return getattr(self.header, typ+'_cnt')
+
+    def getObjects(self, typ):
+        return getattr(self, typ+'s')
+
+    def getObjectGroups(self, typ):
+        return getattr(self, typ+'_groups')
+
+
+    def readObjects(self, typ, cls):
+        offs = getattr(self.header, '%s_offset' % typ)
+        cnt  = getattr(self.header, '%s_cnt' % typ)
+        dofs = getattr(self.header, '%s_dict_offset' % typ)
+        objs = []
+        size = cls._reader.size
+        groups = []
+        log.debug("Reading %d %s from 0x%X (dict 0x%X)",
+            cnt, typ, offs, dofs)
+        for i in range(cnt):
+            group = IndexGroup().readFromFile(self.file, dofs+(i*8))
+            groups.append(group)
+            obj = cls().readFromFRES(self, offs+(i*size))
+            objs.append(obj)
+            if obj.name is None:
+                obj.name = group.root.left.name
+        setattr(self, typ+'s', objs)
+        setattr(self, typ+'_groups', groups)
 
 
     def readRLT(self):

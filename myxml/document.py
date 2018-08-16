@@ -40,6 +40,14 @@ class Document:
             xml_declaration=xml_declaration,
             **kwargs)
 
+    def tostring(self, encoding='utf-8',
+    xml_declaration=True, **kwargs):
+        xml = self.toXML()
+        return ET.tostring(xml,
+            encoding=encoding,
+            xml_declaration=xml_declaration,
+            **kwargs)
+
 
     def __str__(self):
         return "<XML Document (root=%s) at 0x%X>" % (

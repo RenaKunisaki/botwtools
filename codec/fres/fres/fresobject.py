@@ -19,6 +19,9 @@ from codec.base.types import Offset, Offset64, StrOffs
 from structreader import StructReader, BinaryObject
 
 class FresObject(BinaryObject):
+    def __init__(self):
+        self.name = None
+
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the object from given FRES."""
         super().readFromFile(fres.file, offset, reader)
@@ -57,7 +60,7 @@ class FresObject(BinaryObject):
         """Dump the values found at each field treated as an offset."""
         for name, field in self._reader.fields.items():
             val = getattr(self, name)
-            if type(val) is int and val > 0xD0 and val < 0xFFFFFF:
+            if type(val) is int and val >= 0xD0 and val < 0xFFFFFF:
                 self._dumpOffset(name, val)
                 if self.fres.rlt:
                     self._dumpOffset(" reloc", val+self.fres.rlt.data_start)
