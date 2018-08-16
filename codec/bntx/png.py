@@ -1,5 +1,4 @@
 # adapted from https://stackoverflow.com/a/25835368
-""" Converts a list of list into gray-scale PNG image. """
 __copyright__ = "Copyright (C) 2014 Guido Draheim"
 __licence__ = "Public Domain"
 
@@ -62,11 +61,12 @@ class PNG:
             data = self.pixels + (b'\0' * pad)
         idx = 0
         raw = b""
+        # XXX obey self.bpp, self.color_type, etc.
         for y in range(self.height):
             raw += b"\0" # no filter for this scanline
             for x in range(self.width):
                 c = data[idx:idx+4]
-                c[0], c[2] = c[2], c[0] # => BGRA
+                c[0], c[2] = c[2], c[0] # RGBA => BGRA
                 raw += c
                 idx += 4
         compressor = zlib.compressobj()

@@ -21,6 +21,8 @@ Uses third-party libraries:
 
 - libyaz0 by MasterVermilli0n / AboodXD
 - byml-v2 by leoetlino <leo@leolam.fr>
+- BnTxx by gdkchan
+- PNG writing code by Guido U. Draheim
 
 
 # Bugs/Limitations
