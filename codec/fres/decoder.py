@@ -46,27 +46,13 @@ class FresDecoder(ArchiveDecoder):
 
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
-        self.listModels()
-        #self.listTextures()
-
-
-    def listModels(self):
-        print("Models:", len(self.archive.fmdls))
-        for i, obj in enumerate(self.archive.fmdls):
-            print(i, obj.name)
-            for bone in obj.skeleton.bones:
-                print("  Bone:", bone.name)
-            for mat in obj.fmats:
-                print(" Material:", mat.name)
-            for vtx in obj.fvtxs:
-                print(" Vtx:", vtx)
-            for shp in obj.fshps:
-                print(" Shape:", shp.name)
-
-    def listTextures(self):
-        print("Texture packs:", len(self.archive.textures))
-        for i, obj in enumerate(self.archive.textures):
-            print('  ', i, obj)
+        objs = []
+        for typ in self.archive.object_types:
+            name, cls = typ
+            objs += self.archive.getObjects(name)
+        print("%d objects" % len(objs))
+        for i, obj in enumerate(objs):
+            print('  %3d: %s: "%s"' % (i, type(obj).__name__, obj.name))
 
 
     def unpack(self):

@@ -70,10 +70,8 @@ class FRES:
         for typ in self.object_types:
             self.readObjects(*typ)
 
-        #self.readTextures()
-        #self.readModels()
-
         return self
+        
 
     def getNumObjects(self, typ):
         return getattr(self.header, typ+'_cnt')
@@ -119,35 +117,6 @@ class FRES:
 
     def readStringTable(self, offset):
         return StringTable().readFromFile(self.file, offset)
-
-
-    def readTextures(self):
-        self.textures = []
-        cnt = 0
-        while True:
-            offs, unk4, size, unkC = self.file.read('IIII',
-                self.header.bntx_list_offs + (cnt*16))
-            log.debug("Texture at 0x%X, size 0x%X, unk=0x%X, 0x%X",
-                offs, size, unk4, unkC)
-            if size == 0xFFFFFFFF: break
-            self.textures.append({
-                'offset': offs,
-                'size':   size,
-                'unk04':  unk4,
-                'unk0C':  unkC,
-            })
-            cnt += 1
-
-
-    def readModels(self):
-        self.models = []
-        self.file.seek(self.header.fmdl_offset)
-        for i in range(self.header.num_objects):
-            pos = self.file.tell()
-            log.debug("Read FMDL from 0x%X", pos)
-            mdl = FMDL().readFromFRES(self)
-            self.models.append(mdl)
-            self.file.seek(pos + mdl.size)
 
 
     def read(self, size:(int,str)=-1, pos:int=None, count:int=1,

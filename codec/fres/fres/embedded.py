@@ -18,6 +18,7 @@ from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 
+
 class EmbeddedFile(FresObject):
     """Generic file embedded in FRES archive."""
     _reader = StructReader(
