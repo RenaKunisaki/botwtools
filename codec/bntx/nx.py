@@ -16,8 +16,8 @@
 import logging; log = logging.getLogger(__name__)
 #from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
-from codec.base.strtab import StringTable
 from structreader import StructReader, BinaryObject
+from codec.base.strtab import StringTable
 
 class NX(BinaryObject):
     """A 'NX' texture in a BNTX."""

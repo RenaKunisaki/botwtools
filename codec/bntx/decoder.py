@@ -43,9 +43,13 @@ class BntxDecoder(Decoder):
         """Unpack this file to `self.destPath`."""
         for i, tex in enumerate(self.bntx.textures):
             pixels, depth = tex.decode()
-            log.debug("Texture depth is %d", depth)
-            with self.mkfile(tex.name + '.data') as file:
-                file.write(pixels)
+            log.debug("Texture depth is %d, fmt %s", depth,
+                type(tex.fmt_type).__name__)
+
+            # dump raw data
+            #with self.mkfile(tex.name + '.data') as file:
+            #    file.write(pixels)
+
             png = PNG(width=tex.width, height=tex.height,
                 pixels=pixels, bpp=depth)
             log.debug("Writing PNG, size %dx%d", tex.width, tex.height)

@@ -66,6 +66,7 @@ class PNG:
             raw += b"\0" # no filter for this scanline
             for x in range(self.width):
                 c = data[idx:idx+4]
+                c[0], c[2] = c[2], c[0] # => BGRA
                 raw += c
                 idx += 4
         compressor = zlib.compressobj()
