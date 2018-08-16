@@ -58,7 +58,7 @@ class BRTI(BinaryObject):
         ('B',    'dimensions'),
         ('H',    'tile_mode'),
         ('H',    'swizzle_size'),
-        ('H',    'mimap_cnt'),
+        ('H',    'mipmap_cnt'),
         ('H',    'multisample_cnt'),
         ('H',    'reserved1A'),
         ('B',    'fmt_dtype', lambda v: BRTI.TextureDataType(v)),
@@ -111,7 +111,7 @@ class BRTI(BinaryObject):
 
     def _readMimpaps(self):
         self.mipOffsets = []
-        for i in range(self.mimap_cnt):
+        for i in range(self.mipmap_cnt):
             offs  = self.ptrs_offset + (i*8)
             entry = self._file.read('I', offs) #- base
             self.mipOffsets.append(entry)
