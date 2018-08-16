@@ -19,6 +19,18 @@ import os
 import sys
 from .types import Path, BinInput, BinOutput, TxtOutput, fopenMode
 
+def sanitizePath(path:Path):
+    dirs = path.split('/')
+    res  = []
+    for i, d in enumerate(dirs):
+        if d.startswith('.') and d != '.':
+            d = 'data' + d
+        res.append(d)
+    res = '/'.join(res)
+    if res != path:
+        log.warn("Changed path from %s to %s", path, res)
+    return res
+
 class Decoder:
     """Base class for decoders.
 
@@ -54,7 +66,7 @@ class Decoder:
         suggest a path for the output file.
         """
         #path, ext = os.path.splitext(path)
-        return path + '.' + cls.defaultFileExt
+        return sanitizePath(path + '.' + cls.defaultFileExt)
 
     @property
     def objects(self):
@@ -99,6 +111,7 @@ class Decoder:
         """Unpack this file to `self.destPath`."""
         raise NotImplementedError
 
+
     def mkdir(self, path:Path) -> Path:
         """Create a subdirectory within the output directory.
 
@@ -107,11 +120,13 @@ class Decoder:
 
         Returns the full, normalized path to the directory.
         """
+        path = sanitizePath(path)
         path = os.path.normpath(self.destPath + '/' + path)
         if path != '':
             dirs = path.split('/')
             for i in range(len(dirs)):
                 p = '/'.join(dirs[0:i+1])
+                log.debug("mkdir(%s)", p)
                 try: os.mkdir(p)
                 except FileExistsError: pass
         return path
@@ -123,6 +138,7 @@ class Decoder:
 
         Returns the file object.
         """
+        path = sanitizePath(path)
         path, name = os.path.split(path)
         if path == '': path = '.' # don't extract archives to /
         log.debug("mkfile name=%s, path=%s (dest=%s)", name, path,

@@ -53,6 +53,7 @@ class FRES:
             self.strtab = self.readStringTable(self.header.str_tab_offset)
         else:
             self.strtab = None
+            
         self.readTextures()
         self.readModels()
 

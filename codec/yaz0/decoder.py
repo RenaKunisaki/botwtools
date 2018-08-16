@@ -121,5 +121,4 @@ class Yaz0Decoder(Decoder):
 
     def unpack(self):
         """Unpack this file to `self.destPath`."""
-        with open(self.destPath, 'wb') as file:
-            file.write(self.stream.read())
+        self.writeFile(self.destPath, self.stream.read())
