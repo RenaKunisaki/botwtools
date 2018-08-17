@@ -62,14 +62,24 @@ class IndexGroup:
         return self
 
 
-    def dump(self, node, prefix='', _depth=0):
-        ind = ('│ ' * (_depth-1)) + prefix
+    def dump(self, node, prefix='', _depth=0, ind='', isLast=False):
+        #ind = ('│ ' * (_depth-1)) + prefix
         if node is None:
-            print(ind+"<none>")
+            print(ind+prefix+"<none>")
             return
 
-        print('%s%d: "%s" (offs=0x%06X srch=0x%08X)' % (
-            ind, node.index, node.name, node.dataOffs, node.search))
+        print('%s%s%s%d] "%s" (offs=0x%06X srch=0x%08X)' % (ind,
+            prefix, '[root:' if _depth == 0 else '',
+            node.index, node.name, node.dataOffs, node.search))
 
-        self.dump(node.left,  '├─L: ', _depth+1)
-        self.dump(node.right, '└─R: ', _depth+1)
+        if _depth > 0:
+            ind += '  ' if isLast else '│ '
+        if node.left:
+            if node.right:
+                p = '├'
+            else:
+                p = '└'
+            self.dump(node.left,  p+'─[L:', _depth+1, ind, (not node.right))
+
+        if node.right:
+            self.dump(node.right, '└─[R:', _depth+1, ind, True)
