@@ -115,7 +115,9 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             # XXX on Windows we may not be able to open this file.
             log.debug("decoder(%s, %s)", file, temp_path)
             decoder = decoder(file, temp_path)
+            log.debug("decoder.unpack (%s)", type(decoder).__name__)
             decoder.unpack()
+            log.debug("decoder.unpack done")
 
         # if successful, remove the input file, if we created it
         if _depth > 0:
@@ -165,7 +167,6 @@ def main():
     if args.license: print(LICENSE)
     if args.list_codecs: list_codecs()
     dry = args.dry_run
-    log.debug("dry=%s", dry)
     if dry: log.info("Dry run; not writing any files!")
     for arg in args.list: list_file(*arg)
     for arg in args.extract: extract_file(*arg, dry=dry)

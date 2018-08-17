@@ -28,6 +28,7 @@ class FileReader:
     def __init__(self, file, mode='rb'):
         if type(file) is str: file = open(file, mode)
         self.file = file
+        self.name = file.name
         pos = file.tell()
         self.size = self.seek(0, 'end')
         file.seek(pos)

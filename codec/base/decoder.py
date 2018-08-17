@@ -110,7 +110,11 @@ class Decoder:
 
         Returns the file object.
         """
-        path = self.destPath + '/' + path
+        log.debug("%s.mkfile(%s) dest=%s", type(self).__name__,
+            path, self.destPath)
+        _, name = os.path.split(self.input.name)
+        path += '/' + name + '.' + self.defaultFileExt
+        #path = self.destPath + '/' + path
         if self.dry: return DummyFileWriter(path, mode)
         return FileWriter(path, mode)
 

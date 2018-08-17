@@ -76,7 +76,10 @@ class FileWriter:
         path = mkdir(path)
         if path == '': path = '.' # don't extract archives to /
         path += '/' + name
-        if os.path.isdir(path): path += '/' + name
+        if os.path.isdir(path):
+            log.debug("FileWriter: path %s => %s", path,
+                path+'/'+name)
+            path += '/' + name
         self.file = open(path, mode)
 
 
