@@ -18,7 +18,7 @@ import io
 import os
 import sys
 from .types import Path, BinInput, BinOutput, TxtOutput, fopenMode
-from filewriter import FileWriter
+from filewriter import FileWriter, DummyFileWriter
 
 class Decoder:
     """Base class for decoders.
@@ -35,14 +35,16 @@ class Decoder:
     #__codec_name__ = 'your decoder should put a name here'
     defaultFileExt = 'extracted'
 
-    def __init__(self, input:BinInput, output:Path=None):
+    def __init__(self, input:BinInput, output:Path=None, dry=False):
         """Create new decoder.
 
-        input: File to decode.
+        input:  File to decode.
         output: Destination path. Can be excluded if not extracting files.
+        dry:    If true, do not create any files.
         """
         self.input    = input
         self.destPath = output
+        self.dry      = dry
         self._read()
 
     def _read(self):
@@ -54,8 +56,9 @@ class Decoder:
         """Given the path of the input file,
         suggest a path for the output file.
         """
-        #path, ext = os.path.splitext(path)
-        return sanitizePath(path + '.' + cls.defaultFileExt)
+        path, name = os.path.split(path)
+        name, ext = os.path.splitext(path)
+        return sanitizePath(name + '.' + cls.defaultFileExt)
 
     @property
     def objects(self):
@@ -107,7 +110,9 @@ class Decoder:
 
         Returns the file object.
         """
-        return FileWriter(self.destPath + '/' + path, mode)
+        path = self.destPath + '/' + path
+        if self.dry: return DummyFileWriter(path, mode)
+        return FileWriter(path, mode)
 
     def writeFile(self, path:Path, data):
         """Write data to a file within the output directory."""

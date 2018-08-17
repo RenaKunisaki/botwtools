@@ -65,19 +65,20 @@ class FileWriter:
 
     def __init__(self, file, mode='wb'):
         if type(file) is str:
-            path, name = os.path.split(sanitizePath(file))
-            path = mkdir(path)
-            if path == '': path = '.' # don't extract archives to /
-            file = open(path+'/'+name, mode)
-        self.file = file
-        pos = file.tell()
-        self.size = self.seek(0, 'end')
-        file.seek(pos)
+            self._open(file, mode)
+        else: self.file = file
+
+
+    def _open(self, file, mode):
+        path, name = os.path.split(sanitizePath(file))
+        path = mkdir(path)
+        if path == '': path = '.' # don't extract archives to /
+        self.file = open(path+'/'+name, mode)
+
 
     @staticmethod
     def open(path, mode='wb'):
-        file = open(path, mode)
-        return FileWriter(file)
+        return FileWriter(file, mode)
 
     def __enter__(self):
         return self
@@ -116,3 +117,11 @@ class FileWriter:
     def tell(self):
         """Get current read position."""
         return self.file.tell()
+
+
+class DummyFileWriter(FileWriter):
+    """A FileWriter that discards all writes, for dry runs."""
+
+    def _open(self, file, mode):
+        # this should work even on Windows
+        self.file = open(os.devnull, mode)

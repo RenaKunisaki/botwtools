@@ -40,6 +40,9 @@ def _setupArgs():
         action='append', metavar=('PATH', 'DESTPATH'), default=[],
         help="Extract file recursively (ie extract the extracted file).")
 
+    parser.add_argument('--dry-run', action='store_true',
+        help="Do not actually create any files.")
+
     parser.add_argument('--list', '-l', nargs=1, action='append',
         metavar='PATH', default=[],
         help="List contents of file.")
@@ -76,16 +79,16 @@ def list_file(path):
         decoder.printList()
 
 
-def extract_file(path, dest):
+def extract_file(path, dest, dry=False):
     """Extract given file to given destination."""
     log.info("Extracting %s...", path)
     with FileReader(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
-        decoder = decoder(file, dest)
+        decoder = decoder(file, dest, dry=dry)
         decoder.unpack()
 
 
-def extract_directory(path, _depth=0):
+def extract_directory(path, dry=False, _depth=0):
     """Recursively extract given directory.
 
     Called from extract_recursive.
@@ -93,12 +96,12 @@ def extract_directory(path, _depth=0):
     log.info("Recursing into %s", path)
     for name in map(lambda n: path+'/'+n, os.listdir(path)):
         if os.path.isdir(name):
-            extract_directory(name, _depth=_depth+1)
+            extract_directory(name, dry=dry, _depth=_depth+1)
         else:
-            extract_recursive(name, name, _depth=_depth+1)
+            extract_recursive(name, name, dry=dry, _depth=_depth+1)
 
 
-def extract_recursive(path, dest, _depth=0):
+def extract_recursive(path, dest, dry=False, _depth=0):
     """Recursively extract given file/directory to given destination."""
     log.info("Recursively extracting %s to %s...", path, dest)
     try:
@@ -116,10 +119,10 @@ def extract_recursive(path, dest, _depth=0):
             os.remove(path)
 
         # recurse into this file
-        extract_recursive(name, name, _depth=_depth+1)
+        extract_recursive(name, name, dry=dry, _depth=_depth+1)
 
     except IsADirectoryError: # recurse into the directory
-        extract_directory(path, _depth=_depth+1)
+        extract_directory(path, dry=dry, _depth=_depth+1)
 
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
@@ -141,9 +144,12 @@ def main():
     if not args.debug: log.setLevel(logger.logging.INFO)
     if args.license: print(LICENSE)
     if args.list_codecs: list_codecs()
+    dry = args.dry_run
+    log.debug("dry=%s", dry)
+    if dry: log.info("Dry run; not writing any files!")
     for arg in args.list: list_file(*arg)
-    for arg in args.extract: extract_file(*arg)
-    for arg in args.extract_recursive: extract_recursive(*arg)
+    for arg in args.extract: extract_file(*arg, dry=dry)
+    for arg in args.extract_recursive: extract_recursive(*arg, dry=dry)
     return 0
 
 
