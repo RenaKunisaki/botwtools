@@ -22,6 +22,7 @@ import sys
 import codec
 import shutil
 import argparse
+import tempfile
 from filereader import FileReader
 
 arg_parser = None # declare global
@@ -104,13 +105,16 @@ def extract_directory(path, dry=False, _depth=0):
 def extract_recursive(path, dest, dry=False, _depth=0):
     """Recursively extract given file/directory to given destination."""
     log.info("Recursively extracting %s to %s...", path, dest)
+    temp_path = tempfile.mkdtemp()
     try:
         # extract the input file
         with FileReader(path, 'rb') as file:
             decoder = codec.getDecoderForFile(file)
-            name    = os.path.normpath(decoder.suggestOutputName(dest))
-            log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
-            decoder = decoder(file, name)
+            #name    = os.path.normpath(decoder.suggestOutputName(dest))
+            #log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
+            # XXX on Windows we may not be able to open this file.
+            log.debug("decoder(%s, %s)", file, temp_path)
+            decoder = decoder(file, temp_path)
             decoder.unpack()
 
         # if successful, remove the input file, if we created it
@@ -119,18 +123,21 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             os.remove(path)
 
         # recurse into this file
-        extract_recursive(name, name, dry=dry, _depth=_depth+1)
+        extract_recursive(temp_path, temp_path, dry=dry, _depth=_depth+1)
 
     except IsADirectoryError: # recurse into the directory
         extract_directory(path, dry=dry, _depth=_depth+1)
 
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
+        shutil.move(temp_path, dest)
 
     except FileNotFoundError:
         if _depth > 0:
+            # we tried to recurse into the file we just created,
+            # but there was no file. previous stage did nothing.
             log.warning("Nothing extracted from %s", path)
-        else:
+        else: # the user-supplied input file is missing.
             raise
 
 

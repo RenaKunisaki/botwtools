@@ -44,12 +44,14 @@ def mkdir(path:Path) -> Path:
     """
     path = sanitizePath(path)
     if path != '':
+        log.debug("mkdir path is '%s'", path)
         dirs = path.split('/')
         for i in range(len(dirs)):
             p = '/'.join(dirs[0:i+1])
-            log.debug("mkdir(%s)", p)
-            try: os.mkdir(p)
-            except FileExistsError: pass
+            if p != '':
+                log.debug("mkdir(%s)", p)
+                try: os.mkdir(p)
+                except FileExistsError: pass
     return path
 
 
@@ -73,7 +75,9 @@ class FileWriter:
         path, name = os.path.split(sanitizePath(file))
         path = mkdir(path)
         if path == '': path = '.' # don't extract archives to /
-        self.file = open(path+'/'+name, mode)
+        path += '/' + name
+        if os.path.isdir(path): path += '/' + name
+        self.file = open(path, mode)
 
 
     @staticmethod
