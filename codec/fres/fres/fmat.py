@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
+from .idxgrp import IndexGroup
 
 class FMAT(FresObject):
     """A FMAT in an FMDL."""
@@ -25,7 +26,7 @@ class FMAT(FresObject):
         ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
-        ('I',  'unk0C'),
+        Padding(4),
         StrOffs('name'),
         Padding(4),
         Offset64('render_info_offs'),
@@ -62,9 +63,40 @@ class FMAT(FresObject):
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the FMAT from given FRES."""
         super().readFromFRES(fres, offset, reader)
-        #log.debug("FMAT name='%s'", self.name)
-        #self.dumpToDebugLog()
-        #self.dumpOffsets()
+        log.debug("FMAT name='%s'", self.name)
+        self.dumpToDebugLog()
+        self.dumpOffsets()
+
+        dicts = ('render_info', 'sampler', 'shader_param', 'user_data')
+        for name in dicts:
+            offs = getattr(self, name + '_dict_offs')
+            if offs:
+                #d = IndexGroup().readFromFile(self.fres.file, offs)
+                #log.debug("FMAT %s dict:\n%s", name, d.dump())
+
+                # not sure these really are dicts.
+                # the connections make no sense, and there doesn't
+                # seem to be any reason to store these strings
+                # in dicts in the first place.
+                unk, cnt = self.fres.read('II', offs)
+                log.debug("FMAT %s: unk=%d cnt=%d", name, unk, cnt)
+                data = []
+                offs += 8
+                for i in range(cnt):
+                    a, b, c, s, pad = self.fres.read('iHHII', offs+(i*16))
+                    if s: s = self.fres.readStr(s)
+                    log.debug('#%3d: %04X %04X %04X (%X) "%s"',
+                        i, a, b, c, pad, s)
+                    data.append({
+                        'unk00': a,
+                        'unk04': b,
+                        'unk06': c,
+                        'pad':   pad,
+                        'name':  s,
+                    })
+            else:
+                data = None
+            setattr(self, name + '_dict', data)
 
         return self
 

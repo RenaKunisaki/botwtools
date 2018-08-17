@@ -76,12 +76,12 @@ class FMDL(FresObject):
 
         Offset64('fvtx_offset'),
         Offset64('fshp_offset'),
-        Offset64('fshp_dict'),
+        Offset64('fshp_dict_offset'),
         Offset64('fmat_offset'),
-        Offset64('fmat_dict'),
+        Offset64('fmat_dict_offset'),
         Offset64('udata_offset'),
         Offset64('unk60'),
-        Offset64('unk68'),
+        Offset64('unk68'), # probably dict for unk60
 
         ('H',  'fvtx_count'),
         ('H',  'fshp_count'),

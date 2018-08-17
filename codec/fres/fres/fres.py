@@ -71,7 +71,7 @@ class FRES:
             self.readObjects(*typ)
 
         return self
-        
+
 
     def getNumObjects(self, typ):
         return getattr(self.header, typ+'_cnt')
@@ -95,6 +95,7 @@ class FRES:
         for i in range(cnt):
             group = IndexGroup().readFromFile(self.file, dofs+(i*8))
             groups.append(group)
+            log.debug("FRES %s %d: %s", type(cls).__name__, i, group.dump())
             obj = cls().readFromFRES(self, offs+(i*size))
             objs.append(obj)
             if obj.name is None:

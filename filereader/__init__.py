@@ -104,7 +104,7 @@ class FileReader:
             s = b''.join(s)
         else:
             s = self.file.read(length)
-        if encoding is not None: s = s.decode()
+        if encoding is not None: s = s.decode(encoding)
         return s
 
     def tell(self):
