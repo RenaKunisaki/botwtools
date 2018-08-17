@@ -23,6 +23,7 @@
 # Yaz1 is identical to Yaz0 and is rarely seen.
 import logging; log = logging.getLogger(__name__)
 import io
+import os
 import struct
 from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
@@ -35,6 +36,8 @@ class Yaz0Stream(io.RawIOBase):
 
     def __init__(self, file:BinInput):
         self.file = FileReader(file)
+        _, name = os.path.split(file.name)
+        self.name = name + '.out'
         self.magic, self.dest_end = self.file.read('>4sI')
         if self.magic not in (b'Yaz0', b'Yaz1'):
             raise UnsupportedFileTypeError(self.magic)
@@ -98,6 +101,11 @@ class Yaz0Stream(io.RawIOBase):
         return b''.join(res)
 
 
+    def toData(self):
+        """Return the object in a form that can be written to a file."""
+        return self.read()
+
+
     def __str__(self):
         return "<Yaz0 stream at 0x%x>" % id(self)
 
@@ -106,7 +114,6 @@ class Yaz0Stream(io.RawIOBase):
 class Yaz0Decoder(Decoder):
     """Decoder for Yaz0-compressed files."""
     __codec_name__ = 'Yaz0'
-    defaultFileExt = 'bin'
 
     def _read(self):
         """Read the input file, upon opening it."""
@@ -118,7 +125,3 @@ class Yaz0Decoder(Decoder):
         # so we only contain one object, which is
         # the compressed data stream.
         yield self.stream
-
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
-        self.writeFile(self.destPath, self.stream.read())

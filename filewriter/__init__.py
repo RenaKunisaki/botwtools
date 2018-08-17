@@ -27,6 +27,8 @@ def sanitizePath(path:Path):
     for i, d in enumerate(dirs):
         if d.startswith('.') and d != '.':
             d = 'data' + d
+        #elif d == '':
+        #    d = 'data'
         res.append(d)
     res = '/'.join(res)
     if res != path:

@@ -104,8 +104,7 @@ def extract_directory(path, dry=False, _depth=0):
 
 def extract_recursive(path, dest, dry=False, _depth=0):
     """Recursively extract given file/directory to given destination."""
-    temp_path = tempfile.mkdtemp() + '/'
-    log.info("Recursively extracting %s to %s...", path, temp_path)
+    log.info("Recursively extracting %s to %s...", path, dest)
     try:
         # extract the input file
         with FileReader(path, 'rb') as file:
@@ -113,8 +112,8 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             #name    = os.path.normpath(decoder.suggestOutputName(dest))
             #log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
             # XXX on Windows we may not be able to open this file.
-            log.debug("decoder(%s, %s)", file, temp_path)
-            decoder = decoder(file, temp_path)
+            log.debug("decoder(%s, %s)", file, dest)
+            decoder = decoder(file, dest)
             log.debug("decoder.unpack (%s)", type(decoder).__name__)
             decoder.unpack()
             log.debug("decoder.unpack done")
@@ -125,20 +124,20 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             os.remove(path)
 
         # recurse into this file
-        res = extract_recursive(temp_path, temp_path, dry=dry, _depth=_depth+1)
+        res = extract_recursive(dest, dest, dry=dry, _depth=_depth+1)
         log.debug("Recursive extraction from %s => %s", path, res)
 
     except IsADirectoryError: # recurse into the directory
         res = extract_directory(path, dry=dry, _depth=_depth+1)
         log.debug("Extract dir %s => %s", path, res)
         if res is None:
-            os.rmdir(temp_path)
+            os.rmdir(dest)
             return None
 
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
-        log.debug("Remove %s", temp_path)
-        os.rmdir(temp_path)
+        log.debug("Remove %s", dest)
+        os.rmdir(dest)
         return None
 
     except FileNotFoundError:
@@ -149,10 +148,10 @@ def extract_recursive(path, dest, dry=False, _depth=0):
         else: # the user-supplied input file is missing.
             raise
 
-    log.debug("move %s to %s", temp_path, dest)
-    try: shutil.move(temp_path, dest)
-    except FileExistsError:
-        log.debug("can't move %s to %s", temp_path, dest)
+    #log.debug("move %s to %s", temp_path, dest)
+    #try: shutil.move(temp_path, dest)
+    #except FileExistsError:
+    #    log.debug("can't move %s to %s", temp_path, dest)
     return dest
 
 

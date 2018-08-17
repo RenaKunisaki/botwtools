@@ -138,11 +138,7 @@ class FMDL(FresObject):
         return True
 
 
-    def getFiles(self):
-        return ({'name':self.name, 'data':self.serialize()},)
-
-
-    def serialize(self):
+    def toData(self):
         """Export model to COLLADA file."""
         # initial document structure
         document = myxml.Document('COLLADA',

@@ -49,16 +49,7 @@ class Decoder:
 
     def _read(self):
         """Read the input file, upon opening it."""
-        raise NotImplementedError
-
-    @classmethod
-    def suggestOutputName(cls, path:Path) -> Path:
-        """Given the path of the input file,
-        suggest a path for the output file.
-        """
-        path, name = os.path.split(path)
-        name, ext = os.path.splitext(path)
-        return sanitizePath(name + '.' + cls.defaultFileExt)
+        raise NotImplementedErrors
 
     @property
     def objects(self):
@@ -92,6 +83,7 @@ class Decoder:
         """
         return None
 
+
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
         if self.numObjects is not None:
@@ -99,9 +91,21 @@ class Decoder:
         for obj in self.objects:
             print(obj)
 
+
     def unpack(self):
         """Unpack this file to `self.destPath`."""
-        raise NotImplementedError
+        objs = list(self._iter_objects())
+        if len(objs) == 1 and not os.path.isdir(self.destPath):
+            with FileWriter(self.destPath) as file:
+                file.write(objs[0].toData())
+        else:
+            for obj in objs:
+                p = self.destPath+'/'+obj.name
+                if hasattr(obj, 'defaultFileExt'):
+                    p += '.' + obj.defaultFileExt
+                with FileWriter(p) as file:
+                    file.write(obj.toData())
+
 
     def mkfile(self, path:Path, mode:fopenMode='wb') -> BinOutput:
         """Create a file within the output directory.

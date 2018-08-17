@@ -33,16 +33,29 @@ class FresDecoder(ArchiveDecoder):
         log.debug("FRES contains %d models",
             len(self.archive.fmdls))
 
+
     def _iter_objects(self):
         """Iterate over the objects in this file."""
-        return iter(self.archive.fmdls) # + self.archive.textures)
+        objs = (list(self.archive.fmdls) +
+            list(self.archive.embeds)
+            # XXX + others...
+            )
+        return objs
+
 
     def _get_num_objects(self) -> (int, None):
         """Get number of objects in this file.
 
         Returns None if not known.
         """
-        return self.archive.header.num_objects
+        return (self.archive.header.fmdl_cnt +
+            self.archive.header.fska_cnt +
+            self.archive.header.fmaa_cnt +
+            self.archive.header.fvis_cnt +
+            self.archive.header.fshu_cnt +
+            self.archive.header.fscn_cnt +
+            self.archive.header.embed_cnt)
+
 
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
@@ -53,26 +66,6 @@ class FresDecoder(ArchiveDecoder):
         print("%d objects" % len(objs))
         for i, obj in enumerate(objs):
             print('  %3d: %s: "%s"' % (i, type(obj).__name__, obj.name))
-
-
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
-        objs = []
-        for typ in self.archive.object_types:
-            name, cls = typ
-            objs += self.archive.getObjects(name)
-        nobj = len(objs)
-
-        for i, obj in enumerate(objs):
-            log.info("[%3d/%3d] Extracting: %s...",
-                i+1, nobj, obj.name)
-            for file in obj.getFiles():
-                name = file['name']
-                if hasattr(obj, 'defaultFileExt'):
-                    name += '.' + obj.defaultFileExt
-                log.debug('extracting "%s" as "%s"', file['name'], name)
-                self.writeFile(name, file['data'])
-
 
     def _extractTexture(self, texture, name):
         """Export texture to BNTX file."""

@@ -38,6 +38,5 @@ class EmbeddedFile(FresObject):
         return self
 
 
-    def getFiles(self):
-        data = self.fres.file.read(self.size, self.data_offset)
-        return ({'name':self.name, 'data':data},)
+    def toData(self):
+        return self.fres.file.read(self.size, self.data_offset)
