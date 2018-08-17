@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
+import struct
 from .base.exceptions import UnsupportedFileTypeError
 from .aamp.decoder import AampDecoder
 from .bntx.decoder import BntxDecoder
@@ -48,10 +49,19 @@ def findClass(file, classes):
     """
     pos = file.tell()
     for magic, cls in classes.items():
-        m = file.read(len(magic))
-        file.seek(pos, 0) # restore position
-        if m == magic: return cls
-    m = file.read(4)
+        try:
+            m = file.read(len(magic))
+            file.seek(pos, 0) # restore position
+            if m == magic: return cls
+        except struct.error: # file is shorter than magic
+            pass
+
+    # no match found
+    try:
+        m = file.read(4)
+    except struct.error:
+        log.error("File is less than 4 bytes")
+        m = b''
     file.seek(pos, 0) # restore position
     raise UnsupportedFileTypeError(m)
 

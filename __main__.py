@@ -105,7 +105,7 @@ def extract_directory(path, dry=False, _depth=0):
 def extract_recursive(path, dest, dry=False, _depth=0):
     """Recursively extract given file/directory to given destination."""
     log.info("Recursively extracting %s to %s...", path, dest)
-    temp_path = tempfile.mkdtemp()
+    temp_path = tempfile.mkdtemp() + '/'
     try:
         # extract the input file
         with FileReader(path, 'rb') as file:
