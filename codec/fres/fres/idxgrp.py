@@ -37,7 +37,9 @@ class IndexGroup:
         log.debug("dict(%06X) len=0x%X cnt=0x%X", offset, length, count)
         nodes = []
         for i in range(count+1): # +1 for root node
-            srch, lidx, ridx, noff, doff = file.read('IHHII')
+            srch, lidx, ridx, noff, doff = file.read('iHHII')
+            log.debug("node %d: %08X %04X %04X %08X %08X",
+                i, srch, lidx, ridx, noff, doff)
 
             pos = file.tell()
             name = file.readString(noff, '<H')
@@ -46,31 +48,31 @@ class IndexGroup:
             nodes.append((name, doff, srch, lidx, ridx))
 
         def mkNode(idx, _depth=0):
+            log.debug("mkNode(%d)", idx)
             if _depth > 8: return None
             if idx == 0 and _depth > 0: return None
             name, doff, srch, lidx, ridx = nodes[idx]
             left, right = None, None
-            if lidx != idx: left  = mkNode(lidx, _depth+1)
-            if ridx != idx: right = mkNode(ridx, _depth+1)
+            if lidx > idx: left  = mkNode(lidx, _depth+1)
+            if ridx > idx: right = mkNode(ridx, _depth+1)
+            # XXX what does it mean when >0 but <idx?
             return Node(idx, name, doff, srch, left, right)
 
         self.root = mkNode(0)
-        print("*** dict dump ***")
-        self.dump(self.root)
-        print("*** end  dict ***")
-
         return self
 
 
-    def dump(self, node, prefix='', _depth=0, ind='', isLast=False):
-        #ind = ('│ ' * (_depth-1)) + prefix
-        if node is None:
-            print(ind+prefix+"<none>")
-            return
+    def dump(self, node=None, prefix='', _depth=0, ind='', isLast=False):
+        """Dump to nice string for debugging."""
+        if _depth == 0 and node is None:
+            node = self.root
 
-        print('%s%s%s%d] "%s" (offs=0x%06X srch=0x%08X)' % (ind,
+        if node is None:
+            return ind+prefix+"<none>\n"
+
+        r = '%s%s%s%d] "%s" (offs=0x%X srch=%d)\n' % (ind,
             prefix, '[root:' if _depth == 0 else '',
-            node.index, node.name, node.dataOffs, node.search))
+            node.index, node.name, node.dataOffs, node.search)
 
         if _depth > 0:
             ind += '  ' if isLast else '│ '
@@ -79,7 +81,9 @@ class IndexGroup:
                 p = '├'
             else:
                 p = '└'
-            self.dump(node.left,  p+'─[L:', _depth+1, ind, (not node.right))
+            r += self.dump(node.left,  p+'─[L:', _depth+1, ind, (not node.right))
 
         if node.right:
-            self.dump(node.right, '└─[R:', _depth+1, ind, True)
+            r += self.dump(node.right, '└─[R:', _depth+1, ind, True)
+
+        return r
