@@ -95,16 +95,21 @@ class Decoder:
     def unpack(self):
         """Unpack this file to `self.destPath`."""
         objs = list(self._iter_objects())
-        if len(objs) == 1 and not os.path.isdir(self.destPath):
-            with FileWriter(self.destPath) as file:
-                file.write(objs[0].toData())
-        else:
-            for obj in objs:
-                p = self.destPath+'/'+obj.name
-                if hasattr(obj, 'defaultFileExt'):
-                    p += '.' + obj.defaultFileExt
-                with FileWriter(p) as file:
-                    file.write(obj.toData())
+
+        for obj in objs:
+            name = obj.name
+            if name == '' or name.startswith('.'):
+                log.warning("Object named '%s' output to '%s'",
+                    name, 'data'+name)
+                name = 'data'+name
+            if hasattr(obj, 'defaultFileExt'):
+                name += '.' + obj.defaultFileExt
+            if self.destPath != '':
+                name = self.destPath+'/'+name
+
+            log.info('Extract "%s" to "%s"', obj.name, name)
+            with FileWriter(name) as file:
+                file.write(obj.toData())
 
 
     def mkfile(self, path:Path, mode:fopenMode='wb') -> BinOutput:
