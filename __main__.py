@@ -97,15 +97,15 @@ def extract_directory(path, dry=False, _depth=0):
     log.info("Recursing into %s", path)
     for name in map(lambda n: path+'/'+n, os.listdir(path)):
         if os.path.isdir(name):
-            extract_directory(name, dry=dry, _depth=_depth+1)
+            return extract_directory(name, dry=dry, _depth=_depth+1)
         else:
-            extract_recursive(name, name, dry=dry, _depth=_depth+1)
+            return extract_recursive(name, name, dry=dry, _depth=_depth+1)
 
 
 def extract_recursive(path, dest, dry=False, _depth=0):
     """Recursively extract given file/directory to given destination."""
-    log.info("Recursively extracting %s to %s...", path, dest)
     temp_path = tempfile.mkdtemp() + '/'
+    log.info("Recursively extracting %s to %s...", path, temp_path)
     try:
         # extract the input file
         with FileReader(path, 'rb') as file:
@@ -123,14 +123,21 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             os.remove(path)
 
         # recurse into this file
-        extract_recursive(temp_path, temp_path, dry=dry, _depth=_depth+1)
+        res = extract_recursive(temp_path, temp_path, dry=dry, _depth=_depth+1)
+        log.debug("Recursive extraction from %s => %s", path, res)
 
     except IsADirectoryError: # recurse into the directory
-        extract_directory(path, dry=dry, _depth=_depth+1)
+        res = extract_directory(path, dry=dry, _depth=_depth+1)
+        log.debug("Extract dir %s => %s", path, res)
+        if res is None:
+            os.rmdir(temp_path)
+            return None
 
     except codec.UnsupportedFileTypeError:
         log.info("Can't extract %s any further", path)
-        shutil.move(temp_path, dest)
+        log.debug("Remove %s", temp_path)
+        os.rmdir(temp_path)
+        return None
 
     except FileNotFoundError:
         if _depth > 0:
@@ -139,6 +146,12 @@ def extract_recursive(path, dest, dry=False, _depth=0):
             log.warning("Nothing extracted from %s", path)
         else: # the user-supplied input file is missing.
             raise
+
+    log.debug("move %s to %s", temp_path, dest)
+    try: shutil.move(temp_path, dest)
+    except FileExistsError:
+        log.debug("can't move %s to %s", temp_path, dest)
+    return dest
 
 
 def main():
