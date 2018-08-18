@@ -33,7 +33,7 @@ class AampDecoder(Decoder):
         self._validateFileSize()
         self.roots = []
         for i in range(self.header.num_root_nodes):
-            self.input.seek(0x34 + (i*12))
+            self.input.seek(0x34 + (i*RootNode._reader.size))
             self.roots.append(RootNode(self.input))
 
     def _validateFileSize(self):
@@ -55,8 +55,6 @@ class AampDecoder(Decoder):
     def _iter_objects(self):
         """Iterate over the objects in this file."""
         return self.roots
-        # XXX what happens with multiple roots?
-        # does that indicate multiple files? does it ever happen?
 
     def _get_num_objects(self) -> (int, None):
         """Get number of objects in this file.
