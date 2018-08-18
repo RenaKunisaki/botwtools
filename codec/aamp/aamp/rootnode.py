@@ -22,8 +22,9 @@ from .node import Node
 class RootNode(Node):
     """AAMP root node."""
     _reader = StructReader(
-        ('I', 'name_hash'), # always 0xA4F6CB6C (<param_root>)
-        ('I', 'unk04'), # 0x3
+        ('I', 'name_hash'),
+        ('H', 'unk04'),
+        ('H', 'unk06'),
         ('H', 'data_offset'), # relative to start of node
         ('H', 'num_children'),
     )
@@ -41,6 +42,7 @@ class RootNode(Node):
         """Convert node to XML node object."""
         elem = super().toXML(_depth=_depth+1)
         elem.set('{'+self.xmlns+'}unk04', str(self.unk04))
+        elem.set('{'+self.xmlns+'}unk06', str(self.unk06))
         return elem
 
 
