@@ -111,12 +111,12 @@ class FMDL(FresObject):
         """Export model to COLLADA file."""
         writer = ColladaWriter()
 
+        for i, fmat in enumerate(self.fmats):
+            writer.addFMAT(fmat)
+
         for i, fvtx in enumerate(self.fvtxs):
             writer.addFVTX(fvtx, name=self.fshps[i].name)
             writer.addFSHP(self.fshps[i]) # XXX this is weird
-
-        for i, fmat in enumerate(self.fmats):
-            writer.addFMAT(fmat)
 
         writer.addScene()
         return writer.toXML().tostring(pretty_print=True)

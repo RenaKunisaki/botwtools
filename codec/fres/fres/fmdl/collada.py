@@ -73,21 +73,18 @@ class ColladaWriter:
         self.scenes     = []
         self.meshes     = []
         self.vtxs       = []
+        self.textures   = []
+        self.inst_geoms = []
+        self.fmats      = []
 
 
     def addScene(self):
         scene = myxml.Element('visual_scene',
+            *self.inst_geoms,
             id   = 'scene%d' % len(self.scenes),
             name = 'untitled',
         )
         self.scenes.append(scene)
-        for geom in self.geometries:
-            gid = geom.get('id')
-            scene.Child('node',
-                myxml.Element('instance_geometry', url='#'+gid),
-                id = 'node_' + gid,
-                name = geom.get('name'),
-            )
 
 
     def addFVTX(self, fvtx, name=None):
@@ -130,47 +127,61 @@ class ColladaWriter:
             return
 
         for lod in fshp.lods:
-            plist = self._makePlistForLod(lod, vtxs.get('id'))
+            # XXX differentiate the resulting geometries somehow.
+            # currently they have the same names and everything.
+            plist = self._makePlistForLod(fshp, lod, vtxs.get('id'))
             if plist: mesh.append(plist)
 
 
     def addFMAT(self, fmat):
         """Add an FMAT to the file."""
         matid = 'material%d' % len(self.materials)
-        effid = 'effect%d' % len(self.effects)
+        self.fmats.append(fmat)
 
         # add element to materials
         elem = myxml.Element('material', id=matid, name=fmat.name)
         self.materials.append(elem)
-        elem.Child('instance_effect', url='#'+effid)
 
         # create effect
-        tid  = 'texture%d' % id(fmat)
-        sfid = 'surface%d' % id(fmat)
-        smid = 'sampler%d' % id(fmat)
-        elem = myxml.Element('effect', id=effid)
-        prof = elem.Child('profile_COMMON')
+        for tex in fmat.textures:
+            effid = 'effect%d' % len(self.effects)
+            elem.Child('instance_effect', url='#'+effid)
+            eff = self._makeMatTexEntry(fmat, tex, effid)
+            self.effects.append(eff)
+
+
+    def _makeMatTexEntry(self, fmat, tex, effid):
+        """Make nodes for a material's texture."""
+        texid = 'texture%d' % len(self.textures)
+        srfid = 'surface%d' % len(self.textures)
+        smpid = 'sampler%d' % len(self.textures)
+        elem  = myxml.Element('effect', id=effid)
+        prof  = elem.Child('profile_COMMON')
 
         # param to define the surface
-        surf = prof.Child('newparam', sid=sfid) \
+        surf = prof.Child('newparam', sid=srfid) \
             .Child('surface', type='2D') \
             .Child('init_from')
-        surf.text = tid
+        surf.text = texid
 
         # param to sample the surface
-        samp = prof.Child('newparam', sid=smid) \
+        samp = prof.Child('newparam', sid=smpid) \
             .Child('sampler2D') \
             .Child('source')
-        samp.text = sfid
+        samp.text = srfid
 
         # technique to use that sampler
         prof.Child('technique', sid='COMMON') \
             .Child('lambert') \
             .Child('diffuse') \
-            .Child('texture', texture='XXX', texcoord="_u0")
+            .Child('texture', texture=tex['name'], texcoord="_u0")
+
+        self.textures.append(tex)
+        return elem
 
 
-    def _makePlistForLod(self, lod, vid):
+
+    def _makePlistForLod(self, fshp, lod, vid):
         """Build plist element for LOD model. Called by addFSHP."""
         # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
         if lod.prim_fmt in ('line_strip', 'line_loop'):
@@ -181,6 +192,8 @@ class ColladaWriter:
         else:
             log.error("Unsupported prim fmt %s", lod.prim_fmt)
             return None
+
+        gid = self.geometries[-1].get('id')
 
         plist = myxml.Element(elem,
             myxml.Element('input',
@@ -200,6 +213,17 @@ class ColladaWriter:
         vcount.text = ' '.join(map(str, sizes))
         p = plist.Child('p')
         p.text = ' '.join(map(str, faces))
+
+        matid = 'material%d' % fshp.fmat_idx
+        mat = self.fmats[fshp.fmat_idx]
+        inst = myxml.Element('instance_geometry', url='#'+gid)
+        self.inst_geoms.append(inst)
+        inst.Child('bind_material') \
+            .Child('technique_common') \
+            .Child('instance_material',
+                symbol=mat.name, target='#'+matid) \
+            .Child('bind_vertex_input', semantic="UVSET0",
+                input_semantic="TEXCOORD", input_set=0)
 
         return plist
 
