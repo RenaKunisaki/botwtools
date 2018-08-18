@@ -51,7 +51,7 @@ class Node(BinaryObject):
         super().readFromFile(file)
 
         curPos = file.tell()
-        offset = (self.data_offset * 4) - self._reader._dataSize
+        offset = (self.data_offset * 4) - self._reader.size
         file.seek(offset, 1)
 
         if self.num_children > 0:

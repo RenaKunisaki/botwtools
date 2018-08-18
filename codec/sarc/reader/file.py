@@ -32,5 +32,9 @@ class File:
         src.seek(self.data_start + self.archive.header.data_offset + offset)
         return src.read(size)
 
+
+    def toData(self):
+        return self.read()
+
     def __str__(self):
         return "<File:%s at 0x%x>" % (self.name, id(self))
