@@ -1,6 +1,5 @@
 `Animal_Fox_A.bmodellist` is lots of parameters:
-
-ControllerInfo: (some values are empty)
+param_root > ControllerInfo: (some values are empty)
 
 | Param Name               | Value              | Notes |
 | -------------------------|--------------------|-------|
@@ -24,7 +23,7 @@ ControllerInfo: (some values are empty)
 | unknown_D649431B         | 0.0                ||
 | CalcAABBASKey            | Wait               ||
 
-Attention: (some values are empty)
+param_root > Attention: (some values are empty)
 (some floats rounded, eg 0.10000000149011612)
 
 | Param Name                | Value         | Notes |
@@ -49,4 +48,18 @@ Attention: (some values are empty)
 | CursorAIInfoBaseBone      |               ||
 | CursorAIInfoBaseOffset    | 0.0, 0.0, 0.0 ||
 
-There doesn't seem to be an actual model list, but that's likely because my AAMP decoder is bugged.
+ModelData: empty
+AnmTarget: empty
+unknown_050C1373:
+    Base:
+        Folder: Animal_Fox
+        - this must be the name of the model file since the name isn't anywhere else in here or any other file I looked at
+Unit:
+    unknown_C5AFF8F9
+        UnitName: Fox
+        BindBone: empty
+unknown_CBEC2E83:
+    Base:
+        NumASSlot: 3
+        IsParticalEnable: false
+        TargetType: 0
