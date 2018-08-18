@@ -134,6 +134,42 @@ class ColladaWriter:
             if plist: mesh.append(plist)
 
 
+    def addFMAT(self, fmat):
+        """Add an FMAT to the file."""
+        matid = 'material%d' % len(self.materials)
+        effid = 'effect%d' % len(self.effects)
+
+        # add element to materials
+        elem = myxml.Element('material', id=matid, name=fmat.name)
+        self.materials.append(elem)
+        elem.Child('instance_effect', url='#'+effid)
+
+        # create effect
+        tid  = 'texture%d' % id(fmat)
+        sfid = 'surface%d' % id(fmat)
+        smid = 'sampler%d' % id(fmat)
+        elem = myxml.Element('effect', id=effid)
+        prof = elem.Child('profile_COMMON')
+
+        # param to define the surface
+        surf = prof.Child('newparam', sid=sfid) \
+            .Child('surface', type='2D') \
+            .Child('init_from')
+        surf.text = tid
+
+        # param to sample the surface
+        samp = prof.Child('newparam', sid=smid) \
+            .Child('sampler2D') \
+            .Child('source')
+        samp.text = sfid
+
+        # technique to use that sampler
+        prof.Child('technique', sid='COMMON') \
+            .Child('lambert') \
+            .Child('diffuse') \
+            .Child('texture', texture='XXX', texcoord="_u0")
+
+
     def _makePlistForLod(self, lod, vid):
         """Build plist element for LOD model. Called by addFSHP."""
         # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
@@ -259,12 +295,11 @@ class ColladaWriter:
     def toXML(self):
         """Generate XML document for this file."""
         document = myxml.Document('COLLADA',
-            myxml.Element('library_cameras'),
-            myxml.Element('library_lights'),
-            self.makeLibraryEffectsNode(),
-            self.makeLibraryMaterialsNode(),
-            myxml.Element('library_lights'),
-            myxml.Element('library_geometries', *self.geometries),
+            myxml.Element('library_cameras',       *self.cameras),
+            myxml.Element('library_lights',        *self.lights),
+            myxml.Element('library_effects',       *self.effects),
+            myxml.Element('library_materials',     *self.materials),
+            myxml.Element('library_geometries',    *self.geometries),
             myxml.Element('library_visual_scenes', *self.scenes),
             xmlns="http://www.collada.org/2005/11/COLLADASchema",
             version="1.4.1",
@@ -274,13 +309,3 @@ class ColladaWriter:
             root.Child('scene').Child(
                 'instance_visual_scene', url='#'+scene.get('id'))
         return document
-
-    def makeLibraryEffectsNode(self):
-        """Make the library_effects XML node."""
-        elem = myxml.Element('library_effects')
-        return elem
-
-    def makeLibraryMaterialsNode(self):
-        """Make the library_materials XML node."""
-        elem = myxml.Element('library_materials')
-        return elem

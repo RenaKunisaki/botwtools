@@ -29,8 +29,8 @@ class FMAT(FresObject):
         Padding(4),
         StrOffs('name'),
         Padding(4),
-        Offset64('render_info_offs'),
-        Offset64('render_info_dict_offs'),
+        Offset64('render_param_offs'),
+        Offset64('render_param_dict_offs'),
         Offset64('shader_assign_offs'),
         Offset64('unk30_offs'),
         Offset64('tex_ref_array_offs'),
@@ -48,7 +48,7 @@ class FMAT(FresObject):
         Offset64('tex_slot_offs'),
         ('I',  'mat_flags'),
         ('H',  'section_idx'),
-        ('H',  'render_info_cnt'),
+        ('H',  'render_param_cnt'),
         ('B',  'tex_ref_cnt'),
         ('B',  'sampler_cnt'),
         ('H',  'shader_param_volatile_cnt'),
@@ -66,8 +66,13 @@ class FMAT(FresObject):
         log.debug("FMAT name='%s'", self.name)
         self.dumpToDebugLog()
         self.dumpOffsets()
+        self._readDicts()
+        self._readRenderParams()
+        return self
 
-        dicts = ('render_info', 'sampler', 'shader_param', 'user_data')
+
+    def _readDicts(self):
+        dicts = ('render_param', 'sampler', 'shader_param', 'user_data')
         for name in dicts:
             offs = getattr(self, name + '_dict_offs')
             if offs:
@@ -98,7 +103,36 @@ class FMAT(FresObject):
                 data = None
             setattr(self, name + '_dict', data)
 
-        return self
+
+    def _readRenderParams(self):
+        self.renderParams = {}
+        types = ('?', 'float', 'str')
+        for i in range(self.render_param_cnt):
+            name, offs, cnt, typ, pad = self.fres.read('QQHHI',
+                self.render_param_offs + (i*24))
+            name = self.fres.readStr(name)
+
+            if pad != 0:
+                log.warning("Render info '%s' padding=0x%X", name, pad)
+            try: typeName = types[typ]
+            except IndexError: typeName = '0x%X' % typ
+
+            vals = []
+            for j in range(cnt):
+                if   typ == 0: val=self.fres.readHex(8, offs)
+                elif typ == 1: val=self.fres.read('f', offs)
+                elif typ == 2: val=self.fres.readStr(self.fres.read('Q', offs))
+                else:
+                    log.warning("Render param '%s' unknown type 0x%X",name,typ)
+                    val = '<unknown>'
+                vals.append(val)
+
+            log.debug("Render param: %-5s[%d] %-32s: %s",
+                typeName, cnt, name, ', '.join(map(str, vals)))
+
+            if name in self.render_param:
+                log.warning("Duplicate render param '%s'", name)
+            self.renderParams[name] = vals
 
 
     def validate(self):
