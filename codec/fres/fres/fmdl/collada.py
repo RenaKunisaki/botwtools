@@ -70,6 +70,7 @@ class ColladaWriter:
         self.effects    = []
         self.materials  = []
         self.geometries = []
+        self.images     = []
         self.scenes     = []
         self.meshes     = []
         self.vtxs       = []
@@ -174,7 +175,13 @@ class ColladaWriter:
         prof.Child('technique', sid='COMMON') \
             .Child('lambert') \
             .Child('diffuse') \
-            .Child('texture', texture=tex['name'], texcoord="_u0")
+            .Child('texture', texture=smpid, texcoord="_u0")
+
+        # add the texture to the images
+        img = myxml.Element('image', id=texid)
+        self.images.append(img)
+        init = img.Child('init_from')
+        init.text = 'textures/' + tex['name'] + '.png'
 
         self.textures.append(tex)
         return elem
@@ -322,6 +329,7 @@ class ColladaWriter:
             myxml.Element('library_cameras',       *self.cameras),
             myxml.Element('library_lights',        *self.lights),
             myxml.Element('library_effects',       *self.effects),
+            myxml.Element('library_images',        *self.images),
             myxml.Element('library_materials',     *self.materials),
             myxml.Element('library_geometries',    *self.geometries),
             myxml.Element('library_visual_scenes', *self.scenes),

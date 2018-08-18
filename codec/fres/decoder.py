@@ -13,6 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
+# FRES decoding is a bit ugly because an FRES is an archive, but many
+# of its contents are not simple files, but structs which point to
+# various locations in the FRES file. So we can't simply extract all
+# the files and decode them separately; we need to decode to extract.
+
 import logging; log = logging.getLogger(__name__)
 import io
 import sys

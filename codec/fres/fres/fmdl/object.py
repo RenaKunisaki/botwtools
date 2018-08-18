@@ -31,7 +31,8 @@ class FMDL(FresObject):
     defaultFileExt = 'dae'
     # offsets in this struct are relative to the beginning of
     # the FRES file.
-    # I'm assuming they're 64-bit.
+    # I'm assuming they're 64-bit since most are a 32-bit offset
+    # followed by 4 zero bytes.
     _magic = b'FMDL'
     _reader = StructReader(
         ('4s', 'magic'),

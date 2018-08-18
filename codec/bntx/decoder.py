@@ -65,5 +65,6 @@ class BntxDecoder(Decoder):
 
             png = PNG(width=tex.width, height=tex.height,
                 pixels=pixels, bpp=depth)
+            log.info("Writing texture to %s...", tex.name + '.png')
             with self.mkfile(tex.name + '.png') as file:
                 png.writeToFile(file)
