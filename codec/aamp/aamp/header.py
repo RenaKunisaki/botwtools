@@ -20,18 +20,18 @@ class Header(BinaryObject):
     """AAMP file header."""
     _reader = StructReader(
         ('4s', 'magic'), # 'AAMP'
-        ('I', 'version'),
-        ('I', 'unk08'),
-        ('I', 'filesize'),
-        ('I', 'unk10'),
-        ('I', 'xml_str_len'), # length of `str_xml` field
-        ('I', 'num_root_nodes'),
-        ('I', 'num_children'), # num direct children of root node
-        ('I', 'total_nodes'),
-        ('I', 'data_buf_size'), # no idea what these are used for
-        ('I', 'str_buf_size'),
-        ('I', 'unk2C'),
-        ('4s','str_xml'),
+        ('I',  'version'),
+        ('I',  'unk08'),
+        ('I',  'filesize'),
+        ('I',  'unk10'),
+        ('I',  'xml_str_len'), # length of `str_xml` field
+        ('I',  'num_root_nodes'),
+        ('I',  'num_children'), # num direct children of root node
+        ('I',  'total_nodes'),
+        ('I',  'data_buf_size'), # no idea what these are used for
+        ('I',  'str_buf_size'),
+        ('I',  'unk2C'),
+        ('4s', 'str_xml'),
     )
 
     def validate(self):

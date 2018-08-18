@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import io
 import os
 import struct
+from lxml import etree as ET
 from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from .aamp import Header, Node, RootNode
@@ -30,7 +31,10 @@ class AampDecoder(Decoder):
         """Read the input file, upon opening it."""
         self.header = Header().readFromFile(self.input)
         self._validateFileSize()
-        self.root = RootNode(self.input)
+        self.roots = []
+        for i in range(self.header.num_root_nodes):
+            self.input.seek(0x34 + (i*12))
+            self.roots.append(RootNode(self.input))
 
     def _validateFileSize(self):
         """Make sure file size matches what header says it is."""
@@ -50,7 +54,7 @@ class AampDecoder(Decoder):
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""
-        yield self.root
+        return self.roots
         # XXX what happens with multiple roots?
         # does that indicate multiple files? does it ever happen?
 
@@ -63,9 +67,9 @@ class AampDecoder(Decoder):
 
     def unpack(self):
         """Unpack this file to `self.destPath`."""
-        ns    = '{'+self.root.xmlns+'}'
-        xml   = self.root.toXML()
-        root  = xml.getroot()
+        ns    = '{'+self.roots[0].xmlns+'}'
+        root  = ET.Element('aamp', nsmap=self.roots[0].xmlnsmap)
+        for r in self.roots: root.append(r.toXML())
 
         # decode and escape the null byte
         str_xml = (self.header.str_xml.decode('utf-8')
@@ -85,7 +89,8 @@ class AampDecoder(Decoder):
             root.set(ns+k, str(v))
 
         with open(self.destPath, 'wb') as file:
-            xml.write(file,
+            tree = ET.ElementTree(root)
+            tree.write(file,
                 encoding='utf-8',
                 xml_declaration=True,
                 pretty_print=True,

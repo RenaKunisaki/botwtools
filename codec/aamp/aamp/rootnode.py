@@ -29,9 +29,9 @@ class RootNode(Node):
     )
 
     def validate(self):
-        if self.name_hash != 0xA4F6CB6C:
-            log.warn("Root name_hash is 0x%08X, should be 0xA4F6CB6C",
-                self.name_hash)
+        #if self.name_hash != 0xA4F6CB6C:
+        #    log.warn("Root name_hash is 0x%08X, should be 0xA4F6CB6C",
+        #        self.name_hash)
         log.debug("AAMP root unk04=0x%08X, data=0x%04X, nChild=%d",
             self.unk04, self.data_offset, self.num_children)
         return super().validate()
@@ -41,7 +41,7 @@ class RootNode(Node):
         """Convert node to XML node object."""
         elem = super().toXML(_depth=_depth+1)
         elem.set('{'+self.xmlns+'}unk04', str(self.unk04))
-        return ET.ElementTree(elem)
+        return elem
 
 
     def __str__(self):
