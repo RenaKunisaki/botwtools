@@ -173,3 +173,8 @@ class FRES:
         data = self.read(cnt, offset)
         hx   = map(lambda b: '%02X' % b, data)
         return ' '.join(hx)
+
+    def readHexWords(self, cnt, offset):
+        data = self.read('I', offset, cnt)
+        hx   = map(lambda b: '%08X' % b, data)
+        return ' '.join(hx)
