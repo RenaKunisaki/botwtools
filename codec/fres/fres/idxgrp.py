@@ -14,6 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger(__name__)
+import struct
 
 
 class Node:
@@ -37,13 +38,22 @@ class IndexGroup:
         log.debug("dict(%06X) len=0x%X cnt=0x%X", offset, length, count)
         nodes = []
         for i in range(count+1): # +1 for root node
-            srch, lidx, ridx, noff, doff = file.read('iHHII')
+            try:
+                srch, lidx, ridx, noff, doff = file.read('iHHII')
+            except struct.error:
+                break # XXX this shouldn't happen
             #log.debug("node %d: %08X %04X %04X %08X %08X",
             #    i, srch, lidx, ridx, noff, doff)
 
-            pos = file.tell()
-            name = file.readString(noff, '<H')
-            file.seek(pos)
+            if noff:
+                pos = file.tell()
+                try:
+                    name = file.readString(noff, '<H')
+                except UnicodeDecodeError:
+                    name = None # XXX this shouldn't happen
+                file.seek(pos)
+            else:
+                name = None
 
             nodes.append((name, doff, srch, lidx, ridx))
 
@@ -51,7 +61,10 @@ class IndexGroup:
             #log.debug("mkNode(%d)", idx)
             if _depth > 8: return None
             if idx == 0 and _depth > 0: return None
-            name, doff, srch, lidx, ridx = nodes[idx]
+            try:
+                name, doff, srch, lidx, ridx = nodes[idx]
+            except IndexError:
+                return None # XXX this shouldn't happen
             left, right = None, None
             if lidx > idx: left  = mkNode(lidx, _depth+1)
             if ridx > idx: right = mkNode(ridx, _depth+1)

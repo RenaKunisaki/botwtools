@@ -95,17 +95,22 @@ class FileReader:
         Returns the string.
         """
         if pos is not None: self.seek(pos)
+        pos = self.tell() # for error message
         s = []
-        if type(length) is str: length = self.read(length)
-        if length is None:
-            while True:
-                b = self.file.read(1)
-                if b == b'\0': break
-                else: s.append(b)
-            s = b''.join(s)
-        else:
-            s = self.file.read(length)
-        if encoding is not None: s = s.decode(encoding)
+        try:
+            if type(length) is str: length = self.read(length)
+            if length is None:
+                while True:
+                    b = self.file.read(1)
+                    if b == b'\0': break
+                    else: s.append(b)
+                s = b''.join(s)
+            else:
+                s = self.file.read(length)
+            if encoding is not None: s = s.decode(encoding)
+        except (UnicodeDecodeError, struct.error):
+            log.error("Can't decode string from 0x%X", pos)
+            return None
         return s
 
     def tell(self):

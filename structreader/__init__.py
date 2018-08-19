@@ -101,13 +101,19 @@ class StructReader:
 def readString(file, offset=None, maxlen=None, encoding='shift-jis'):
     """Read null-terminated string from file."""
     if offset is not None: file.seek(offset)
+    offset = file.tell() # for error message
     s = []
     while maxlen == None or len(s) < maxlen:
         b = file.read(1)
         if b == b'\0': break
         else: s.append(b)
     s = b''.join(s)
-    if encoding is not None: s = s.decode(encoding)
+
+    try:
+        if encoding is not None: s = s.decode(encoding)
+    except UnicodeDecodeError:
+        log.error("Can't decode string from 0x%X", offset)
+        raise
     return s
 
 
@@ -117,11 +123,16 @@ def readStringWithLength(file, fmt, offset=None, encoding='shift-jis'):
     fmt: The struct format of the length.
     """
     if offset is not None: file.seek(offset)
+    offset = file.tell() # for error message
     #log.debug("string offset: 0x%X", offset)
     ln = file.read(fmt)
     #log.debug("string length: 0x%x", ln)
     s  = file.read(ln)
     #file.seek(1, 1) # +1 for null byte
     if encoding is not None:
-        s = s.decode(encoding)
+        try:
+            s = s.decode(encoding)
+        except UnicodeDecodeError:
+            log.error("Can't decode string from 0x%X", offset)
+            raise
     return s
