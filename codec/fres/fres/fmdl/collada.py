@@ -200,7 +200,9 @@ class ColladaWriter:
             log.error("Unsupported prim fmt %s", lod.prim_fmt)
             return None
 
-        gid = self.geometries[-1].get('id')
+        gid   = self.geometries[-1].get('id')
+        matid = 'material%d' % fshp.fmat_idx
+        mat   = self.fmats[fshp.fmat_idx]
 
         plist = myxml.Element(elem,
             myxml.Element('input',
@@ -208,7 +210,9 @@ class ColladaWriter:
                 semantic = 'VERTEX',
                 source   = vid,
             ),
-            count=len(lod.faces))
+            count=len(lod.faces),
+            material=mat.name,
+        )
 
         sizes = []
         faces = []
@@ -221,15 +225,14 @@ class ColladaWriter:
         p = plist.Child('p')
         p.text = ' '.join(map(str, faces))
 
-        matid = 'material%d' % fshp.fmat_idx
-        mat = self.fmats[fshp.fmat_idx]
+
         inst = myxml.Element('instance_geometry', url='#'+gid)
         self.inst_geoms.append(inst)
         inst.Child('bind_material') \
             .Child('technique_common') \
             .Child('instance_material',
                 symbol=mat.name, target='#'+matid) \
-            .Child('bind_vertex_input', semantic="UVSET0",
+            .Child('bind_vertex_input', semantic="_u0",
                 input_semantic="TEXCOORD", input_set=0)
 
         return plist
