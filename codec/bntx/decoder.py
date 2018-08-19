@@ -24,7 +24,6 @@ import struct
 from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput, TxtOutput
 from . import bntx
-from .png import PNG
 
 
 class BntxDecoder(Decoder):
@@ -38,7 +37,14 @@ class BntxDecoder(Decoder):
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""
-        yield self.bntx
+        return self.bntx.textures
+
+    def _get_num_objects(self) -> (int, None):
+        """Get number of objects in this file.
+
+        Returns None if not known.
+        """
+        return len(self.bntx.textures)
 
     def printList(self, dest:TxtOutput=sys.stdout):
         """Print nicely formatted list of this file's objects."""
@@ -51,20 +57,3 @@ class BntxDecoder(Decoder):
                 tex.mipmap_cnt, tex.multisample_cnt,
                 tex.name))
         print("M=mipmap count, S=multisample count")
-
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
-        for i, tex in enumerate(self.bntx.textures):
-            pixels, depth = tex.decode()
-            log.debug("Texture depth is %d, fmt %s", depth,
-                type(tex.fmt_type).__name__)
-
-            # dump raw data
-            #with self.mkfile(tex.name + '.data') as file:
-            #    file.write(pixels)
-
-            png = PNG(width=tex.width, height=tex.height,
-                pixels=pixels, bpp=depth)
-            log.info("Writing texture to %s...", tex.name + '.png')
-            with self.mkfile(tex.name + '.png') as file:
-                png.writeToFile(file)

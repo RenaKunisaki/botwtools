@@ -15,12 +15,14 @@
 
 import logging; log = logging.getLogger(__name__)
 #from .fresobject import FresObject
+import tempfile
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from codec.base.strtab import StringTable
 from structreader import StructReader, BinaryObject, readStringWithLength
 from enum import Enum
 from .pixelfmt import TextureFormat
 from .pixelfmt.swizzle import Swizzle, BlockLinearSwizzle
+from .png import PNG
 
 
 class BRTI(BinaryObject):
@@ -49,6 +51,7 @@ class BRTI(BinaryObject):
         SRGB   = 6
         UHalf  = 10
 
+    defaultFileExt = 'png'
     _magic = b'BRTI'
     _reader = StructReader(
         ('4s',   'magic'),
@@ -126,7 +129,18 @@ class BRTI(BinaryObject):
 
 
     def decode(self):
-        return self.fmt_type.decode(self)
+        self.pixels, self.depth = self.fmt_type.decode(self)
+        return self.pixels
+
+
+    def toData(self):
+        self.decode()
+        tempFile = tempfile.SpooledTemporaryFile()
+        png = PNG(width=self.width, height=self.height,
+            pixels=self.pixels, bpp=self.depth)
+        png.writeToFile(tempFile)
+        tempFile.seek(0)
+        return tempFile.read()
 
 
     def validate(self):

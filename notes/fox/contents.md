@@ -62,3 +62,7 @@ Actor
 └── [  42]  Physics
  └── [1.2K]  Animal_Fox_A.bphysics
 ```
+
+In the `.bmodellist` file is a node `unknown_050C1373/Base/Folder` with value `Animal_Fox`, which most likely is how it locates the model `Model/Animal_Fox.sbfres`.
+The `Animal_Fox.Tex.sbfres` is derived from the filename in the model sbfres.
+Presumably `Animal_Fox_Animation` is either named in one of these files or is inferred from the name just like the texture.
