@@ -40,8 +40,8 @@
 
 - `F` apparently comes from Cafe, the WiiU OS
 - File extensions:
-    - `s` prefix seems to mean compressed (YAZ0)
-        - ie every ".bfoo" is a YAZ0-compressed ".foo"
+    - `s` prefix seems to mean compressed (Yaz0)
+        - ie every ".bfoo" is a Yaz0-compressed ".foo"
     - `b` prefix might mean binary?
 
 
@@ -62,4 +62,8 @@
 |esetlist   | VFXB | |
 |fmc        | ?    | Used by FarModelCullMgr, so FMC probably stands for that |
 |mubin      | BYML | related to maps
+|sarc       | SARC | Generic archive
 |stats      | SARC | related to maps
+|yaz0       | Yaz0 | Generic compressed file
+
+Many `.bxml` files' contents can be inferred from the directory they're in.
