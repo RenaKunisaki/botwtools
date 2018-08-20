@@ -27,7 +27,6 @@ Uses third-party libraries:
 
 # Bugs/Limitations
 - Currently does not support little-endian (WiiU) SARC files.
-- Does not handle AAMP files with multiple roots.
 - Since AAMP only stores the hashes of element names, many elements come out named `unknown_xxxxxxxx`.
 - Recursive extraction is buggy.
 - This program is only tested on Linux, but probably works fine on Windows too.
