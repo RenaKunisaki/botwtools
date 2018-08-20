@@ -106,6 +106,11 @@ class Yaz0Stream(io.RawIOBase):
         return self.read()
 
 
+    def toString(self):
+        """Return pretty string describing this object."""
+        return 'Yaz0-compressed file "%s"' % self.file.name
+
+
     def __str__(self):
         return "<Yaz0 stream at 0x%x>" % id(self)
 

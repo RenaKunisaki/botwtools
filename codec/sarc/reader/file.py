@@ -36,5 +36,13 @@ class File:
     def toData(self):
         return self.read()
 
+    def toString(self):
+        """Return pretty string describing this object."""
+        try:
+            magic = self.read(4, 0).decode('utf-8')
+        except:
+            magic = '<unknown type>'
+        return '%s file "%s", %10d bytes' % (magic, self.name, self.size)
+
     def __str__(self):
         return "<File:%s at 0x%x>" % (self.name, id(self))

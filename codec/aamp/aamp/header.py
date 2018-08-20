@@ -42,10 +42,7 @@ class Header(BinaryObject):
         if self.str_xml != b'xml\0':
             log.warn("AAMP header XML string is %s, should be b'xml\0'",
                 self.str_xml)
-
-        if self.num_root_nodes != 1:
-            log.warn("AAMP num_root_nodes = %d", self.num_root_nodes)
-
+                
         log.debug("AAMP filesize:        %d", self.filesize)
         log.debug("AAMP #roots:          %d", self.num_root_nodes)
         log.debug("AAMP #root children:  %d", self.num_children)

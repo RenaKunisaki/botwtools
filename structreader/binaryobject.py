@@ -165,3 +165,26 @@ class BinaryObject:
                 except struct.error:
                     data = "<out of range>"
                 log.debug("%28s %06X => %s", name, val, data)
+
+
+    def toString(self):
+        """Return pretty string describing this object."""
+        cls  = type(self).__name__
+        name = getattr(self, 'name', None)
+        if name is None:
+            file = getattr(self, '_file', None)
+            if file is None:
+                return cls
+            else:
+                return "%s (in file %s)" % (cls, file.name)
+        else:
+            return '%s "%s"' % (cls, name)
+
+
+    def __str__(self):
+        cls  = type(self).__name__
+        name = getattr(self, 'name', None)
+        if name is None:
+            return "<%s object at 0x%x>" % (cls, id(self))
+        else:
+            return '<%s "%s" at 0x%x>' % (cls, name, id(self))

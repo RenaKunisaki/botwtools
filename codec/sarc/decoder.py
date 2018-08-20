@@ -46,3 +46,7 @@ class SarcDecoder(ArchiveDecoder):
         print("NameHash  FileSize Name")
         for obj in self.objects:
             print("%08X %9d %s" % (obj.name_hash, obj.size, obj.name))
+
+    def toString(self):
+        """Return pretty string describing this object."""
+        return "SARC archive containing %d files" % self.numObjects

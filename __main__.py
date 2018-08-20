@@ -48,6 +48,10 @@ def _setupArgs():
         metavar='PATH', default=[],
         help="List contents of file.")
 
+    parser.add_argument('--list-recursive', '-L', nargs=1,
+        action='append', metavar='PATH', default=[],
+        help="List contents of file recursively.")
+
     parser.add_argument('--list-codecs', action='store_true',
         help="List supported file formats.")
 
@@ -78,6 +82,36 @@ def list_file(path):
         decoder = codec.getDecoderForFile(file)
         decoder = decoder(file, None)
         decoder.printList()
+
+
+def _list_recursive(obj, _depth=0):
+    ind = '  ' * _depth
+    try: print(ind + obj.toString())
+    except AttributeError: print(ind + str(obj))
+    with tempfile.TemporaryFile() as file:
+        try:
+            file.write(obj.toData())
+        except AttributeError:
+            return
+        file.seek(0, 0)
+        file = FileReader(file)
+        try:
+            decoder = codec.getDecoderForFile(file)
+        except codec.UnsupportedFileTypeError:
+            return
+        decoder = decoder(file, None)
+        for item in decoder.objects:
+            _list_recursive(item, _depth+1)
+
+
+def list_file_recursive(path):
+    """Print list of given file's contents recursively."""
+    with FileReader(path, 'rb') as file:
+        decoder = codec.getDecoderForFile(file)
+        decoder = decoder(file, None)
+        for obj in decoder.objects:
+            _list_recursive(obj)
+
 
 
 def extract_file(path, dest, dry=False):
@@ -168,6 +202,7 @@ def main():
     dry = args.dry_run
     if dry: log.info("Dry run; not writing any files!")
     for arg in args.list: list_file(*arg)
+    for arg in args.list_recursive: list_file_recursive(*arg)
     for arg in args.extract: extract_file(*arg, dry=dry)
     for arg in args.extract_recursive: extract_recursive(*arg, dry=dry)
     return 0

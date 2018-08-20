@@ -29,7 +29,7 @@ with open(dir_path+'/unknown-hashes.txt') as file:
 def log_unknown_hash(hash):
     """If a hash is unknown, add to the list of unknown hashes."""
     if hash not in unknown_hashes:
-        log.warn("New unknown hash %08X", hash)
+        log.debug("New unknown hash %08X", hash)
         unknown_hashes[hash] = True
         with open(dir_path+'/unknown-hashes.txt', 'a') as file:
             file.write('%d\n' % hash)
