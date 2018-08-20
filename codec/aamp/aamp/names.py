@@ -37,19 +37,25 @@ def log_unknown_hash(hash):
 
 # read the known hashes
 name_hashes = {}
-with open(dir_path+'/names.txt') as file:
-    for line in file:
-        line = line.strip()
-        hash = crc32(line)
-        if hash in name_hashes and name_hashes[hash] != line:
-            log.warn("duplicate hash %s:\n  %s\n  %s", hash,
-                name_hashes[hash], line)
-        name_hashes[hash] = line
-    log.debug("computed %d name hashes", len(name_hashes))
+did_read_hashes = False
+def read_hashes():
+    global did_read_hashes
+    with open(dir_path+'/names.txt') as file:
+        for line in file:
+            line = line.strip()
+            hash = crc32(line)
+            if hash in name_hashes and name_hashes[hash] != line:
+                log.warn("duplicate hash %s:\n  %s\n  %s", hash,
+                    name_hashes[hash], line)
+            name_hashes[hash] = line
+    log.debug("AAMP: computed %d name hashes", len(name_hashes))
+    did_read_hashes = True
 
 
 def getName(hash):
     """Look up the name for a hash."""
+    global did_read_hashes
+    if not did_read_hashes: read_hashes()
     try:
         return name_hashes[hash]
     except KeyError:
