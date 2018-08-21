@@ -17,6 +17,7 @@ along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logger; logger.setup('botwtools')
 log = logger.logging.getLogger()
+import io
 import os
 import sys
 import codec
@@ -24,6 +25,7 @@ import shutil
 import argparse
 import tempfile
 from filereader import FileReader
+from filewriter import FileWriter
 
 arg_parser = None # declare global
 
@@ -85,6 +87,48 @@ def _format_size(size):
     return '%4d%s' % (size, units[unit])
 
 
+def get_files(obj, name, _depth=0):
+    """Recursively get all files in given object.
+
+    Returns list of files.
+    """
+    #log.debug("listing %s", obj)
+    items = []
+    name = getattr(obj, 'name', name)
+    if hasattr(obj, 'defaultFileExt'):
+        name += '.' + obj.defaultFileExt
+
+    if hasattr(obj, 'toData'):
+        log.debug("recursing into %s, name=%s", obj, name)
+        file = tempfile.TemporaryFile()
+        file.write(obj.toData())
+        file.seek(0, 0)
+        file = FileReader(file)
+        try:
+            decoder = codec.getDecoderForFile(file)
+        except codec.UnsupportedFileTypeError:
+            log.debug("can't decode %s", obj)
+            return [{'name':name, 'obj':obj, 'file':file}]
+
+        decoder = decoder(file, None)
+        items += get_files(decoder, name, _depth+1)
+        #for item in decoder.objects:
+        #    items += get_files(item, _depth+1)
+        if len(items) == 0:
+            items = [{'name':name, 'obj':obj, 'file':file}]
+        log.debug("%s => %s", obj, items)
+    else:
+        if not getattr(obj, 'isListable', False):
+            log.debug("Can't list object: %s", obj)
+            return items
+
+        log.debug("no data in %s", obj)
+        for item in getattr(obj, 'objects', []):
+            items += get_files(item, _depth+1)
+        log.debug("%s => %s", obj, items)
+    return items
+
+
 def list_file(path):
     """Print list of given file's contents."""
     with FileReader(path, 'rb') as file:
@@ -125,89 +169,30 @@ def _list_recursive(obj, _depth=0):
             _list_recursive(item, _depth+1)
 
 
+def extract_recursive(path, dest, dry=False):
+    with FileReader(path, 'rb') as file:
+        decoder = codec.getDecoderForFile(file)
+        decoder = decoder(file, None)
+        items   = get_files(decoder, path)
+        for item in items:
+            log.info("Extracting %s/%s...", dest, item['name'])
+            if not dry:
+                with FileWriter(dest+'/'+item['name']) as output:
+                    if 'file' in item:
+                        item['file'].seek(0)
+                        output.write(item['file'].read())
+                    else:
+                        output.write(item['obj'].toData())
+
+
 def list_file_recursive(path):
     """Print list of given file's contents recursively."""
     with FileReader(path, 'rb') as file:
         decoder = codec.getDecoderForFile(file)
         decoder = decoder(file, None)
+        items   = []
         for obj in decoder.objects:
             _list_recursive(obj)
-
-
-
-def extract_file(path, dest, dry=False):
-    """Extract given file to given destination."""
-    log.info("Extracting %s...", path)
-    with FileReader(path, 'rb') as file:
-        decoder = codec.getDecoderForFile(file)
-        decoder = decoder(file, dest, dry=dry)
-        decoder.unpack()
-
-
-def extract_directory(path, dry=False, _depth=0):
-    """Recursively extract given directory.
-
-    Called from extract_recursive.
-    """
-    log.info("Recursing into %s", path)
-    for name in map(lambda n: path+'/'+n, os.listdir(path)):
-        if os.path.isdir(name):
-            return extract_directory(name, dry=dry, _depth=_depth+1)
-        else:
-            return extract_recursive(name, name, dry=dry, _depth=_depth+1)
-
-
-def extract_recursive(path, dest, dry=False, _depth=0):
-    """Recursively extract given file/directory to given destination."""
-    log.info("Recursively extracting %s to %s...", path, dest)
-    try:
-        # extract the input file
-        with FileReader(path, 'rb') as file:
-            decoder = codec.getDecoderForFile(file)
-            #name    = os.path.normpath(decoder.suggestOutputName(dest))
-            #log.debug("in(%s) sugg(%s) out(%s)", path, name, dest)
-            # XXX on Windows we may not be able to open this file.
-            log.debug("decoder(%s, %s)", file, dest)
-            decoder = decoder(file, dest)
-            log.debug("decoder.unpack (%s)", type(decoder).__name__)
-            decoder.unpack()
-            log.debug("decoder.unpack done")
-
-        # if successful, remove the input file, if we created it
-        if _depth > 0:
-            log.debug("Removing intermediate file %s", path)
-            os.remove(path)
-
-        # recurse into this file
-        res = extract_recursive(dest, dest, dry=dry, _depth=_depth+1)
-        log.debug("Recursive extraction from %s => %s", path, res)
-
-    except IsADirectoryError: # recurse into the directory
-        res = extract_directory(path, dry=dry, _depth=_depth+1)
-        log.debug("Extract dir %s => %s", path, res)
-        if res is None:
-            os.rmdir(dest)
-            return None
-
-    except codec.UnsupportedFileTypeError:
-        log.info("Can't extract %s any further", path)
-        log.debug("Remove %s", dest)
-        os.rmdir(dest)
-        return None
-
-    except FileNotFoundError:
-        if _depth > 0:
-            # we tried to recurse into the file we just created,
-            # but there was no file. previous stage did nothing.
-            log.warning("Nothing extracted from %s", path)
-        else: # the user-supplied input file is missing.
-            raise
-
-    #log.debug("move %s to %s", temp_path, dest)
-    #try: shutil.move(temp_path, dest)
-    #except FileExistsError:
-    #    log.debug("can't move %s to %s", temp_path, dest)
-    return dest
 
 
 def main():

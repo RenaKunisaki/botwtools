@@ -26,7 +26,7 @@ class AampDecoder(Decoder):
     """Decoder for AAMP files."""
     __codec_name__ = 'AAMP'
     defaultFileExt = 'xml'
-    
+
     def _read(self):
         """Read the input file, upon opening it."""
         self.header = Header().readFromFile(self.input)
@@ -63,8 +63,7 @@ class AampDecoder(Decoder):
         """
         return self.header.num_root_nodes
 
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
+    def toData(self):
         ns    = '{'+self.roots[0].xmlns+'}'
         root  = ET.Element('aamp', nsmap=self.roots[0].xmlnsmap)
         for r in self.roots: root.append(r.toXML())
@@ -86,10 +85,14 @@ class AampDecoder(Decoder):
         for k, v in attrs.items():
             root.set(ns+k, str(v))
 
+        tree = ET.ElementTree(root)
+        return ET.tostring(tree,
+            encoding='utf-8',
+            xml_declaration=True,
+            pretty_print=True,
+        )
+
+    def unpack(self):
+        """Unpack this file to `self.destPath`."""
         with open(self.destPath, 'wb') as file:
-            tree = ET.ElementTree(root)
-            tree.write(file,
-                encoding='utf-8',
-                xml_declaration=True,
-                pretty_print=True,
-            )
+            file.write(self.toData())
