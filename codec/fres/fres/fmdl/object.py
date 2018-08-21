@@ -70,7 +70,7 @@ class FMDL(FresObject):
         self.dumpToDebugLog()
         #self.dumpOffsets()
 
-        log.info("FMDL '%s' contains %d skeletons, %d FVTXs, %d FSHPs, %d FMATs, %d udatas, total %d vertices",
+        log.debug("FMDL '%s' contains %d skeletons, %d FVTXs, %d FSHPs, %d FMATs, %d udatas, total %d vertices",
             self.name,
             1 if self.fskl_offset > 0 else 0, # can this ever be 0?
             self.fvtx_count, self.fshp_count, self.fmat_count,
