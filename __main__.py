@@ -76,6 +76,15 @@ def list_codecs():
     )))))
 
 
+def _format_size(size):
+    units = 'bKMG'
+    unit  = 0
+    while(size > 9999 and unit < len(units)):
+        size /= 1024
+        unit += 1
+    return '%4d%s' % (size, units[unit])
+
+
 def list_file(path):
     """Print list of given file's contents."""
     with FileReader(path, 'rb') as file:
@@ -86,8 +95,12 @@ def list_file(path):
 
 def _list_recursive(obj, _depth=0):
     ind = '  ' * _depth
-    try: print(ind + obj.toString())
-    except AttributeError: print(ind + str(obj))
+    try: name = obj.toString()
+    except AttributeError: name = str(obj)
+
+    try: print('%s[%s] %s' % (ind, _format_size(obj.size), name))
+    except AttributeError: print('%s%s' % (ind, name))
+
     with tempfile.TemporaryFile() as file:
         try:
             file.write(obj.toData())
