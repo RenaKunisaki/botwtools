@@ -16,6 +16,8 @@ import codec
 
 class File:
     """Represents a file in a SARC archive."""
+    isListable = True # `--list-recursive` should enumerate this
+    
     def __init__(self, arc, node, name):
         self.archive    = arc
         self.name       = name

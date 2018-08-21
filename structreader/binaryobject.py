@@ -95,6 +95,8 @@ def fmtStructField(fmt, val):
 
 class BinaryObject:
     """Object which is instantiated by reading a struct from a file."""
+    isListable = True # `--list-recursive` should enumerate this
+
     def __init__(self):
         self._file = None
         self._file_offset = None

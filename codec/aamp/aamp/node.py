@@ -26,8 +26,9 @@ xmlnsmap = {
 
 class Node(BinaryObject):
     """AAMP node."""
-    xmlns = xmlns
-    xmlnsmap = xmlnsmap
+    xmlns      = xmlns
+    xmlnsmap   = xmlnsmap
+    isListable = False
 
     _reader = StructReader(
         ('I', 'name_hash'),

@@ -34,6 +34,7 @@ class Decoder:
     """
     #__codec_name__ = 'your decoder should put a name here'
     defaultFileExt = 'extracted'
+    isListable     = True # `--list-recursive` should enumerate this
 
     def __init__(self, input:BinInput, output:Path=None, dry=False):
         """Create new decoder.

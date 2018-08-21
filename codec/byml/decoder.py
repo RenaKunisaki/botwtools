@@ -48,6 +48,7 @@ class BymlDecoder(Decoder):
     """Decoder for BYML files."""
     __codec_name__ = 'BYML'
     defaultFileExt = 'yaml'
+    isListable     = False
 
     def _read(self):
         """Read the input file, upon opening it."""

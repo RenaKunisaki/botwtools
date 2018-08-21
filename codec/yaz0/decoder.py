@@ -33,6 +33,7 @@ class Yaz0Stream(io.RawIOBase):
 
     Accepts an input file and yields bytes of the decompressed data.
     """
+    isListable = True # `--list-recursive` should enumerate this
 
     def __init__(self, file:BinInput):
         self.file = FileReader(file)

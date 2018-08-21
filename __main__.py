@@ -77,7 +77,7 @@ def list_codecs():
 
 
 def _format_size(size):
-    units = 'bKMG'
+    units = ' KMG'
     unit  = 0
     while(size > 9999 and unit < len(units)):
         size /= 1024
@@ -95,11 +95,19 @@ def list_file(path):
 
 def _list_recursive(obj, _depth=0):
     ind = '  ' * _depth
+
+    if not getattr(obj, 'isListable', False):
+        #log.debug("Can't list object: %s", obj)
+        return
+    #else:
+    #    log.debug("Listing object: %s", obj)
+
     try: name = obj.toString()
     except AttributeError: name = str(obj)
 
     try: print('%s[%s] %s' % (ind, _format_size(obj.size), name))
     except AttributeError: print('%s%s' % (ind, name))
+
 
     with tempfile.TemporaryFile() as file:
         try:
