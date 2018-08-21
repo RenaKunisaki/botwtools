@@ -83,14 +83,26 @@ def defType(id, fmt, name):
         'read': read,
     }
 
-defType(0x00, Bool,   'bool')
-defType(0x01, 'f',    'float')
-defType(0x02, 'I',    'int')
-defType(0x03, VecF(2),'Vec2f')
-defType(0x04, VecF(3),'Vec3f')
-# 0x05: unknown
-defType(0x06, VecF(4),'Vec4f')
-defType(0x07, String, 'string')
-defType(0x08, String, 'actor') # actor name
-defType(0x11, 'I', '0x11') # no idea
-defType(0x14, String, 'string2') # probably some object name
+# eg: 0x01 = agl::util::Parameter<float>
+defType(0x00, Bool,   'bool') # bool
+defType(0x01, 'f',    'float') # float
+defType(0x02, 'I',    'int') # int
+defType(0x03, VecF(2),'Vec2f') # sead::Vector2<float>
+defType(0x04, VecF(3),'Vec3f') # sead::Vector3<float>
+defType(0x05, VecF(4),'Vec4f') # sead::Vector4<float>
+defType(0x06, VecF(4),'color') # sead::Color4f
+defType(0x07, String, 'string32') # sead::FixedSafeString<32>
+defType(0x08, String, 'string64') # sead::FixedSafeString<64>
+# 0x09: curve1 - agl::utl::ParameterCurve<1u>
+# 0x0A: curve2 - agl::utl::ParameterCurve<2u>
+# 0x0B: curve3 - agl::utl::ParameterCurve<3u>
+# 0x0C: curve4 - agl::utl::ParameterCurve<4u>
+# 0x0D: buffer_int - agl::utl::ParameterBuffer<int>
+# 0x0E: buffer_float - agl::utl::ParameterBuffer<float>
+defType(0x0F, String, 'string256') # sead::FixedSafeString<256>
+# 0x10: quat - agl::utl::Parameter<sead::Quat<float>>
+defType(0x11, 'I', 'uint') # uint
+# 0x12: buffer_u32 - agl::utl::ParameterBuffer<unsigned int>
+# 0x13: buffer_binary - agl::utl::ParameterBuffer<unsigned char>
+defType(0x14, String, 'stringref') # sead::SafeStringBase<char>
+# 0x15: none - agl::utl::Parameter<int *>, agl::utl::Parameter<float *>, agl::utl::Parameter<unsigned int *>, agl::utl::Parameter<unsigned char *>
