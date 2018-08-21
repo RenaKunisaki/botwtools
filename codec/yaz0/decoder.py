@@ -44,6 +44,7 @@ class Yaz0Stream(io.RawIOBase):
             raise UnsupportedFileTypeError(self.magic)
         self.src_pos  = 16
         self.dest_pos = 0
+        self.size     = self.dest_end
         self._output  = []
 
 
