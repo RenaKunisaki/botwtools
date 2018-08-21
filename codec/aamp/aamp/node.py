@@ -69,8 +69,8 @@ class Node(BinaryObject):
     def toXML(self, _depth=0):
         """Convert node to XML node object."""
         elem = ET.Element(self.name, nsmap=self.xmlnsmap)
-        elem.set('{'+self.xmlns+'}namehash',
-            '%08X' % self.name_hash)
+        #elem.set('{'+self.xmlns+'}namehash',
+        #    '%08X' % self.name_hash)
 
         if self.num_children > 0:
             for child in self.children:
