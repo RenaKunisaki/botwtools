@@ -41,8 +41,8 @@ class RootNode(Node):
     def toXML(self, _depth=0):
         """Convert node to XML node object."""
         elem = super().toXML(_depth=_depth+1)
-        elem.set('{'+self.xmlns+'}unk04', str(self.unk04))
-        elem.set('{'+self.xmlns+'}unk06', str(self.unk06))
+        elem.set('unk04', str(self.unk04))
+        elem.set('unk06', str(self.unk06))
         return elem
 
 

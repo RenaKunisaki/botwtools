@@ -62,11 +62,6 @@ def VecF(n):
         return ', '.join(map(str, data))
     return read
 
-#It's a Curve3
-#2 uint32s + 30 floats per curve
-#so sizeof(Curve) is 4*32 = 0x80
-#sizeof(Curve2) = 0x100, then 0x180, then 0x200 for Curve4
-
 def Curve(n):
     fmt = '%dI%df' % (n*2, n*30)
     size = struct.calcsize(fmt)
@@ -99,7 +94,7 @@ def defType(id, fmt, name):
 # eg: 0x01 = agl::util::Parameter<float>
 defType(0x00, Bool,   'bool') # bool
 defType(0x01, 'f',    'float') # float
-defType(0x02, 'I',    'int') # int
+defType(0x02, 'i',    'int') # int
 defType(0x03, VecF(2),'Vec2f') # sead::Vector2<float>
 defType(0x04, VecF(3),'Vec3f') # sead::Vector3<float>
 defType(0x05, VecF(4),'Vec4f') # sead::Vector4<float>

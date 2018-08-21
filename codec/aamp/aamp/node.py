@@ -77,8 +77,7 @@ class Node(BinaryObject):
             for child in self.children:
                 elem.append(child.toXML())
         elif hasattr(self, 'data_type'):
-            elem.set('{'+self.xmlns+'}type',
-                get_type_name(self.data_type))
+            elem.set('type', get_type_name(self.data_type))
             try:
                 elem.text = str(self.data)
             except ValueError:
