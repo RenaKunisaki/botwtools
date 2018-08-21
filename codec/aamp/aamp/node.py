@@ -78,7 +78,10 @@ class Node(BinaryObject):
         elif hasattr(self, 'data_type'):
             elem.set('{'+self.xmlns+'}type',
                 get_type_name(self.data_type))
-            elem.text = str(self.data)
+            try:
+                elem.text = str(self.data)
+            except ValueError:
+                log.error("Error writing string to XML: %s", self.data)
         else: # root node
             pass
 

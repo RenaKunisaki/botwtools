@@ -19,14 +19,14 @@ aamp_data_type = {}
 def read_aamp_type(file, typ):
     """Given type ID and file, read data of that type."""
     if typ not in aamp_data_type:
-        raise TypeError("Unknown type: " + str(typ))
+        raise TypeError("Unknown type: 0x%X" % typ)
 
     return aamp_data_type[typ]['read'](file)
 
 def get_type_name(typ):
     """Get type name by ID."""
     if typ not in aamp_data_type:
-        raise TypeError("Unknown type: " + str(typ))
+        raise TypeError("Unknown type: 0x%X" % typ)
 
     return aamp_data_type[typ]['name']
 
@@ -91,6 +91,6 @@ defType(0x04, VecF(3),'Vec3f')
 # 0x05: unknown
 defType(0x06, VecF(4),'Vec4f')
 defType(0x07, String, 'string')
-# 0x08: actor
 defType(0x08, String, 'actor') # actor name
+defType(0x11, 'I', '0x11') # no idea
 defType(0x14, String, 'string2') # probably some object name
