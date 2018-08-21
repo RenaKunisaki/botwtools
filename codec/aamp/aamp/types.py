@@ -62,6 +62,19 @@ def VecF(n):
         return ', '.join(map(str, data))
     return read
 
+#It's a Curve3
+#2 uint32s + 30 floats per curve
+#so sizeof(Curve) is 4*32 = 0x80
+#sizeof(Curve2) = 0x100, then 0x180, then 0x200 for Curve4
+
+def Curve(n):
+    fmt = '%dI%df' % (n*2, n*30)
+    size = struct.calcsize(fmt)
+    def read(file):
+        data = struct.unpack(fmt, file.read(size))
+        return ', '.join(map(str, data))
+    return read
+
 
 def defType(id, fmt, name):
     """Define type.
@@ -93,10 +106,10 @@ defType(0x05, VecF(4),'Vec4f') # sead::Vector4<float>
 defType(0x06, VecF(4),'color') # sead::Color4f
 defType(0x07, String, 'string32') # sead::FixedSafeString<32>
 defType(0x08, String, 'string64') # sead::FixedSafeString<64>
-# 0x09: curve1 - agl::utl::ParameterCurve<1u>
-# 0x0A: curve2 - agl::utl::ParameterCurve<2u>
-# 0x0B: curve3 - agl::utl::ParameterCurve<3u>
-# 0x0C: curve4 - agl::utl::ParameterCurve<4u>
+defType(0x09, Curve(1), 'curve1') # agl::utl::ParameterCurve<1u>
+defType(0x0A, Curve(2), 'curve2') # agl::utl::ParameterCurve<2u>
+defType(0x0B, Curve(3), 'curve3') # agl::utl::ParameterCurve<3u>
+defType(0x0C, Curve(4), 'curve4') # agl::utl::ParameterCurve<4u>
 # 0x0D: buffer_int - agl::utl::ParameterBuffer<int>
 # 0x0E: buffer_float - agl::utl::ParameterBuffer<float>
 defType(0x0F, String, 'string256') # sead::FixedSafeString<256>
