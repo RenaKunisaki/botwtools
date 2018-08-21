@@ -37,7 +37,8 @@ class App:
     """The main application."""
 
     def __init__(self):
-        pass
+        self.readOnly = False
+
 
     def _list_codecs(self, codecs):
         return ', '.join(sorted(set(
@@ -45,10 +46,12 @@ class App:
             codecs.values()
         ))))
 
+
     def list_codecs(self):
         """Print list of available encoders and decoders."""
         print("Available encoders:", self._list_codecs(codec.encoders))
         print("Available decoders:", self._list_codecs(codec.decoders))
+
 
     def get_files(self, obj, name, _depth=0):
         """Recursively get all files in given object.
@@ -91,20 +94,51 @@ class App:
             log.debug("%s => %s", obj, items)
         return items
 
-    def extract_recursive(self, path, dest, dry=False):
+
+    def get_file_name(self, obj, input):
+        name = getattr(obj, 'name', input)
+        if hasattr(obj, 'defaultFileExt'):
+            name += '.' + obj.defaultFileExt
+        return name
+
+
+    def write_file(self, name, obj, dest):
+        if hasattr(obj, 'toData'):
+            data = obj.toData()
+            path, name = os.path.split(name)
+            name = self.get_file_name(obj, name)
+            log.info("Extracting %s to %s...", name, dest+'/'+name)
+            if not self.readOnly:
+                with FileWriter(dest+'/'+name) as output:
+                    output.write(data)
+        else:
+            for obj in obj.objects:
+                self.write_file(name, obj, dest)
+
+
+
+    def extract_file(self, path, dest):
+        with FileReader(path, 'rb') as file:
+            decoder = codec.getDecoderForFile(file)
+            decoder = decoder(file, None)
+            self.write_file(path, decoder, dest)
+
+
+    def extract_recursive(self, path, dest):
         with FileReader(path, 'rb') as file:
             decoder = codec.getDecoderForFile(file)
             decoder = decoder(file, None)
             items   = self.get_files(decoder, path)
             for item in items:
                 log.info("Extracting %s/%s...", dest, item['name'])
-                if not dry:
+                if not self.readOnly:
                     with FileWriter(dest+'/'+item['name']) as output:
                         if 'file' in item:
                             item['file'].seek(0)
                             output.write(item['file'].read())
                         else:
                             output.write(item['obj'].toData())
+
 
     def _list_recursive(self, obj, _depth=0):
         ind = '  ' * _depth
@@ -137,6 +171,7 @@ class App:
             for item in decoder.objects:
                 self._list_recursive(item, _depth+1)
 
+
     def list_file_recursive(self, path):
         """Print list of given file's contents recursively."""
         with FileReader(path, 'rb') as file:
@@ -145,6 +180,7 @@ class App:
             items   = []
             for obj in decoder.objects:
                 self._list_recursive(obj)
+
 
     def list_file(self, path):
         """Print list of given file's contents."""

@@ -73,12 +73,12 @@ def main():
     app = App()
 
     if args.list_codecs: app.list_codecs()
-    dry = args.dry_run
-    if dry: log.info("Dry run; not writing any files!")
+    app.readOnly = args.dry_run
+    if app.readOnly: log.info("Dry run; not writing any files!")
     for arg in args.list: app.list_file(*arg)
     for arg in args.list_recursive: app.list_file_recursive(*arg)
-    for arg in args.extract: app.extract_file(*arg, dry=dry)
-    for arg in args.extract_recursive: app.extract_recursive(*arg, dry=dry)
+    for arg in args.extract: app.extract_file(*arg)
+    for arg in args.extract_recursive: app.extract_recursive(*arg)
     return 0
 
 
