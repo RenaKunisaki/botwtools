@@ -32,7 +32,7 @@ def log_unknown_hash(hash):
         log.debug("New unknown hash %08X", hash)
         unknown_hashes[hash] = True
         with open(dir_path+'/unknown-hashes.txt', 'a') as file:
-            file.write('%d\n' % hash)
+            file.write('0x%08X,\n' % hash)
 
 
 # read the known hashes
