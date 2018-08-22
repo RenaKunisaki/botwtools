@@ -18,7 +18,11 @@ import io
 import struct
 
 class FileReader:
-    """Helper class for reading binary files."""
+    """Helper class for reading binary files.
+
+    Wraps a file object and provides additional methods and properties.
+    """
+
     _seekNames = {
         'start': 0,
         'cur':   1,
@@ -33,19 +37,14 @@ class FileReader:
         self.size = self.seek(0, 'end')
         file.seek(pos)
 
+
     @staticmethod
     def open(path, mode='rb'):
         file = open(path, mode)
         return FileReader(file)
 
-    def __enter__(self):
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.close()
-
-
-    def seek(self, pos:int, whence:(int,str)=0):
+    def seek(self, pos:int, whence:(int,str)=0) -> int:
         """Seek within the file.
 
         pos: Position to seek to.
@@ -60,21 +59,32 @@ class FileReader:
         return self.file.seek(pos, whence)
 
 
-    def read(self, size:(int,str)=-1, pos:int=None):
+    def read(self, size:(int,str)=-1, pos:int=None, count:int=1):
         """Read from the file.
 
-        size: Number of bytes to read, or a `struct` format string.
-        pos:  Position to seek to first. (optional)
+        size:  Number of bytes to read, or a `struct` format string.
+        pos:   Position to seek to first. (optional)
+        count: Number of items to read. If not 1, returns a list.
 
         Returns the data read.
         """
         if pos is not None: self.seek(pos)
+        if   count <  0: raise ValueError("Count cannot be negative")
+        elif count == 0: return []
+
+        res = []
         if type(size) is str:
-            r = struct.unpack(size,
-                self.file.read(struct.calcsize(size)))
-            if len(r) == 1: r = r[0]
-            return r
-        return self.file.read(size)
+            fmt  = size
+            size = struct.calcsize(size)
+            for i in range(count):
+                r = struct.unpack(fmt, self.file.read(size))
+                if len(r) == 1: r = r[0]
+                res.append(r)
+        else:
+            for i in range(count):
+                res.append(self.file.read(size))
+        if count == 1: return res[0]
+        return res
 
 
     def readString(self, pos:int=None, length:(int,str)=None,
@@ -113,6 +123,17 @@ class FileReader:
             return None
         return s
 
-    def tell(self):
+
+    def tell(self) -> int:
         """Get current read position."""
         return self.file.tell()
+
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+
+    def __str__(self):
+        return "<FileReader(%s) at 0x%x>" % (self.name, id(self))
