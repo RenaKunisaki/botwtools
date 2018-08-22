@@ -12,13 +12,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
+import logging; log = logging.getLogger(__name__)
 import codec
 
 class File:
     """Represents a file in a SARC archive."""
     isListable = True # `--list-recursive` should enumerate this
-    
+
     def __init__(self, arc, node, name):
+        #log.debug("SARC file name=%s", name)
         self.archive    = arc
         self.name       = name
         self.name_hash  = node.name_hash

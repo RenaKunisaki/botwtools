@@ -43,6 +43,9 @@ class Decoder:
         output: Destination path. Can be excluded if not extracting files.
         dry:    If true, do not create any files.
         """
+        name = getattr(input, 'name', None)
+        if type(name) is str:
+            self.name = input.name
         self.input    = input
         self.destPath = output
         self.dry      = dry

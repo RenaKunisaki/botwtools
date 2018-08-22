@@ -65,8 +65,7 @@ class BymlDecoder(Decoder):
 
     def _read(self):
         """Read the input file, upon opening it."""
-        self.root = RootNode(self.input.name,
-            self.input.read())
+        self.root = RootNode(self.input.name, self.input.read())
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""

@@ -90,8 +90,3 @@ class AampDecoder(Decoder):
             xml_declaration=True,
             pretty_print=True,
         )
-
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
-        with open(self.destPath, 'wb') as file:
-            file.write(self.toData())

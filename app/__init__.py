@@ -45,6 +45,7 @@ class App:
         """Make a FileReader for the given file,
         with default settings for this app.
         """
+        log.debug("makeFileReader(%s: %s)", file, getattr(file, 'name', None))
         if isinstance(file, FileReader): return file
         return FileReader(file, mode,
             endian=self.endian,
@@ -71,8 +72,14 @@ class App:
         """
         #log.debug("listing %s", obj)
         items = []
-        name = getattr(obj, 'name', name)
-        if hasattr(obj, 'defaultFileExt'):
+
+        # name might be int if input is a temp file,
+        # so ignore it in that case.
+        oname = getattr(obj, 'name', name)
+        if type(oname) is str: name = oname
+
+        if (hasattr(obj, 'defaultFileExt')
+        and not name.endswith(obj.defaultFileExt)):
             name += '.' + obj.defaultFileExt
 
         if hasattr(obj, 'toData'):
@@ -141,6 +148,7 @@ class App:
         with self.makeFileReader(path) as file:
             decoder = codec.getDecoderForFile(file)
             decoder = decoder(file, None)
+            log.debug("get_files(%s, %s)", decoder, path)
             items   = self.get_files(decoder, path)
             for item in items:
                 log.info("Extracting %s/%s...", dest, item['name'])
