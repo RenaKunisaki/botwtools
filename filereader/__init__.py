@@ -29,10 +29,18 @@ class FileReader:
         'end':   2,
     }
 
-    def __init__(self, file, mode='rb'):
+    _endianFmts = {
+        'big':    '>',
+        'little': '<',
+    }
+
+    def __init__(self, file, mode='rb', endian='little',
+    defaultStringLengthFmt='H'):
         if type(file) is str: file = open(file, mode)
-        self.file = file
-        self.name = file.name
+        self.file   = file
+        self.name   = file.name
+        self.endian = endian
+        self.defaultStringLengthFmt = defaultStringLengthFmt
         pos = file.tell()
         self.size = self.seek(0, 'end')
         file.seek(pos)
@@ -42,6 +50,10 @@ class FileReader:
     def open(path, mode='rb'):
         file = open(path, mode)
         return FileReader(file)
+
+    @property
+    def endianFmt(self):
+        return self._endianFmts[self.endian]
 
 
     def seek(self, pos:int, whence:(int,str)=0) -> int:
@@ -87,7 +99,7 @@ class FileReader:
         return res
 
 
-    def readString(self, pos:int=None, length:(int,str)=None,
+    def readString(self, pos:int=None, length:(int,str,bool)=None,
     encoding:(str,None)='shift-jis') -> (str, bytes):
         """Read null-terminated string from file.
 
@@ -101,6 +113,8 @@ class FileReader:
             even if there are embeded nulls.
         If `length` is a string, it specifies a `struct` format
             string; this value is read and used as the string length.
+        If `length` is True, it uses `self.defaultStringLengthFmt` as
+            the length prefix format.
 
         Returns the string.
         """
@@ -108,7 +122,11 @@ class FileReader:
         pos = self.tell() # for error message
         s = []
         try:
-            if type(length) is str: length = self.read(length)
+            if type(length) is str:
+                if length[0] not in '@=<>!': # not a byte order
+                    length = self.endianFmt + length
+                length = self.read(length)
+
             if length is None:
                 while True:
                     b = self.file.read(1)

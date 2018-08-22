@@ -36,8 +36,19 @@ def _format_size(size):
 class App:
     """The main application."""
 
-    def __init__(self):
-        self.readOnly = False
+    def __init__(self, endian='little', readOnly=False):
+        self.endian   = endian
+        self.readOnly = readOnly
+
+
+    def makeFileReader(self, file, mode='rb') -> FileReader:
+        """Make a FileReader for the given file,
+        with default settings for this app.
+        """
+        if isinstance(file, FileReader): return file
+        return FileReader(file, mode,
+            endian=self.endian,
+            defaultStringLengthFmt='H')
 
 
     def _list_codecs(self, codecs):
@@ -69,7 +80,7 @@ class App:
             file = tempfile.TemporaryFile()
             file.write(obj.toData())
             file.seek(0, 0)
-            file = FileReader(file)
+            file = self.makeFileReader(file)
             try:
                 decoder = codec.getDecoderForFile(file)
             except codec.UnsupportedFileTypeError:
@@ -118,14 +129,14 @@ class App:
 
 
     def extract_file(self, path, dest):
-        with FileReader(path, 'rb') as file:
+        with self.makeFileReader(path) as file:
             decoder = codec.getDecoderForFile(file)
             decoder = decoder(file, None)
             self.write_file(path, decoder, dest)
 
 
     def extract_recursive(self, path, dest):
-        with FileReader(path, 'rb') as file:
+        with self.makeFileReader(path) as file:
             decoder = codec.getDecoderForFile(file)
             decoder = decoder(file, None)
             items   = self.get_files(decoder, path)
@@ -162,7 +173,7 @@ class App:
             except AttributeError:
                 return
             file.seek(0, 0)
-            file = FileReader(file)
+            file = self.makeFileReader(file)
             try:
                 decoder = codec.getDecoderForFile(file)
             except codec.UnsupportedFileTypeError:
