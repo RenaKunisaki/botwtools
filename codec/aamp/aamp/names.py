@@ -24,7 +24,7 @@ from .crc32 import crc32
 unknown_hashes = {}
 with open(dir_path+'/unknown-hashes.txt') as file:
     for line in file:
-        line = line.strip()[0:-2] # remove comma
+        line = line.strip()[0:-1] # remove comma
         unknown_hashes[int(line, 0)] = True
 
 def log_unknown_hash(hash):
