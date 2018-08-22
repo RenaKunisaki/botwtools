@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
+from ..types import attrFmts
 
 attr_types = {
     # attribute name => {
@@ -80,8 +81,13 @@ class ColladaWriter:
 
 
     def addScene(self):
+        nodes = []
+        for i, geom in enumerate(self.inst_geoms):
+            node = myxml.Element('node', id='node%d'%i, type='NODE')
+            node.append(geom)
+            nodes.append(node)
         scene = myxml.Element('visual_scene',
-            *self.inst_geoms,
+            *nodes,
             id   = 'scene%d' % len(self.scenes),
             name = 'untitled',
         )
@@ -249,10 +255,10 @@ class ColladaWriter:
 
         # get the buffer and format
         buf  = fvtx.buffers[attr.buf_idx]
-        fmt  = fvtx.attrFmts.get(attr.format)
+        fmt  = attrFmts.get(attr.format)
         func = None
-        if type(fmt) is dict: # we have a conversion function
-            func = fmt['func']
+        if type(fmt) is dict:
+            func = fmt.get('func', None)
             fmt  = fmt['fmt']
 
         # get the data from the buffer
@@ -299,11 +305,19 @@ class ColladaWriter:
 
     def _makeArrayForAttribute(self, attr, data):
         """Make the array element for an attribute's data."""
-        # XXX use attr.format instead of always float
+        typ = attrFmts[attr.format]
+        if typ['collada_type'] == 'int':
+            dmin, dmax = typ['min'], typ['max']
+            data = list(map(lambda d: d/(dmax-dmin)+dmin, data))
+
         arr = myxml.Element('float_array',
-            id = 'array%d' % id(attr),
+            id = 'array_%s' % attr.name,
             count = len(data),
         )
+        # apparently Blender doesn't like these
+        #if typ['collada_type'] == 'int':
+        #    arr.set('mininclusive', typ['min'])
+        #    arr.set('maxinclusive', typ['max'])
         arr.text = ' '.join(map(str, data))
         return arr
 
@@ -312,17 +326,21 @@ class ColladaWriter:
         """Make the accessor/technique elements for an attribute."""
         # XXX support more types of accessor/technique
         if attr.name not in attr_types: return None
-        offs = attr.buf_offs #* buf.stride
-        tech = myxml.Element('technique_common')
+        typ    = attrFmts[attr.format]
+        offs   = attr.buf_offs                    #* buf.stride
+        tech   = myxml.Element('technique_common')
         params = attr_types[attr.name]['params']
-        acc  = tech.Child('accessor',
+        acc    = tech.Child('accessor',
             count  = len(data)*len(params), # XXX what is this
             offset = offs,
             stride = len(params),
-            source = '#array%d' % id(attr),
+            source = '#array_%s' % attr.name,
         )
         for p in params:
-            acc.Child('param', name=p, type='float')
+            acc.Child('param', name=p,
+                #type=typ['collada_type']
+                type='float'
+                )
         return tech
 
 

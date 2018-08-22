@@ -69,7 +69,7 @@ class Element:
         if type(name) is dict:
             for k, v in name.items(): self.attrs[k] = v
         else:
-            self.attrs[name] = val
+            self.attrs[name] = val[0]
 
 
     def _toXML(self, document):
