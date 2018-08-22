@@ -21,7 +21,6 @@ import io
 import os
 import sys
 import struct
-from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput, TxtOutput
 from . import bntx
 

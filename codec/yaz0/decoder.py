@@ -25,7 +25,6 @@ import logging; log = logging.getLogger(__name__)
 import io
 import os
 import struct
-from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 
 class Yaz0Stream(io.RawIOBase):
@@ -36,7 +35,7 @@ class Yaz0Stream(io.RawIOBase):
     isListable = True # `--list-recursive` should enumerate this
 
     def __init__(self, file:BinInput):
-        self.file = FileReader(file)
+        self.file = file
         _, name = os.path.split(file.name)
         self.name = name + '.out'
         self.magic, self.dest_end = self.file.read('>4sI')

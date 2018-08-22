@@ -18,7 +18,6 @@ import io
 import os
 import struct
 from lxml import etree as ET
-from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from .aamp import Header, Node, RootNode
 

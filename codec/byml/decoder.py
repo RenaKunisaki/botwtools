@@ -21,7 +21,6 @@ import io
 import os
 import struct
 import yaml
-from filereader import FileReader
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from . import byml
 

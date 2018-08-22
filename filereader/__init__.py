@@ -88,7 +88,7 @@ class FileReader:
 
 
     def readString(self, pos:int=None, length:(int,str)=None,
-    encoding:str='shift-jis') -> (str, bytes):
+    encoding:(str,None)='shift-jis') -> (str, bytes):
         """Read null-terminated string from file.
 
         pos: Position to seek to first. (optional)
@@ -130,7 +130,7 @@ class FileReader:
         hx   = map(lambda b: '%02X' % b, data)
         return ' '.join(hx)
 
-    def readHexWords(self, cnt:, offset:int=None) -> str:
+    def readHexWords(self, cnt:int, offset:int=None) -> str:
         """Read hex string for debugging, in 4-byte chunks."""
         data = self.read('I', offset, cnt)
         hx   = map(lambda b: '%08X' % b, data)
