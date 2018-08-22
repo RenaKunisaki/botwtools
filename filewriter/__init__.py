@@ -89,14 +89,8 @@ class FileWriter:
     def open(path, mode='wb'):
         return FileWriter(file, mode)
 
-    def __enter__(self):
-        return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.file.close()
-
-
-    def seek(self, pos:int, whence:(int,str)=0):
+    def seek(self, pos:int, whence:(int,str)=0) -> int:
         """Seek within the file.
 
         pos: Position to seek to.
@@ -111,7 +105,7 @@ class FileWriter:
         return self.file.seek(pos, whence)
 
 
-    def write(self, data, fmt=None, pos:int=None):
+    def write(self, data, fmt=None, pos:int=None) -> None:
         """Write to the file.
 
         data: Data to write.
@@ -123,9 +117,19 @@ class FileWriter:
         self.file.write(data)
 
 
-    def tell(self):
+    def tell(self) -> int:
         """Get current read position."""
         return self.file.tell()
+
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.file.close()
+
+    def __str__(self):
+        return "<FileWriter(%s) at 0x%x>" % (self.name, id(self))
 
 
 class DummyFileWriter(FileWriter):
