@@ -27,11 +27,21 @@ BaseTypes = {
 class StructReader:
     """Reads a struct from a binary file or buffer, and returns
     a dict with named fields.
-
-    structDef: a list of (format, name) pairs, where format is the
-    format string used by `struct`, and name is the field name.
     """
-    def __init__(self, *structDef, size=None):
+
+    def __init__(self, *structDef, size:int=None):
+        """Create StructReader.
+
+        structDef: a list of field definitions. Each item is either:
+            - a tuple containing fields:
+                - `struct` format string
+                - field name
+                - (optional) conversion function, which takes the data
+                    that was read and returns some other object
+            - an object with a `name` attribute and a `read` method
+        size: size of struct. If specified, produces a warning message
+            if the actual size does not match this value.
+        """
         _checkSize = size
         self.fields = {}
         self.orderedFields = []
