@@ -31,6 +31,6 @@ Thanks to leoetlino and KillzXGaming for help reverse engineering file formats.
 - Currently does not support little-endian (WiiU) SARC files.
 - Since AAMP only stores the hashes of element names, many elements come out named `unknown_xxxxxxxx`.
     - I've brute-forced a handful of hashes, but CRC32 is prone to collisions, so some of the names might be nonsense that happens to have the same hash.
-- Recursive extraction is buggy.
+- Recursive extraction might be buggy.
 - This program is only tested on Linux, but probably works fine on Windows too.
 - This program only operates on files extracted from the game image. It cannot unpack the `.xci` image file. Use `nxtools` for that. I will not help you obtain the game image/files.
