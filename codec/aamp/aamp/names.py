@@ -24,7 +24,8 @@ from .crc32 import crc32
 unknown_hashes = {}
 with open(dir_path+'/unknown-hashes.txt') as file:
     for line in file:
-        unknown_hashes[int(line.strip())] = True
+        line = line.strip()[0:-2] # remove comma
+        unknown_hashes[int(line, 0)] = True
 
 def log_unknown_hash(hash):
     """If a hash is unknown, add to the list of unknown hashes."""
@@ -45,7 +46,7 @@ def read_hashes():
             line = line.strip()
             hash = crc32(line)
             if hash in name_hashes and name_hashes[hash] != line:
-                log.warn("duplicate hash %s:\n  %s\n  %s", hash,
+                log.warn('duplicate hash 0x%08X: %s / %s', hash,
                     name_hashes[hash], line)
             name_hashes[hash] = line
     log.debug("AAMP: computed %d name hashes", len(name_hashes))
