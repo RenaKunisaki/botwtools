@@ -124,6 +124,19 @@ class FileReader:
         return s
 
 
+    def readHex(self, cnt:int, offset:int=None) -> str:
+        """Read hex string for debugging."""
+        data = self.read(cnt, offset)
+        hx   = map(lambda b: '%02X' % b, data)
+        return ' '.join(hx)
+
+    def readHexWords(self, cnt:, offset:int=None) -> str:
+        """Read hex string for debugging, in 4-byte chunks."""
+        data = self.read('I', offset, cnt)
+        hx   = map(lambda b: '%08X' % b, data)
+        return ' '.join(hx)
+
+
     def tell(self) -> int:
         """Get current read position."""
         return self.file.tell()
