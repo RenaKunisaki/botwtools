@@ -24,7 +24,7 @@ import yaml
 from ..base import Decoder, UnsupportedFileTypeError, BinInput
 from . import byml
 
-def byml_to_yml(root, output) -> None:
+def byml_to_yml(root) -> None:
     # taken from byml-v2 by leoetlino
     # Licensed under GPLv2+
     dumper = yaml.CDumper
@@ -39,26 +39,35 @@ def byml_to_yml(root, output) -> None:
     for k, v in types.items():
         yaml.add_representer(getattr(byml, k), v, Dumper=dumper)
 
+    output = io.StringIO()
     yaml.dump(root, output,
         Dumper=dumper, allow_unicode=True, encoding='utf-8')
+    return output.getvalue()
+
+
+class RootNode:
+    isListable = False
+    defaultFileExt = 'yaml'
+
+    def __init__(self, name, data):
+        self.name = name
+        self.byml = byml.Byml(data)
+        self.root = self.byml.parse()
+
+    def toData(self):
+        return byml_to_yml(self.root)
 
 
 class BymlDecoder(Decoder):
     """Decoder for BYML files."""
     __codec_name__ = 'BYML'
     defaultFileExt = 'yaml'
-    isListable     = False
 
     def _read(self):
         """Read the input file, upon opening it."""
-        self.byml = byml.Byml(self.input.read())
-        self.root = self.byml.parse()
+        self.root = RootNode(self.input.name,
+            self.input.read())
 
     def _iter_objects(self):
         """Iterate over the objects in this file."""
         yield self.root
-
-    def unpack(self):
-        """Unpack this file to `self.destPath`."""
-        with open(self.destPath, 'wb') as file:
-            byml_to_yml(self.root, file)

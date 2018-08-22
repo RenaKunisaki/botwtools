@@ -78,7 +78,9 @@ class App:
         if hasattr(obj, 'toData'):
             log.debug("recursing into %s, name=%s", obj, name)
             file = tempfile.TemporaryFile()
-            file.write(obj.toData())
+            data = obj.toData()
+            if type(data) is str: data = bytes(data, 'utf-8')
+            file.write(data)
             file.seek(0, 0)
             file = self.makeFileReader(file)
             try:
@@ -101,7 +103,7 @@ class App:
 
             log.debug("no data in %s", obj)
             for item in getattr(obj, 'objects', []):
-                items += self.get_files(item, _depth+1)
+                items += self.get_files(item, name, _depth+1)
             log.debug("%s => %s", obj, items)
         return items
 
