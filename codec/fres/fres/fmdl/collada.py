@@ -66,78 +66,39 @@ class ColladaWriter:
     a COLLADA file from them.
     """
     def __init__(self):
-        self.cameras    = []
-        self.lights     = []
-        self.effects    = []
-        self.materials  = []
-        self.geometries = []
-        self.images     = []
-        self.scenes     = []
-        self.meshes     = []
-        self.vtxs       = []
-        self.textures   = []
-        self.inst_geoms = []
-        self.fmats      = []
+        self.effects     = []
+        self.materials   = []
+        self.geometries  = []
+        self.images      = []
+        self.scenes      = []
+        self.meshes      = []
+        self.vtxs        = []
+        self.textures    = []
+        self.scene_nodes = []
+        self.fmats       = []
+        self.fvtxs       = []
 
 
-    def addScene(self):
-        nodes = []
-        for i, geom in enumerate(self.inst_geoms):
-            node = myxml.Element('node', id='node%d'%i, type='NODE')
-            node.append(geom)
-            nodes.append(node)
+    def addScene(self, name="Untitled"):
         scene = myxml.Element('visual_scene',
-            *nodes,
+            *self.scene_nodes,
             id   = 'scene%d' % len(self.scenes),
-            name = 'untitled',
+            name = name,
         )
         self.scenes.append(scene)
 
 
     def addFVTX(self, fvtx, name=None):
         """Add an FVTX to the file."""
-        # generate IDs
-        gid  = 'geometry%d' % len(self.geometries)
-        vid  = 'vertices%d' % len(self.geometries)
-        if name is None: name = gid
-
-        # create geometry element
-        elem = myxml.Element('geometry', id=gid, name=name)
-        self.geometries.append(elem)
-
-        # create geometry -> mesh -> vertices
-        mesh = elem.Child('mesh')
-        vtxs = mesh.Child('vertices', id=vid)
-        self.meshes.append(mesh)
-        self.vtxs.append(vtxs)
-
-        # add each attribute to the mesh,
-        # and an input for it to the vertices
-        for attr in fvtx.attrs:
-            src, input = self._serializeAttribute(attr, fvtx)
-            if src:   mesh.append(src)
-            if input: vtxs.append(input)
+        fvid = 'fvtx%d' % len(self.fvtxs)
+        self.fvtxs.append(fvtx)
 
 
     def addFSHP(self, fshp):
         """Add an FSHP to the file."""
-        # we need to attach the polylist to a mesh,
-        # and it needs to reference a vertices element by ID.
-        try: mesh = self.meshes[-1]
-        except IndexError:
-            log.error("No mesh to attach FSHP to!")
-            return
-
-        try: vtxs = self.vtxs[-1]
-        except IndexError:
-            log.error("No vertex group to attach FSHP to!")
-            return
-
-        for lod in fshp.lods:
-            # XXX differentiate the resulting geometries somehow.
-            # currently they have the same names and everything.
-            plist = self._makePlistForLod(fshp, lod, vtxs.get('id'))
-            if plist: mesh.append(plist)
+        for i, lod in enumerate(fshp.lods):
+            name = '%s.%d' % (fshp.name, i)
+            self._makePlistForLod(fshp, lod, name)
 
 
     def addFMAT(self, fmat):
@@ -181,7 +142,7 @@ class ColladaWriter:
         prof.Child('technique', sid='COMMON') \
             .Child('lambert') \
             .Child('diffuse') \
-            .Child('texture', texture=smpid, texcoord="_u0")
+            .Child('texture', texture=smpid, texcoord="geometry0_src4") # XXX
 
         # add the texture to the images
         img = myxml.Element('image', id=texid)
@@ -194,46 +155,87 @@ class ColladaWriter:
 
 
 
-    def _makePlistForLod(self, fshp, lod, vid):
+    def _makePlistForLod(self, fshp, lod, name):
         """Build plist element for LOD model. Called by addFSHP."""
-        # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
-        if lod.prim_fmt in ('line_strip', 'line_loop'):
-            #elem = 'lines'
-            elem = 'triangles' # XXX
-        elif lod.prim_fmt == 'triangles':
-            elem = 'triangles'
-        else:
-            log.error("Unsupported prim fmt %s", lod.prim_fmt)
-            return None
+        # generate IDs
+        gid  = 'geometry%d' % len(self.geometries)
+        vid  = 'vertices%d' % len(self.geometries)
+        if name is None: name = gid
 
-        gid   = self.geometries[-1].get('id')
         matid = 'material%d' % fshp.fmat_idx
         mat   = self.fmats[fshp.fmat_idx]
 
-        plist = myxml.Element(elem,
-            myxml.Element('input',
-                offset   = '0',
-                semantic = 'VERTEX',
-                source   = vid,
-            ),
-            count=len(lod.faces),
-            material=mat.name,
-        )
+        # create geometry and mesh
+        geom = myxml.Element('geometry', id=gid, name=name)
+        self.geometries.append(geom)
+        mesh = geom.Child('mesh')
+        self.meshes.append(mesh)
 
+        # mesh -> vertices -> input, mesh -> source, mesh -> triangles
+        vtxs = myxml.Element('vertices', id=vid)
+        self.vtxs.append(vtxs)
+        tris = myxml.Element(self._getPrimFmt(lod),
+            count=len(lod.faces), material=mat.name)
+        for i, fvtx in enumerate(self.fvtxs):
+            for j, attr in enumerate(fvtx.attrs):
+                if attr.name in attr_types:
+                    srcid = '%s_src%d' % (gid, j)
+                    typ   = attr_types[attr.name]
+                    src   = mesh.Child('source', id=srcid, name=attr.name)
+
+                    # get the buffer and format
+                    buf  = fvtx.buffers[attr.buf_idx]
+                    fmt  = attrFmts.get(attr.format)
+                    func = None
+                    if type(fmt) is dict:
+                        func = fmt.get('func', None)
+                        fmt  = fmt['fmt']
+
+                    # get the data from the buffer
+                    data = []
+                    sz   = struct.calcsize(fmt)
+                    for k in range(int(buf.size / sz)):
+                        d = struct.unpack_from(fmt, buf.data, k*sz)
+                        if func: d = func(d)
+                        for item in d: data.append(item)
+
+                    # stupid
+                    if attr.name == '_p0':
+                        data = self._fixBufferForBlender(data)
+
+                    src.append(self._makeArrayForAttribute(attr, data, srcid))
+                    src.append(self._makeAccessorForAttribute(attr, data, srcid))
+
+                    vtxs.Child('input',
+                        semantic = typ['semantic'],
+                        source   = '#'+srcid,
+                    )
+                    tris.Child('input',
+                        offset   = "0",
+                        semantic = 'VERTEX' if typ['semantic'] == 'POSITION' else typ['semantic'],
+                        source   = srcid+'_'+attr.name,
+                    )
+        mesh.append(vtxs)
+        mesh.append(tris)
+
+        # triangles -> vcount, triangles -> p
         sizes = []
         faces = []
         for face in lod.faces:
             sizes.append(len(face))
             faces += face
 
-        vcount = plist.Child('vcount')
+        vcount = tris.Child('vcount')
         vcount.text = ' '.join(map(str, sizes))
-        p = plist.Child('p')
+        p = tris.Child('p')
         p.text = ' '.join(map(str, faces))
 
 
-        inst = myxml.Element('instance_geometry', url='#'+gid)
-        self.inst_geoms.append(inst)
+        # node -> instance_geometry
+        node = myxml.Element('node', name=name, type='NODE',
+            id = 'node%d' % len(self.scene_nodes),
+        )
+        inst = node.Child('instance_geometry', url='#'+gid)
         inst.Child('bind_material') \
             .Child('technique_common') \
             .Child('instance_material',
@@ -241,7 +243,19 @@ class ColladaWriter:
             .Child('bind_vertex_input', semantic="_u0",
                 input_semantic="TEXCOORD", input_set=0)
 
-        return plist
+        self.scene_nodes.append(node)
+
+
+    def _getPrimFmt(self, lod):
+        # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
+        if lod.prim_fmt in ('line_strip', 'line_loop'):
+            #elem = 'lines'
+            return 'triangles' # XXX
+        elif lod.prim_fmt == 'triangles':
+            return 'triangles'
+        else:
+            log.error("Unsupported prim fmt %s", lod.prim_fmt)
+            return None
 
 
     def _serializeAttribute(self, attr, fvtx):
@@ -251,7 +265,7 @@ class ColladaWriter:
             name = attr_types[attr.name]['name']
         else:
             name = attr.name
-        elem = myxml.Element('source', id=attr.name, name=name)
+        src = myxml.Element('source', id=attr.name, name=name)
 
         # get the buffer and format
         buf  = fvtx.buffers[attr.buf_idx]
@@ -276,8 +290,8 @@ class ColladaWriter:
         # make elements for the data
         arr = self._makeArrayForAttribute   (attr, data)
         acc = self._makeAccessorForAttribute(attr, data)
-        if arr: elem.append(arr)
-        if acc: elem.append(acc)
+        if arr: src.append(arr)
+        if acc: src.append(acc)
 
         # create the input element for this source
         if attr.name in attr_types:
@@ -288,7 +302,7 @@ class ColladaWriter:
         else: # we don't know what to use this attribute for
             input = None
 
-        return elem, input
+        return src, input
 
 
     def _fixBufferForBlender(self, data):
@@ -303,7 +317,7 @@ class ColladaWriter:
         return res
 
 
-    def _makeArrayForAttribute(self, attr, data):
+    def _makeArrayForAttribute(self, attr, data, srcid):
         """Make the array element for an attribute's data."""
         typ = attrFmts[attr.format]
         if typ['collada_type'] == 'int':
@@ -311,7 +325,7 @@ class ColladaWriter:
             data = list(map(lambda d: d/(dmax-dmin)+dmin, data))
 
         arr = myxml.Element('float_array',
-            id = 'array_%s' % attr.name,
+            id = '%s_%s' % (srcid, attr.name),
             count = len(data),
         )
         # apparently Blender doesn't like these
@@ -322,7 +336,7 @@ class ColladaWriter:
         return arr
 
 
-    def _makeAccessorForAttribute(self, attr, data):
+    def _makeAccessorForAttribute(self, attr, data, srcid):
         """Make the accessor/technique elements for an attribute."""
         # XXX support more types of accessor/technique
         if attr.name not in attr_types: return None
@@ -334,7 +348,7 @@ class ColladaWriter:
             count  = len(data)*len(params), # XXX what is this
             offset = offs,
             stride = len(params),
-            source = '#array_%s' % attr.name,
+            source = '#'+srcid,
         )
         for p in params:
             acc.Child('param', name=p,
@@ -347,8 +361,8 @@ class ColladaWriter:
     def toXML(self):
         """Generate XML document for this file."""
         document = myxml.Document('COLLADA',
-            myxml.Element('library_cameras',       *self.cameras),
-            myxml.Element('library_lights',        *self.lights),
+            #myxml.Element('library_cameras',       *self.cameras),
+            #myxml.Element('library_lights',        *self.lights),
             myxml.Element('library_effects',       *self.effects),
             myxml.Element('library_images',        *self.images),
             myxml.Element('library_materials',     *self.materials),
