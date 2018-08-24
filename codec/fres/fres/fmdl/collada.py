@@ -46,13 +46,15 @@ attr_types = {
     },
     '_u0': {
         'name':    "UV Map",
-        'semantic':'UV',
-        'params': ('U', 'V'),
+        'semantic':'TEXCOORD',
+        'params': ('S', 'T'),
+        'set':    0,
     },
     '_u1': {
         'name':    "Secondary UV Map",
-        'semantic':'UV',
-        'params': ('U', 'V'),
+        'semantic':'TEXCOORD',
+        'params': ('S', 'T'),
+        'set':    1,
     },
     '_w0': {
         'name':    "Weight",
@@ -98,7 +100,7 @@ class ColladaWriter:
         """Add an FSHP to the file."""
         for i, lod in enumerate(fshp.lods):
             name = '%s.%d' % (fshp.name, i)
-            self._makePlistForLod(fshp, lod, name)
+            self._makePlistForLod(fshp, lod, name, i)
 
 
     def addFMAT(self, fmat):
@@ -142,7 +144,7 @@ class ColladaWriter:
         prof.Child('technique', sid='COMMON') \
             .Child('lambert') \
             .Child('diffuse') \
-            .Child('texture', texture=smpid, texcoord="geometry0_src4") # XXX
+            .Child('texture', texture=smpid, texcoord="geometry0_lod0_src4") # XXX
 
         # add the texture to the images
         img = myxml.Element('image', id=texid)
@@ -155,7 +157,7 @@ class ColladaWriter:
 
 
 
-    def _makePlistForLod(self, fshp, lod, name):
+    def _makePlistForLod(self, fshp, lod, name, idx):
         """Build plist element for LOD model. Called by addFSHP."""
         # generate IDs
         gid  = 'geometry%d' % len(self.geometries)
@@ -176,57 +178,102 @@ class ColladaWriter:
         self.vtxs.append(vtxs)
         tris = myxml.Element(self._getPrimFmt(lod),
             count=len(lod.faces), material=mat.name)
-        for i, fvtx in enumerate(self.fvtxs):
-            for j, attr in enumerate(fvtx.attrs):
-                if attr.name in attr_types:
-                    srcid = '%s_src%d' % (gid, j)
-                    typ   = attr_types[attr.name]
-                    src   = mesh.Child('source', id=srcid, name=attr.name)
+        log.debug("LOD %s prim_fmt=%s", name, self._getPrimFmt(lod))
+        input_cnt = {}
+        fvtx = self.fvtxs[0]
+        max_offs = 0
+        for j, attr in enumerate(fvtx.attrs):
+            if attr.name in attr_types:
+                srcid = '%s_lod%d_src%d' % (gid, idx, j)
+                typ   = attr_types[attr.name]
 
-                    # get the buffer and format
-                    buf  = fvtx.buffers[attr.buf_idx]
-                    fmt  = attrFmts.get(attr.format)
-                    func = None
-                    if type(fmt) is dict:
-                        func = fmt.get('func', None)
-                        fmt  = fmt['fmt']
+                # get the buffer and format
+                # idx = which data buffer to read
+                # offset = where in the index buffer to read (in bytes)
+                # atr fmt  offs   idx
+                # _p0 1505  0      0
+                # _n0 0E02  0      1
+                # _t0 0B02  4      1
+                # _b0 0B02  0      2
+                # _u0 1201  8      1
+                # _u1 1201 12      1
+                # so the index buffer is (p0+n0+b0, t0, u0, u1)
+                # ie the first index specifies p0, n0, and b0
+                # but they each read from a different buffer
+                # but this seems to not make sense with the indices given:
+                # 0 1 2  1 3 2  4 5 6  5 7 6
+                # these are clearly groups of 3, not 4...
+                # so is there another index buffer?
+                # perhaps it's the fvtx.index attribute...
 
-                    # get the data from the buffer
-                    data = []
-                    sz   = struct.calcsize(fmt)
-                    for k in range(int(buf.size / sz)):
-                        d = struct.unpack_from(fmt, buf.data, k*sz)
-                        if func: d = func(d)
-                        for item in d: data.append(item)
+                buf  = fvtx.buffers[attr.buf_idx]
+                fmt  = attrFmts.get(attr.format)
+                func = None
+                if type(fmt) is dict:
+                    func = fmt.get('func', None)
+                    fmt  = fmt['fmt']
 
-                    # stupid
-                    if attr.name == '_p0':
-                        data = self._fixBufferForBlender(data)
+                log.debug("model attr %s type 0x%04X", attr.name, attr.format)
 
-                    src.append(self._makeArrayForAttribute(attr, data, srcid))
-                    src.append(self._makeAccessorForAttribute(attr, data, srcid))
+                # get the data from the buffer
+                data = []
+                sz   = struct.calcsize(fmt)
+                for k in range(attr.buf_offs, int(buf.size / sz)):
+                    d = struct.unpack_from(fmt, buf.data, k*sz)
+                    if func: d = func(d)
+                    for item in d: data.append(item)
 
+                # stupid
+                if attr.name == '_p0':
+                    data = self._fixPositionsForBlender(data)
+                elif attr.name in ('_u0', '_u1'):
+                    data = self._fixTexcoordsForBlender(data)
+
+                src = mesh.Child('source', id=srcid, name=attr.name)
+                src.append(self._makeArrayForAttribute(attr, data, srcid))
+                src.append(self._makeAccessorForAttribute(attr, data, srcid))
+
+                #The first index in a <p> element refers to all inputs with
+                #an offset attribute value of 0. The second index refers to
+                #all inputs with an offset of 1. There is an index value for
+                #each unique input offset attribute value. Each vertex of
+                #the primitive is assembled using the value(s) read from
+                #indexed inputs. After each input is sampled, producing a
+                #primitive vertex, the next index in the <p> element again
+                #refers to the inputs with offset of 0
+
+                offset = int(attr.buf_offs / sz)
+                semantic = typ['semantic']
+                if semantic == 'POSITION':
                     vtxs.Child('input',
                         semantic = typ['semantic'],
                         source   = '#'+srcid,
                     )
-                    tris.Child('input',
-                        offset   = "0",
-                        semantic = 'VERTEX' if typ['semantic'] == 'POSITION' else typ['semantic'],
-                        source   = srcid+'_'+attr.name,
-                    )
+                    semantic = 'VERTEX'
+
+                if semantic not in input_cnt: input_cnt[semantic] = 0
+                input = tris.Child('input',
+                    offset   = offset, #len(input_cnt) - 1,
+                    semantic = semantic,
+                    source   = '#'+srcid,
+                )
+                if 'set' in typ:
+                    input.set('set', typ['set'])
+                input_cnt[semantic] += 1
+                max_offs = max(max_offs, offset)
         mesh.append(vtxs)
         mesh.append(tris)
 
         # triangles -> vcount, triangles -> p
-        sizes = []
-        faces = []
-        for face in lod.faces:
-            sizes.append(len(face))
-            faces += face
+        sizes  = []
+        faces  = []
+        offset = len(input_cnt)
+        log.debug("idxs: %s", lod.idxs)
+        for face in lod.idxs:
+            faces.append(face)
 
-        vcount = tris.Child('vcount')
-        vcount.text = ' '.join(map(str, sizes))
+        #vcount = tris.Child('vcount')
+        #vcount.text = ' '.join(map(str, sizes))
         p = tris.Child('p')
         p.text = ' '.join(map(str, faces))
 
@@ -285,7 +332,7 @@ class ColladaWriter:
 
         # stupid
         if attr.name == '_p0':
-            data = self._fixBufferForBlender(data)
+            data = self._fixPositionsForBlender(data)
 
         # make elements for the data
         arr = self._makeArrayForAttribute   (attr, data)
@@ -305,7 +352,7 @@ class ColladaWriter:
         return src, input
 
 
-    def _fixBufferForBlender(self, data):
+    def _fixPositionsForBlender(self, data):
         """Take `data` and return a copy with every 4th element removed.
         This is necessary to remove the W position from vertices
         because Blender refuses to import a Collada file whose
@@ -314,6 +361,12 @@ class ColladaWriter:
         res = []
         for i in range(0, len(data), 4):
             res += data[i:i+3] # skip every 4th item
+        return res
+
+    def _fixTexcoordsForBlender(self, data):
+        res = []
+        for i in range(0, len(data), 2):
+            res += (data[i], data[i+1])
         return res
 
 
@@ -341,7 +394,7 @@ class ColladaWriter:
         # XXX support more types of accessor/technique
         if attr.name not in attr_types: return None
         typ    = attrFmts[attr.format]
-        offs   = attr.buf_offs                    #* buf.stride
+        offs   = attr.buf_offs #* buf.stride
         tech   = myxml.Element('technique_common')
         params = attr_types[attr.name]['params']
         acc    = tech.Child('accessor',
@@ -361,6 +414,7 @@ class ColladaWriter:
     def toXML(self):
         """Generate XML document for this file."""
         document = myxml.Document('COLLADA',
+            myxml.Element('asset', myxml.Element('up_axis', 'Y_UP')),
             #myxml.Element('library_cameras',       *self.cameras),
             #myxml.Element('library_lights',        *self.lights),
             myxml.Element('library_effects',       *self.effects),

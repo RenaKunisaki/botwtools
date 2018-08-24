@@ -33,7 +33,7 @@ class Attribute(FresObject):
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the attribute from given FRES."""
         super().readFromFRES(fres, offset, reader)
-        #log.debug("Attr name = '%s', fmt=%04X", self.name, self.format)
+        log.debug("Attr name='%s' fmt=%04X offs=%d idx=%d unk=%d", self.name, self.format, self.buf_offs, self.buf_idx, self.unk04)
         #self.dumpToDebugLog()
         return self
 

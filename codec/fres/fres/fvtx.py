@@ -41,7 +41,7 @@ class FVTX(FresObject):
         Offset('vtx_buf_offs'),
         ('B',  'num_attrs'),
         ('B',  'num_bufs'),
-        ('H',  'index'),
+        ('H',  'index'), # Section index: index into FVTX array of this entry.
         ('I',  'num_vtxs'),
         ('I',  'skin_weight_influence'),
         size = 0x60,
@@ -66,10 +66,10 @@ class FVTX(FresObject):
         self.buffers = []
         file = self.fres.file
         for i in range(self.num_bufs):
-            n = i*0x10
+            n      = i*0x10
             size   = file.read('I', self.vtx_bufsize_offs+n)
             stride = file.read('I', self.vtx_stridesize_offs+n)
-            buf = Buffer(file, size, stride, dataOffs)
+            buf    = Buffer(file, size, stride, dataOffs)
             self.buffers.append(buf)
             dataOffs += buf.size
 

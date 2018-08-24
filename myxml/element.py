@@ -19,10 +19,12 @@ from lxml import etree as ET
 class Element:
     def __init__(self, _element_name, *children, **attrs):
         self.name      = _element_name
-        self.attrs     = attrs
+        self.attrs     = {}
         self._text     = None
-        self._children = list(children)
+        self._children = []
         self.parent    = None
+        for child in children: self.append(child)
+        for k, v in attrs.items(): self.set(k, v)
 
 
     def Child(self, _element_name, *children, **attrs):
