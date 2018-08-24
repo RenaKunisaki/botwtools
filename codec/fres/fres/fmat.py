@@ -65,7 +65,7 @@ class FMAT(FresObject):
         super().readFromFRES(fres, offset, reader)
         log.debug("FMAT name='%s'", self.name)
         self.dumpToDebugLog()
-        self.dumpOffsets()
+        #self.dumpOffsets()
         self._readDicts()
         self._readRenderParams()
         self._readTextureList()
@@ -93,8 +93,8 @@ class FMAT(FresObject):
                 for i in range(cnt):
                     a, b, c, s, pad = self.fres.read('iHHII', offs+(i*16))
                     if s: s = self.fres.readStr(s)
-                    log.debug('#%3d: %04X %04X %04X (%X) "%s"',
-                        i, a, b, c, pad, s)
+                    #log.debug('#%3d: %04X %04X %04X (%X) "%s"',
+                    #    i, a, b, c, pad, s)
                     data.append({
                         'unk00': a,
                         'unk04': b,
@@ -109,22 +109,22 @@ class FMAT(FresObject):
 
     def _readTextureList(self):
         self.textures = []
-        log.debug("Texture list:")
+        #log.debug("Texture list:")
         for i in range(self.tex_ref_cnt):
             name = self.fres.readStr(self.fres.read('Q',
                 self.tex_ref_array_offs + (i*8)))
             slot = self.fres.read('q', self.tex_slot_offs + (i*8))
-            log.debug("%3d (%2d): %s", i, slot, name)
+            #log.debug("%3d (%2d): %s", i, slot, name)
             self.textures.append({'name':name, 'slot':slot})
 
 
     def _readSamplerList(self):
         self.samplers = []
-        log.debug("Sampler list:")
+        #log.debug("Sampler list:")
         for i in range(self.sampler_cnt):
             data = self.fres.readHexWords(8, self.sampler_list_offs + (i*32))
             slot = self.fres.read('q', self.sampler_slot_offs + (i*8))
-            log.debug("%3d (%2d): %s", i, slot, data)
+            #log.debug("%3d (%2d): %s", i, slot, data)
             self.samplers.append({'slot':slot, 'data':data})
             # XXX no idea what to do with this data
 
@@ -152,8 +152,8 @@ class FMAT(FresObject):
                     val = '<unknown>'
                 vals.append(val)
 
-            log.debug("Render param: %-5s[%d] %-32s: %s",
-                typeName, cnt, name, ', '.join(map(str, vals)))
+            #log.debug("Render param: %-5s[%d] %-32s: %s",
+            #    typeName, cnt, name, ', '.join(map(str, vals)))
 
             if name in self.renderParams:
                 log.warning("Duplicate render param '%s'", name)

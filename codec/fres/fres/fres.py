@@ -112,8 +112,8 @@ class FRES:
             "RlT start 0x%X is beyond EOF 0x%X" % (
                 self.rlt.data_start, self.file.size)
         self.rlt.fres = self
-        self.rlt.dumpToDebugLog()
-        self.rlt.dumpOffsets()
+        #self.rlt.dumpToDebugLog()
+        #self.rlt.dumpOffsets()
 
 
     def readStringTable(self, offset):

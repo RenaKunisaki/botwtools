@@ -46,12 +46,12 @@ def mkdir(path:Path) -> Path:
     """
     path = sanitizePath(path)
     if path != '':
-        log.debug("mkdir path is '%s'", path)
+        #log.debug("mkdir path is '%s'", path)
         dirs = path.split('/')
         for i in range(len(dirs)):
             p = '/'.join(dirs[0:i+1])
             if p != '':
-                log.debug("mkdir(%s)", p)
+                #log.debug("mkdir(%s)", p)
                 try: os.mkdir(p)
                 except FileExistsError: pass
     return path

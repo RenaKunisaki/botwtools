@@ -32,7 +32,7 @@ class EmbeddedFile(FresObject):
         """Read the archive from given FRES."""
         super().readFromFRES(fres, offset, reader)
 
-        self.dumpToDebugLog()
+        #self.dumpToDebugLog()
         #self.dumpOffsets()
 
         return self

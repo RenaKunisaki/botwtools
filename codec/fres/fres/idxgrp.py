@@ -35,7 +35,7 @@ class IndexGroup:
     def readFromFile(self, file, offset=None):
         if offset is not None: file.seek(offset)
         length, count = file.read('II')
-        log.debug("dict(%06X) len=0x%X cnt=0x%X", offset, length, count)
+        #log.debug("dict(%06X) len=0x%X cnt=0x%X", offset, length, count)
         nodes = []
         for i in range(count+1): # +1 for root node
             try:

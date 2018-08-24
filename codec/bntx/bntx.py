@@ -48,7 +48,7 @@ class BNTX(BinaryObject):
 
         self.nx = NX().readFromFile(self._file,
             self._file_offset + self._reader.size)
-        self.nx.dumpToDebugLog()
+        #self.nx.dumpToDebugLog()
 
         self.textures = []
         for i in range(self.nx.num_textures):

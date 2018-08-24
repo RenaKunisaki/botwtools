@@ -93,7 +93,7 @@ class BRTI(BinaryObject):
     def _unpackFromData(self, data):
         super()._unpackFromData(data)
         self.name = readStringWithLength(self._file, '<H', self.name)
-        self.dumpToDebugLog()
+        #self.dumpToDebugLog()
 
         self.swizzle = BlockLinearSwizzle(self.width,
             self.fmt_type.bytesPerPixel,

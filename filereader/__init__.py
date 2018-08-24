@@ -137,7 +137,7 @@ class FileReader:
                 s = self.file.read(length)
             if encoding is not None: s = s.decode(encoding)
         except (UnicodeDecodeError, struct.error):
-            log.error("Can't decode string from 0x%X", pos)
+            #log.error("Can't decode string from 0x%X", pos)
             return None
         return s
 
