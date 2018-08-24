@@ -71,7 +71,6 @@ class FSHP(FresObject):
         for i in range(self.lod_cnt):
             model = LODModel().readFromFRES(fres,
                 self.lod_offset + (i * LODModel._reader.size))
-            model.readFaces(self.fvtx)
             self.lods.append(model)
 
         #self.lods = [self.lods[1]] # XXX DEBUG only keep one model

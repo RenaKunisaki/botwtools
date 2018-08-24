@@ -51,7 +51,7 @@ class FVTX(FresObject):
         """Read the FVTX from given FRES."""
         super().readFromFRES(fres, offset, reader)
 
-        #self.dumpToDebugLog()
+        self.dumpToDebugLog()
         #self.dumpOffsets()
 
         self._readBuffers()
@@ -76,12 +76,14 @@ class FVTX(FresObject):
 
     def _readAttrs(self):
         self.attrs = []
+        self.attrsByName = {}
         for i in range(self.num_attrs):
             attr = Attribute().readFromFRES(self.fres,
                 self.vtx_attrib_array_offs +
                 (i * Attribute._reader.size))
             #log.debug("Attr: %s", attr)
             self.attrs.append(attr)
+            self.attrsByName[attr.name] = attr
 
 
     def _readVtxs(self):

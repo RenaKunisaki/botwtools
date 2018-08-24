@@ -89,39 +89,21 @@ class LODModel(FresObject):
             self.idx_type, self.idx_fmt,
             self.prim_min, self.prim_size)
 
+        # read index buffer
         log.debug("Read %d idxs in fmt %s from 0x%X; idx_buf_offs=0x%X",
             self.idx_cnt, self.idx_fmt, self.face_offs,
             self.idx_buf_offs)
-        self.idxs = fres.read(self.idx_fmt,
+        self.idx_buf = fres.read(self.idx_fmt,
             pos=self.face_offs, count=self.idx_cnt, use_rlt=True)
-        #log.debug("idxs(%d): %s", len(self.idxs), self.idxs)
 
-        self.faces = []
-        for i in range(0, self.idx_cnt, self.prim_fmt_id):
-            face = []
-            for j in range(self.prim_fmt_id):
-                face.append(self.idxs[i+j] + self.visibility_group)
-            self.faces.append(face)
+        # read submeshes
+        self.submeshes = []
+        for i in range(self.submesh_cnt+1): # XXX is this right?
+            offs, cnt = self.fres.read('2I', self.submesh_array_offs + (i*8))
+            idxs = self.idx_buf[offs:offs+cnt] # XXX offs / size?
+            self.submeshes.append({'offset':offs, 'count':cnt, 'idxs':idxs})
 
         return self
-
-
-    def readFaces(self, buffer):
-        #self.faces = []
-        #idx = self.face_offs #+ self.prim_min
-        #for i in range(0, self.idx_cnt, self.prim_min):
-        #    #vtxs = buffer.vtxs[i:i+self.prim_size:]
-        #    face = []
-        #    for j in range(self.prim_min):
-        #        face.append(idx + j)
-        #    self.faces.append(face)
-        #    idx += self.prim_size
-
-        log.debug("LOD model has %d faces", len(self.faces))
-        #for i, face in enumerate(self.faces):
-        #    for j, vtx in enumerate(face):
-        #        log.debug("%d.%d: %d", i, j, vtx)
-        #            #buffer.vtxs[vtx])
 
 
     def validate(self):

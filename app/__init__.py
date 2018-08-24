@@ -102,7 +102,7 @@ class App:
             #    items += get_files(item, _depth+1)
             if len(items) == 0:
                 items = [{'name':name, 'obj':obj, 'file':file}]
-            log.debug("%s => %s", obj, items)
+            #log.debug("%s => %s", obj, items)
         else:
             if not getattr(obj, 'isListable', False):
                 log.debug("Can't list object: %s", obj)
