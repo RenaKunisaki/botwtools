@@ -19,13 +19,15 @@
 import logging; log = logging.getLogger(__name__)
 
 def unpack10bit(val):
-    # XXX sign bit
     if type(val) in (list, tuple):
         val = val[0] # grumble grumble struct is butts
-    v0 = ( val        & 0x3FF) / 511
-    v1 = ((val >> 10) & 0x3FF) / 511
-    v2 = ((val >> 20) & 0x3FF) / 511
-    return v0, v1, v2
+    res = []
+    for i in range(3):
+        s = (val >> (i*10)) & 0x200
+        v = (val >> (i*10)) & 0x1FF
+        if s: v = -v
+        res.append(v / 511)
+    return res
 
 # attribute format ID => struct fmt
 attrFmts = {
