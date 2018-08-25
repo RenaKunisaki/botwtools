@@ -72,7 +72,7 @@ def setup(appName):
     log.addHandler(ch)
 
     # uncomment to output to debug.log too
-    fh = logging.FileHandler('debug.log', mode='wt')
+    fh = logging.FileHandler('botwtools-debug.log', mode='wt')
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     log.addHandler(fh)
