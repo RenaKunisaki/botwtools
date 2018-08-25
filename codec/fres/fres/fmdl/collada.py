@@ -107,55 +107,74 @@ class ColladaWriter:
         self.fmats.append(fmat)
 
         # add element to materials
-        elem = myxml.Element('material', id=matid, name=fmat.name)
-        self.materials.append(elem)
+        matElem = myxml.Element('material', id=matid, name=fmat.name)
+        self.materials.append(matElem)
 
-        # create effect
-        texcoord = "geometry0_lod0_src4" # XXX
-        # how do we define specular/normal textures?
+        # create an effect
+        effid   = 'effect%d' % len(self.effects)
+        effect  = myxml.Element('effect', id=effid)
+        profile = effect.Child('profile_COMMON')
+        self.effects.append(effect)
+        matElem.Child('instance_effect', url='#'+effid)
+
+        # create a technique and a shader
+        tech   = myxml.Element('technique', sid='common')
+        shader = tech.Child('phong')
+        shader.Child('emission').Child('color', '0 0 0 1', sid="emission")
+        shader.Child('ambient').Child('color', '0 0 0 1', sid="ambient")
+        shader.Child('shininess').Child('float', '50', sid="shininess")
+        shader.Child('index_of_refraction') \
+            .Child('float', '1', sid="index_of_refraction")
+
+        # add the textures to our image list
         for tex in fmat.textures:
             log.debug("fmat %s texture %s", fmat.name, tex['name'])
-            effid = 'effect%d' % len(self.effects)
-            elem.Child('instance_effect', url='#'+effid)
-            eff = self._makeMatTexEntry(fmat, tex, effid, texcoord)
-            self.effects.append(eff)
 
+            texid = tex['name'].replace('.', '_') # XXX ensure valid ID
+            img = myxml.Element('image', id=texid, name=tex['name'])
+            self.images.append(img)
+            init = img.Child('init_from')
+            init.text = 'textures/' + tex['name'] + '.png'
+            self.textures.append(tex)
 
-    def _makeMatTexEntry(self, fmat, tex, effid, texcoord):
-        """Make nodes for a material's texture."""
-        texid = 'texture%d' % len(self.textures)
-        srfid = 'surface%d' % len(self.textures)
-        smpid = 'sampler%d' % len(self.textures)
-        elem  = myxml.Element('effect', id=effid)
-        prof  = elem.Child('profile_COMMON')
+            # create surface from this texture
+            srfid = texid + '_surface'
+            surf = profile.Child('newparam', sid=srfid) \
+                .Child('surface', type='2D') \
+                .Child('init_from')
+            surf.text = texid
 
-        # param to define the surface
-        surf = prof.Child('newparam', sid=srfid) \
-            .Child('surface', type='2D') \
-            .Child('init_from')
-        surf.text = texid
+            # create sampler for this surface
+            smpid = texid + '_sampler'
+            samp = profile.Child('newparam', sid=smpid) \
+                .Child('sampler2D') \
+                .Child('source')
+            samp.text = srfid
 
-        # param to sample the surface
-        samp = prof.Child('newparam', sid=smpid) \
-            .Child('sampler2D') \
-            .Child('source')
-        samp.text = srfid
+            # add texture to the effect
+            # XXX there's probably a better way to do this,
+            # instead of by name.
+            if '_Alb' in tex['name']: # texture
+                texcoord = "geometry0_lod0_src4" # XXX
+                shader.Child('diffuse') \
+                    .Child('texture', texture=smpid, texcoord=texcoord)
 
-        # technique to use that sampler
-        prof.Child('technique', sid='COMMON') \
-            .Child('lambert') \
-            .Child('diffuse') \
-            .Child('texture', texture=smpid, texcoord=texcoord)
+            elif '_Nrm' in tex['name']: # normal
+                texcoord = "geometry0_lod0_src5" # XXX
+                tech.Child('extra') \
+                    .Child('technique', profile='FCOLLADA') \
+                    .Child('bump') \
+                    .Child('texture', texture=smpid, texcoord=texcoord)
 
-        # add the texture to the images
-        img = myxml.Element('image', id=texid)
-        self.images.append(img)
-        init = img.Child('init_from')
-        init.text = 'textures/' + tex['name'] + '.png'
+            elif '_Spm' in tex['name']: # specular
+                texcoord = "geometry0_lod0_src4" # XXX
+                shader.Child('specular') \
+                    .Child('texture', texture=smpid, texcoord=texcoord)
 
-        self.textures.append(tex)
-        return elem
+            else:
+                log.warn("Don't know what to do with material %s texture %s", fmat.name, tex['name'])
 
+        profile.append(tech)
 
 
     def _makePlistForLod(self, fshp, lod, model_name, idx):
@@ -180,7 +199,7 @@ class ColladaWriter:
         self.vtxs.append(vtxs)
 
         tris = myxml.Element(self._getPrimFmt(lod),
-            count=int(lod.idx_cnt / 3), material=mat.name) # XXX
+            count=int(lod.idx_cnt / 3), material=matid) # XXX
         #log.debug("LOD %s prim_fmt=%s", model_name, self._getPrimFmt(lod))
 
         # make sources for each attribute
@@ -209,7 +228,9 @@ class ColladaWriter:
         mesh.append(tris)
 
         # make p element (index buffer)
-        tris.Child('p', ' '.join(map(str, lod.idx_buf)))
+        # prefix with \n\t so that editors can fold the data
+        # so that we don't have to scroll past it all the time
+        tris.Child('p', '\n\t' + (' '.join(map(str, lod.idx_buf))))
 
         # node -> instance_geometry
         node = myxml.Element('node', name=model_name, type='NODE',
@@ -219,9 +240,9 @@ class ColladaWriter:
         inst.Child('bind_material') \
             .Child('technique_common') \
             .Child('instance_material',
-                symbol=mat.name, target='#'+matid) \
-            .Child('bind_vertex_input', semantic="_u0",
-                input_semantic="TEXCOORD", input_set=0)
+                symbol=mat.name, target='#'+matid)
+            #.Child('bind_vertex_input', semantic="_u0",
+            #    input_semantic="TEXCOORD", input_set=0)
 
         self.scene_nodes.append(node)
 
@@ -301,7 +322,7 @@ class ColladaWriter:
         #if typ['collada_type'] == 'int':
         #    arr.set('mininclusive', typ['min'])
         #    arr.set('maxinclusive', typ['max'])
-        arr.text = ' '.join(map(str, data))
+        arr.text = '\n\t' + (' '.join(map(str, data)))
         return arr
 
 
@@ -330,7 +351,16 @@ class ColladaWriter:
     def toXML(self):
         """Generate XML document for this file."""
         document = myxml.Document('COLLADA',
-            myxml.Element('asset', myxml.Element('up_axis', 'Y_UP')),
+            myxml.Element('asset',
+                myxml.Element('contributor',
+                    myxml.Element('author', "Nintendo"),
+                    myxml.Element('authoring_tool',
+                        "https://github.com/RenaKunisaki/botwtools"
+                    ),
+                ),
+                myxml.Element('unit', name='meter', meter=1),
+                myxml.Element('up_axis', 'Y_UP'),
+            ),
             #myxml.Element('library_cameras',       *self.cameras),
             #myxml.Element('library_lights',        *self.lights),
             myxml.Element('library_effects',       *self.effects),

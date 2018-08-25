@@ -2,8 +2,9 @@
     - skeletons
     - bounding box
     - FMAT render params, shader params
-        - assign correct textures
         - don't hardcode `geometry0_lod0_src4` as sampler texcoord
+        - figure out proper way to tell what each texture is used for
+        - figure out why Blender is ignoring the `_Nrm` textures, and how to get the `_Spm` textures to be used for specular intensity rather than specular color - I can't see any difference in a file exported from Blender?
     - FSKA (Skeleton Animation)
     - FMAA (Material Animation)
     - FVIS (Visual Animation)
