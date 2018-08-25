@@ -24,7 +24,7 @@ class LODModel(FresObject):
         Offset64('submesh_array_offs'),
         Offset64('unk08'),
         Offset64('unk10'),
-        Offset64('idx_buf_offs'),
+        Offset64('idx_buf_offs'), # -> buffer size in bytes
         ('I',    'face_offs'),# offset into index buffer
         ('I',    'prim_fmt'), # how to draw the faces
         ('I',    'idx_type'), # data type of index buffer entries
@@ -79,7 +79,6 @@ class LODModel(FresObject):
         #    log.debug("group %2d: 0x%X, %d", i, offs, count)
         #    self.groups.append((offs, count))
 
-        #self.prim_fmt = 4 # XXX why is this wrong?
         self.prim_fmt_id = self.prim_fmt
         self.prim_min, self.prim_size, self.prim_fmt = \
             self.primTypes[self.prim_fmt]
@@ -94,14 +93,20 @@ class LODModel(FresObject):
             self.idx_cnt, self.idx_fmt, self.face_offs,
             self.idx_buf_offs)
         self.idx_buf = fres.read(self.idx_fmt,
-            pos=self.face_offs, count=self.idx_cnt, use_rlt=True)
+            pos=self.face_offs,
+            count=self.idx_cnt, use_rlt=True)
+        for i in range(self.idx_cnt):
+            self.idx_buf[i] += self.visibility_group
+        log.debug("idxs(%d): %s...", len(self.idx_buf),
+            ' '.join(map(str, self.idx_buf[0:16])))
 
         # read submeshes
         self.submeshes = []
         for i in range(self.submesh_cnt+1): # XXX is this right?
             offs, cnt = self.fres.read('2I', self.submesh_array_offs + (i*8))
             idxs = self.idx_buf[offs:offs+cnt] # XXX offs / size?
-            log.debug("LOD submesh %d offs=%d cnt=%d", i, offs, cnt)
+            log.debug("LOD submesh %d offs=%d cnt=%d: %s...", i, offs, cnt,
+                ' '.join(map(str, idxs[0:16])))
             self.submeshes.append({'offset':offs, 'count':cnt, 'idxs':idxs})
 
         return self
