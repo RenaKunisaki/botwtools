@@ -111,14 +111,17 @@ class ColladaWriter:
         self.materials.append(elem)
 
         # create effect
+        texcoord = "geometry0_lod0_src4" # XXX
+        # how do we define specular/normal textures?
         for tex in fmat.textures:
+            log.debug("fmat %s texture %s", fmat.name, tex['name'])
             effid = 'effect%d' % len(self.effects)
             elem.Child('instance_effect', url='#'+effid)
-            eff = self._makeMatTexEntry(fmat, tex, effid)
+            eff = self._makeMatTexEntry(fmat, tex, effid, texcoord)
             self.effects.append(eff)
 
 
-    def _makeMatTexEntry(self, fmat, tex, effid):
+    def _makeMatTexEntry(self, fmat, tex, effid, texcoord):
         """Make nodes for a material's texture."""
         texid = 'texture%d' % len(self.textures)
         srfid = 'surface%d' % len(self.textures)
@@ -142,7 +145,7 @@ class ColladaWriter:
         prof.Child('technique', sid='COMMON') \
             .Child('lambert') \
             .Child('diffuse') \
-            .Child('texture', texture=smpid, texcoord="geometry0_lod0_src4") # XXX
+            .Child('texture', texture=smpid, texcoord=texcoord)
 
         # add the texture to the images
         img = myxml.Element('image', id=texid)
