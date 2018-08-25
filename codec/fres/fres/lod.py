@@ -101,6 +101,7 @@ class LODModel(FresObject):
         for i in range(self.submesh_cnt+1): # XXX is this right?
             offs, cnt = self.fres.read('2I', self.submesh_array_offs + (i*8))
             idxs = self.idx_buf[offs:offs+cnt] # XXX offs / size?
+            log.debug("LOD submesh %d offs=%d cnt=%d", i, offs, cnt)
             self.submeshes.append({'offset':offs, 'count':cnt, 'idxs':idxs})
 
         return self

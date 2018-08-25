@@ -72,8 +72,8 @@ def setup(appName):
     log.addHandler(ch)
 
     # uncomment to output to debug.log too
-    #fh = logging.FileHandler('debug.log', mode='at')
-    #fh.setLevel(logging.DEBUG)
-    #fh.setFormatter(formatter)
-    #log.addHandler(fh)
+    fh = logging.FileHandler('debug.log', mode='wt')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    log.addHandler(fh)
     _is_setup = True
