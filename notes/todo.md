@@ -1,0 +1,14 @@
+- model exporting:
+    - skeletons
+    - bounding box
+    - FMAT render params, shader params
+        - assign correct textures
+        - don't hardcode `geometry0_lod0_src4` as sampler texcoord
+    - FSKA (Skeleton Animation)
+    - FMAA (Material Animation)
+    - FVIS (Visual Animation)
+    - FSCN (Scene Animation)
+    - FSHU (Shape Animation)
+    - other attributes
+    - check out if fox SPM textures are being exported correctly; they look funny.
+- figure out what dicts are about

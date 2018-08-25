@@ -224,6 +224,13 @@ class ColladaWriter:
 
 
     def _getAttrBuffers(self, lod, fvtx):
+        """Get attribute data for given LOD.
+
+        lod:  LOD model.
+        fvtx: FVTX whose buffers to use.
+
+        Returns a dict of attribute name => [values].
+        """
         attr_buffers = {}
         for attr in fvtx.attrs:
             attr_buffers[attr.name] = []
@@ -243,8 +250,12 @@ class ColladaWriter:
                     if func: data = func(data)
 
                     # stupid: strip W coord for Blender;
-                    # flip texture Y coord
+                    # its importer rejects anything where position's
+                    # stride is not 3.
                     if attr.name == '_p0': data = data[0:3]
+
+                    # flip texture Y coord because COLLADA is backward
+                    # from what everything else uses
                     elif attr.name in ('_u0', '_u1'):
                         data = (data[0], fmt.get('max', 1) - data[1])
 
@@ -258,7 +269,10 @@ class ColladaWriter:
 
 
     def _getPrimFmt(self, lod):
+        """Get primitive element name for LOD."""
         # <lines>, <linestrips>, <polygons>, <polylists>, <triangles>, <trifans> and <tristrips>
+        # Blender's importer doesn't support these, so we just use
+        # triangles and manually fix up the index buffers.
         if lod.prim_fmt in ('line_strip', 'line_loop'):
             #elem = 'lines'
             return 'triangles' # XXX
