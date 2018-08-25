@@ -82,6 +82,7 @@ class FVTX(FresObject):
                 self.vtx_attrib_array_offs +
                 (i * Attribute._reader.size))
             #log.debug("Attr: %s", attr)
+            attr.fvtx = self
             self.attrs.append(attr)
             self.attrsByName[attr.name] = attr
 

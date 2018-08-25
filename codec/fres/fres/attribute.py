@@ -35,6 +35,7 @@ class Attribute(FresObject):
         super().readFromFRES(fres, offset, reader)
         log.debug("Attr name='%s' fmt=%04X offs=%d idx=%d unk=%d", self.name, self.format, self.buf_offs, self.buf_idx, self.unk04)
         self.dumpToDebugLog()
+        self.fvtx = None # to be filled in by the FVTX that reads it
         return self
 
 

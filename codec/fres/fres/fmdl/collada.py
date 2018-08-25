@@ -178,11 +178,10 @@ class ColladaWriter:
 
         tris = myxml.Element(self._getPrimFmt(lod),
             count=int(lod.idx_cnt / 3), material=mat.name) # XXX
-        log.debug("LOD %s prim_fmt=%s", model_name, self._getPrimFmt(lod))
+        #log.debug("LOD %s prim_fmt=%s", model_name, self._getPrimFmt(lod))
 
         # make sources for each attribute
-        # XXX use the fvtx that defined the attribute
-        fvtx = self.fvtxs[0]
+        fvtx = self.fvtxs[fshp.fvtx_idx]
         attr_buffers = self._getAttrBuffers(lod, fvtx)
         for name, buf in attr_buffers.items():
             if name in attr_types:
@@ -231,7 +230,7 @@ class ColladaWriter:
 
         for submesh in lod.submeshes:
             idxs = submesh['idxs']
-            log.debug("submesh idxs: %s", idxs)
+            #log.debug("submesh idxs: %s", idxs)
             for idx in range(max(idxs)+1):
                 for attr in fvtx.attrs:
                     fmt  = attrFmts.get(attr.format)
@@ -253,8 +252,8 @@ class ColladaWriter:
                         attr_buffers[attr.name] += data
                     else: attr_buffers[attr.name].append(data)
 
-        for name, buf in attr_buffers.items():
-            log.debug("%s: %s", name, buf)
+        #for name, buf in attr_buffers.items():
+        #    log.debug("%s: %s", name, buf)
         return attr_buffers
 
 
