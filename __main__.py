@@ -15,9 +15,13 @@ You should have received a copy of the GNU General Public License
 along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+import sys
+if sys.version_info < (3, 0):
+    raise RuntimeError("This program requires Python 3.")
+
+
 import logger; logger.setup('botwtools')
 log = logger.logging.getLogger()
-import sys
 import argparse
 from app import App
 import codec
