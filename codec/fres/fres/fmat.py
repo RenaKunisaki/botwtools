@@ -123,16 +123,19 @@ class FMAT(FresObject):
         data = []
         offs += 8
         for i in range(cnt+1): # +1 for root node
-            a, b, c, s, pad = self.fres.read('iHHII', offs+(i*16))
-            if s: s = self.fres.readStr(s)
-            #log.debug('#%3d: %04X %04X %04X (%X) "%s"',
-            #    i, a, b, c, pad, s)
+            search, left, right, name, pad = self.fres.read(
+                'iHHII', offs+(i*16))
+            if name: name = self.fres.readStr(name)
+            else: name = None
+            #log.debug('#%3d: %04X (%d:%d) %04X %04X (%X) "%s"',
+            #    i, search, search >> 3, search & 7,
+            #    left, right, pad, name)
             data.append({
-                'unk00': a,
-                'unk04': b,
-                'unk06': c,
-                'pad':   pad,
-                'name':  s,
+                'search': search,
+                'left':   left,
+                'right':  right,
+                'pad':    pad,
+                'name':   name,
             })
         return data
 
