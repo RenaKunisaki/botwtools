@@ -168,6 +168,11 @@ class FRES:
         return readStringWithLength(self.file, '<H', offset)
 
 
+    def readStrPtr(self, offset):
+        """Read length-prefixed string pointed to by given offset."""
+        return self.readStr(self.read('Q', offset))
+
+
     def readHex(self, cnt, offset):
         """Read hex string for debugging."""
         data = self.read(cnt, offset)

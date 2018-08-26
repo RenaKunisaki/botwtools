@@ -39,7 +39,7 @@ class ShaderAssign(FresObject):
         Offset64('vtx_attr_dict'),
         Offset64('tex_attr_names'),
         Offset64('tex_attr_dict'),
-        Offset64('mat_param_vals'),
+        Offset64('mat_param_vals'), # names from dict
         Offset64('mat_param_dict'),
         Padding(4),
         ('B', 'num_vtx_attrs'),
@@ -141,8 +141,7 @@ class FMAT(FresObject):
         self.textures = []
         log.debug("Texture list:")
         for i in range(self.tex_ref_cnt):
-            name = self.fres.readStr(self.fres.read('Q',
-                self.tex_ref_array_offs + (i*8)))
+            name = self.fres.readStrPtr(self.tex_ref_array_offs + (i*8))
             slot = self.fres.read('q', self.tex_slot_offs + (i*8))
             log.debug("%3d (%2d): %s", i, slot, name)
             self.textures.append({'name':name, 'slot':slot})
@@ -176,7 +175,7 @@ class FMAT(FresObject):
             for j in range(cnt):
                 if   typ == 0: val=self.fres.readHex(8, offs)
                 elif typ == 1: val=self.fres.read('f', offs)
-                elif typ == 2: val=self.fres.readStr(self.fres.read('Q', offs))
+                elif typ == 2: val=self.fres.readStrPtr(offs)
                 else:
                     log.warning("Render param '%s' unknown type 0x%X",name,typ)
                     val = '<unknown>'
@@ -243,15 +242,13 @@ class FMAT(FresObject):
 
         self.vtxAttrs = []
         for i in range(assign.num_vtx_attrs):
-            name = self.fres.readStr(self.fres.read('Q',
-                assign.vtx_attr_names + (i*8)))
+            name = self.fres.readStrPtr(assign.vtx_attr_names + (i*8))
             log.debug("vtx attr %d: '%s'", i, name)
             self.vtxAttrs.append(name)
 
         self.texAttrs = []
         for i in range(assign.num_tex_attrs):
-            name = self.fres.readStr(self.fres.read('Q',
-                assign.tex_attr_names + (i*8)))
+            name = self.fres.readStrPtr(assign.tex_attr_names + (i*8))
             log.debug("tex attr %d: '%s'", i, name)
             self.texAttrs.append(name)
 
@@ -261,8 +258,7 @@ class FMAT(FresObject):
         log.debug("material params:")
         for i in range(assign.num_mat_params):
             name = self.mat_param_dict[i+1]['name']
-            val  = self.fres.readStr(self.fres.read('Q',
-                assign.mat_param_vals + (i*8)))
+            val  = self.fres.readStrPtr(assign.mat_param_vals + (i*8))
             log.debug("%-40s: %s", name, val)
             if name in self.mat_params:
                 log.warning("duplicate mat_param '%s'", name)
