@@ -14,10 +14,38 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger(__name__)
+import struct
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .idxgrp import IndexGroup
+
+shaderParamTypes = {
+    # http://mk8.tockdom.com/wiki/FMDL_(File_Format)#Material_Parameter
+    0x08: {'fmt':'I',  'name':'ptr',   'outfmt':'%08X'},
+    0x0C: {'fmt':'f',  'name':'float', 'outfmt':'%f'},
+    0x0D: {'fmt':'2f', 'name':'Vec2f', 'outfmt':'%f, %f'},
+    0x0E: {'fmt':'3f', 'name':'Vec3f', 'outfmt':'%f, %f, %f'},
+    0x0F: {'fmt':'4f', 'name':'Vec4f', 'outfmt':'%f, %f, %f, %f'},
+    0x1E: {'fmt':'I5f','name':'texSRT', # scale, rotation, translation
+        'outfmt':'mode=%d XS=%f YS=%f rot=%f X=%f Y=%f'},
+}
+
+class ShaderAssign(FresObject):
+    _reader = StructReader(
+        StrOffs('name'), Padding(4),
+        StrOffs('name2'), Padding(4),
+        Offset64('vtx_attr_names'), # -> offsets of attr names
+        Offset64('vtx_attr_dict'),
+        Offset64('tex_attr_names'),
+        Offset64('tex_attr_dict'),
+        Offset64('mat_param_vals'),
+        Offset64('mat_param_dict'),
+        Padding(4),
+        ('B', 'num_vtx_attrs'),
+        ('B', 'num_tex_attrs'),
+        ('H', 'num_mat_params'),
+    )
 
 class FMAT(FresObject):
     """A FMAT in an FMDL."""
@@ -39,7 +67,7 @@ class FMAT(FresObject):
         Offset64('sampler_dict_offs'),
         Offset64('shader_param_array_offs'),
         Offset64('shader_param_dict_offs'),
-        Offset64('source_param_data_offs'),
+        Offset64('shader_param_data_offs'),
         Offset64('user_data_offs'),
         Offset64('user_data_dict_offs'),
         Offset64('volatile_flag_offs'),
@@ -51,8 +79,8 @@ class FMAT(FresObject):
         ('H',  'render_param_cnt'),
         ('B',  'tex_ref_cnt'),
         ('B',  'sampler_cnt'),
-        ('H',  'shader_param_volatile_cnt'),
-        ('H',  'source_param_data_size'),
+        ('H',  'shader_param_cnt'),
+        ('H',  'shader_param_data_size'),
         ('H',  'raw_param_data_size'),
         ('H',  'user_data_cnt'),
         Padding(2),
@@ -68,8 +96,10 @@ class FMAT(FresObject):
         self.dumpOffsets()
         self._readDicts()
         self._readRenderParams()
+        self._readShaderParams()
         self._readTextureList()
         self._readSamplerList()
+        self._readShaderAssign()
 
         return self
 
@@ -81,30 +111,30 @@ class FMAT(FresObject):
             if offs:
                 #d = IndexGroup().readFromFile(self.fres.file, offs)
                 #log.debug("FMAT %s dict:\n%s", name, d.dump())
-
-                # not sure these really are dicts.
-                # the connections make no sense, and there doesn't
-                # seem to be any reason to store these strings
-                # in dicts in the first place.
-                unk, cnt = self.fres.read('II', offs)
-                log.debug("FMAT %s: unk=%d cnt=%d", name, unk, cnt)
-                data = []
-                offs += 8
-                for i in range(cnt):
-                    a, b, c, s, pad = self.fres.read('iHHII', offs+(i*16))
-                    if s: s = self.fres.readStr(s)
-                    #log.debug('#%3d: %04X %04X %04X (%X) "%s"',
-                    #    i, a, b, c, pad, s)
-                    data.append({
-                        'unk00': a,
-                        'unk04': b,
-                        'unk06': c,
-                        'pad':   pad,
-                        'name':  s,
-                    })
+                data = self._readDict(offs, name)
             else:
                 data = None
             setattr(self, name + '_dict', data)
+
+
+    def _readDict(self, offs, name):
+        unk, cnt = self.fres.read('II', offs)
+        log.debug("FMAT dict %s: unk=0x%X cnt=%d", name, unk, cnt)
+        data = []
+        offs += 8
+        for i in range(cnt+1): # +1 for root node
+            a, b, c, s, pad = self.fres.read('iHHII', offs+(i*16))
+            if s: s = self.fres.readStr(s)
+            #log.debug('#%3d: %04X %04X %04X (%X) "%s"',
+            #    i, a, b, c, pad, s)
+            data.append({
+                'unk00': a,
+                'unk04': b,
+                'unk06': c,
+                'pad':   pad,
+                'name':  s,
+            })
+        return data
 
 
     def _readTextureList(self):
@@ -159,6 +189,84 @@ class FMAT(FresObject):
                 log.warning("Duplicate render param '%s'", name)
             self.renderParams[name] = vals
 
+
+    def _readShaderParams(self):
+        self.shaderParams = {}
+        log.debug("Shader params:")
+
+        array_offs = self.shader_param_array_offs
+        data_offs  = self.shader_param_data_offs
+        for i in range(self.shader_param_cnt):
+            # unk0: always 0; unk14: always -1
+            # idx0, idx1: both always == i
+            unk0, name, type, size, offset, unk14, idx0, idx1 = \
+                self.fres.read('QQBBHiHH', array_offs + (i*32))
+
+            name = self.fres.readStr(name)
+            type = shaderParamTypes[type]
+            if unk0: log.debug("Shader param '%s' unk0=0x%X", name, unk0)
+            if unk14 != -1:
+                log.debug("Shader param '%s' unk14=%d", name, unk14)
+            if idx0 != i or idx1 != i:
+                log.debug("Shader param '%s' idxs=%d, %d (expected %d)",
+                    name, idx0, idx1, i)
+
+            data = self.fres.read(size, data_offs + offset)
+            data = struct.unpack(type['fmt'], data)
+
+            log.debug("%-38s %-5s %s", name, type['name'],
+                type['outfmt'] % data)
+
+            if name in self.shaderParams:
+                log.warning("Duplicate shader param '%s'", name)
+
+            self.shaderParams[name] = {
+                'name':   name,
+                'type':   type,
+                'size':   size,
+                'offset': offset,
+                'idxs':   (idx0, idx1),
+                'unk00':  unk0,
+                'unk14':  unk14,
+                'data':   data,
+            }
+
+
+    def _readShaderAssign(self):
+        assign = ShaderAssign()
+        assign.readFromFRES(self.fres, self.shader_assign_offs)
+        self.shader_assign = assign
+
+        log.debug("shader assign: %d vtx attrs, %d tex attrs, %d mat params",
+            assign.num_vtx_attrs, assign.num_tex_attrs,
+            assign.num_mat_params)
+
+        self.vtxAttrs = []
+        for i in range(assign.num_vtx_attrs):
+            name = self.fres.readStr(self.fres.read('Q',
+                assign.vtx_attr_names + (i*8)))
+            log.debug("vtx attr %d: '%s'", i, name)
+            self.vtxAttrs.append(name)
+
+        self.texAttrs = []
+        for i in range(assign.num_tex_attrs):
+            name = self.fres.readStr(self.fres.read('Q',
+                assign.tex_attr_names + (i*8)))
+            log.debug("tex attr %d: '%s'", i, name)
+            self.texAttrs.append(name)
+
+        self.mat_param_dict = self._readDict(
+            assign.mat_param_dict, "mat_params")
+        self.mat_params = {}
+        log.debug("material params:")
+        for i in range(assign.num_mat_params):
+            name = self.mat_param_dict[i+1]['name']
+            val  = self.fres.readStr(self.fres.read('Q',
+                assign.mat_param_vals + (i*8)))
+            log.debug("%-40s: %s", name, val)
+            if name in self.mat_params:
+                log.warning("duplicate mat_param '%s'", name)
+            self.mat_params[name] = val
 
     def validate(self):
         super().validate()
