@@ -48,7 +48,8 @@ class Element:
 
 
     def append(self, child):
-        if type(child) is str:
+        if type(child) in (str, int, float, bool, None):
+            child = str(child)
             if self._text is None: self._text = child
             else: self._text += child
         elif isinstance(child, Element):
