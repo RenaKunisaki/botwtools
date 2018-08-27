@@ -117,6 +117,8 @@ class ColladaWriter:
         self.effects.append(effect)
         matElem.Child('instance_effect', url='#'+effid)
 
+        effect.append(self._makeUkingMatNodes(fmat))
+
         # create a technique and a shader
         tech   = myxml.Element('technique', sid='common')
         shader = tech.Child('phong')
@@ -175,6 +177,51 @@ class ColladaWriter:
                 log.warn("Don't know what to do with material %s texture %s", fmat.name, tex['name'])
 
         profile.append(tech)
+
+
+    def _makeUkingMatNodes(self, fmat):
+        """Make nodes to store the raw material parameters."""
+        extra = myxml.Element('extra')
+        tech  = extra.Child('technique', profile='uking')
+
+        rparam = tech.Child('render_params')
+        for name, param in fmat.renderParams.items():
+            node = rparam.Child(name,
+                type=param['type'], count=param['count'])
+            for val in param['vals']:
+                node.Child('val', val)
+
+        sparam = tech.Child('shader_params')
+        for name, param in fmat.shaderParams.items():
+            node = sparam.Child(name, type=param['type']['name'],
+                #size=param['size'],
+                idx0=param['idxs'][0],
+                idx1=param['idxs'][1],
+                unk00=param['unk00'],
+                unk14=param['unk14'],
+            )
+            node.text = param['type']['outfmt'] % param['data']
+
+        mparam = tech.Child('shader_assign',
+            name=fmat.shader_assign.name,
+            name2=fmat.shader_assign.name2,
+        )
+        vattrs = mparam.Child('vtx_attrs',
+            count=fmat.shader_assign.num_vtx_attrs)
+        for attr in fmat.vtxAttrs:
+            vattrs.Child('attr', attr)
+
+        tattrs = mparam.Child('tex_attrs',
+            count=fmat.shader_assign.num_tex_attrs)
+        for attr in fmat.texAttrs:
+            tattrs.Child('attr', attr)
+
+        mattrs = mparam.Child('mat_params',
+            count=fmat.shader_assign.num_mat_params)
+        for name, param in fmat.mat_params.items():
+            mattrs.Child(name, param)
+
+        return extra
 
 
     def _makePlistForLod(self, fshp, lod, model_name, idx):

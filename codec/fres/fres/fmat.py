@@ -174,7 +174,12 @@ class FMAT(FresObject):
             try: typeName = types[typ]
             except IndexError: typeName = '0x%X' % typ
 
-            vals = []
+            param = {
+                'name':  name,
+                'count': cnt,
+                'type':  types[typ],
+                'vals':  [],
+            }
             for j in range(cnt):
                 if   typ == 0: val=self.fres.readHex(8, offs)
                 elif typ == 1: val=self.fres.read('f', offs)
@@ -182,14 +187,14 @@ class FMAT(FresObject):
                 else:
                     log.warning("Render param '%s' unknown type 0x%X",name,typ)
                     val = '<unknown>'
-                vals.append(val)
+                param['vals'].append(val)
 
             log.debug("Render param: %-5s[%d] %-32s: %s",
-                typeName, cnt, name, ', '.join(map(str, vals)))
+                typeName, cnt, name, ', '.join(map(str, param['vals'])))
 
             if name in self.renderParams:
                 log.warning("Duplicate render param '%s'", name)
-            self.renderParams[name] = vals
+            self.renderParams[name] = param
 
 
     def _readShaderParams(self):

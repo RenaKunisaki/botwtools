@@ -1,7 +1,22 @@
 - model exporting:
     - skeletons
     - bounding box
-    - FMAT render params, shader params
+    - FMAT:
+        - actually use:
+            - render params
+            - shader params
+            - shader assign/mat params
+        - figure out purpose and format of...
+            - sampler list
+            - volatile flag
+            - unk30, 40, B4
+            - mat_flags
+            - various dicts
+            - user data (if ever used)
+            - names at beginning of ShaderAssign struct
+                - is this an appropriate name?
+            - shader param fields unk0, unk14, idx0, idx1
+            - is `TexInfo.txt` used?
         - don't hardcode `geometry0_lod0_src4` as sampler texcoord
         - figure out proper way to tell what each texture is used for
         - figure out why Blender is ignoring the `_Nrm` textures, and how to get the `_Spm` textures to be used for specular intensity rather than specular color - I can't see any difference in a file exported from Blender?
