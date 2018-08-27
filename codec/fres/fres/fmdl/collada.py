@@ -277,7 +277,7 @@ class ColladaWriter:
         # make p element (index buffer)
         # prefix with \n\t so that editors can fold the data
         # so that we don't have to scroll past it all the time
-        tris.Child('p', '\n\t' + (' '.join(map(str, lod.idx_buf))))
+        tris.Child('p', '\n\t\t\t\t\t\t\t\t\t\t' + (' '.join(map(str, lod.idx_buf))))
 
         # node -> instance_geometry
         node = myxml.Element('node', name=model_name, type='NODE',
@@ -369,7 +369,7 @@ class ColladaWriter:
         #if typ['collada_type'] == 'int':
         #    arr.set('mininclusive', typ['min'])
         #    arr.set('maxinclusive', typ['max'])
-        arr.text = '\n\t' + (' '.join(map(str, data)))
+        arr.text = '\n\t\t\t\t\t\t\t\t\t\t' + (' '.join(map(str, data)))
         return arr
 
 

@@ -6,6 +6,8 @@
             - render params
             - shader params
             - shader assign/mat params
+        - store in COLLADA file:
+            - texture slots
         - figure out purpose and format of...
             - sampler list
             - volatile flag
