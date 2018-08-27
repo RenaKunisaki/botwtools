@@ -8,6 +8,7 @@
             - shader assign/mat params
         - store in COLLADA file:
             - texture slots
+            - texSRT values (these are stored but not in a proper XML format)
         - figure out purpose and format of...
             - sampler list
             - volatile flag
