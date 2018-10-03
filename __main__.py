@@ -53,6 +53,10 @@ def _setupArgs():
         action='append', metavar='PATH', default=[],
         help="List contents of file recursively.")
 
+    parser.add_argument('--show-xml', nargs=1, action='append',
+        metavar='PATH', default=[],
+        help="Display XML file as tree.")
+
     parser.add_argument('--list-codecs', action='store_true',
         help="List supported file formats.")
 
@@ -83,6 +87,7 @@ def main():
     for arg in args.list_recursive: app.list_file_recursive(*arg)
     for arg in args.extract: app.extract_file(*arg)
     for arg in args.extract_recursive: app.extract_recursive(*arg)
+    for arg in args.show_xml: app.show_xml(*arg)
     return 0
 
 

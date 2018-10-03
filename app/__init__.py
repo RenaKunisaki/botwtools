@@ -209,3 +209,29 @@ class App:
             decoder = codec.getDecoderForFile(file)
             decoder = decoder(file, None)
             decoder.printList()
+
+
+    def show_xml(self, path):
+        """Read an XML file and display it in a more convenient format."""
+        import xml.dom.minidom
+        with open(path, 'rt') as file:
+            data = file.read()
+            doc  = xml.dom.minidom.parseString(data)
+        def _printNode(node, parent='', _depth=0,_idx=0):
+            pref = '    ' * (_depth - 2)
+            #print('%s%s: %s' % (pref, node.localName,
+            #    getattr(node, 'data', '').strip()))
+            if node.nodeType == node.TEXT_NODE:
+                data = node.data.strip()
+                if data != '':
+                    print('%s%-20s "%s"' % (pref, parent+':', data))
+            else:
+                name = ''
+                if node.localName is not None:
+                    name = node.localName
+                if _idx == 1:
+                    print('%s%s:' % (pref, parent))
+                for i, child in enumerate(node.childNodes):
+                    _printNode(child, parent=name,
+                        _depth=_depth+1, _idx=i)
+        _printNode(doc)
