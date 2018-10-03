@@ -30,4 +30,5 @@
     - FSHU (Shape Animation)
     - other attributes
     - check out if fox SPM textures are being exported correctly; they look funny.
+    - put all the pieces together (model, skeleton, textures...)
 - figure out what dicts are about

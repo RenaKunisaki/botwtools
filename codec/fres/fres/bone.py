@@ -49,6 +49,12 @@ class Bone(FresObject):
         #self.s70  = readStringWithLength(file, '<H', self.unk70)
         #self.s88  = readStringWithLength(file, '<H', self.unk88)
 
+        log.debug("Bone %d: '%s', parent=%s scale=%+2.1f %+2.1f %+2.1f rot=%+2.1f %+2.1f %+2.1f %+2.1f pos=%+2.1f %+2.1f %+2.1f",
+            self.bone_idx, self.name, self.parent,
+            self.scaleX, self.scaleY, self.scaleZ,
+            self.rotX, self.rotY, self.rotZ, self.rotW,
+            self.posX, self.posY, self.posZ)
+
         #log.debug("Bone name  = '%s'", self.name)
         #log.debug("Bone s60   = '%s'", self.s60)
         #log.debug("Bone s70   = '%s'", self.s70)

@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
 from ..types import attrFmts
+E = myxml.Element
 
 attr_types = {
     # attribute name => {
@@ -66,21 +67,22 @@ class ColladaWriter:
     a COLLADA file from them.
     """
     def __init__(self):
+        self.controllers = []
         self.effects     = []
-        self.materials   = []
-        self.geometries  = []
-        self.images      = []
-        self.scenes      = []
-        self.meshes      = []
-        self.vtxs        = []
-        self.textures    = []
-        self.scene_nodes = []
         self.fmats       = []
         self.fvtxs       = []
+        self.geometries  = []
+        self.images      = []
+        self.materials   = []
+        self.meshes      = []
+        self.scene_nodes = []
+        self.scenes      = []
+        self.textures    = []
+        self.vtxs        = []
 
 
     def addScene(self, name="Untitled"):
-        scene = myxml.Element('visual_scene',
+        scene = E('visual_scene',
             *self.scene_nodes,
             id   = 'scene%d' % len(self.scenes),
             name = name,
@@ -90,7 +92,7 @@ class ColladaWriter:
 
     def addFVTX(self, fvtx, name=None):
         """Add an FVTX to the file."""
-        fvid = 'fvtx%d' % len(self.fvtxs)
+        #fvid = 'fvtx%d' % len(self.fvtxs)
         self.fvtxs.append(fvtx)
 
 
@@ -107,12 +109,12 @@ class ColladaWriter:
         self.fmats.append(fmat)
 
         # add element to materials
-        matElem = myxml.Element('material', id=matid, name=fmat.name)
+        matElem = E('material', id=matid, name=fmat.name)
         self.materials.append(matElem)
 
         # create an effect
         effid   = 'effect%d' % len(self.effects)
-        effect  = myxml.Element('effect', id=effid)
+        effect  = E('effect', id=effid)
         profile = effect.Child('profile_COMMON')
         self.effects.append(effect)
         matElem.Child('instance_effect', url='#'+effid)
@@ -120,7 +122,7 @@ class ColladaWriter:
         effect.append(self._makeUkingMatNodes(fmat))
 
         # create a technique and a shader
-        tech   = myxml.Element('technique', sid='common')
+        tech   = E('technique', sid='common')
         shader = tech.Child('phong')
         shader.Child('emission').Child('color', '0 0 0 1', sid="emission")
         shader.Child('ambient').Child('color', '0 0 0 1', sid="ambient")
@@ -133,7 +135,7 @@ class ColladaWriter:
             log.debug("fmat %s texture %s", fmat.name, tex['name'])
 
             texid = tex['name'].replace('.', '_') # XXX ensure valid ID
-            img = myxml.Element('image', id=texid, name=tex['name'])
+            img = E('image', id=texid, name=tex['name'])
             self.images.append(img)
             init = img.Child('init_from')
             init.text = 'textures/' + tex['name'] + '.png'
@@ -179,9 +181,29 @@ class ColladaWriter:
         profile.append(tech)
 
 
+    def addFSKL(self, fskl, name=None):
+        # https://www.khronos.org/collada/wiki/Skinning
+        """Add an FSKL to the file."""
+        ctrl_id = 'controller%d' % len(self.controllers)
+        controller = E('controller', id=ctrl_id)
+        self.controllers.append(controller)
+
+        arr_id = ctrl_id+'-skin-joints-array'
+        skin   = controller.Child('skin', source='#some_geometry')
+        name_array = skin.Child('Name_array', id=arr_id,
+            count=len(fskl.bones))
+        name_array.text = ' '.join([b.name for b in fskl.bones])
+
+        technique = skin.Child('technique_common')
+        accessor  = technique.Child('accessor', source='#'+arr_id,
+            count=len(fskl.bones), stride=1)
+        param     = accessor.Child('param',
+            name='JOINT', type='Name')
+
+
     def _makeUkingMatNodes(self, fmat):
         """Make nodes to store the raw material parameters."""
-        extra = myxml.Element('extra')
+        extra = E('extra')
         tech  = extra.Child('technique', profile='uking')
 
         rparam = tech.Child('render_params')
@@ -235,17 +257,17 @@ class ColladaWriter:
         mat   = self.fmats[fshp.fmat_idx]
 
         # create geometry and mesh
-        geom = myxml.Element('geometry', id=gid, name=model_name)
+        geom = E('geometry', id=gid, name=model_name)
         self.geometries.append(geom)
         mesh = geom.Child('mesh')
         self.meshes.append(mesh)
 
         # mesh -> vertices -> input, mesh -> source, mesh -> triangles
-        vtxs = myxml.Element('vertices', id=vid)
+        vtxs = E('vertices', id=vid)
         vtxs.Child('input', semantic='POSITION', source='#%s_src_p0' % gid)
         self.vtxs.append(vtxs)
 
-        tris = myxml.Element(self._getPrimFmt(lod),
+        tris = E(self._getPrimFmt(lod),
             count=int(lod.idx_cnt / 3), material=matid) # XXX
         #log.debug("LOD %s prim_fmt=%s", model_name, self._getPrimFmt(lod))
 
@@ -280,7 +302,7 @@ class ColladaWriter:
         tris.Child('p', '\n\t\t\t\t\t\t\t\t\t\t' + (' '.join(map(str, lod.idx_buf))))
 
         # node -> instance_geometry
-        node = myxml.Element('node', name=model_name, type='NODE',
+        node = E('node', name=model_name, type='NODE',
             id = 'node%d' % len(self.scene_nodes),
         )
         inst = node.Child('instance_geometry', url='#'+gid)
@@ -361,7 +383,7 @@ class ColladaWriter:
             dmin, dmax = typ['min'], typ['max']
             data = list(map(lambda d: d/(dmax-dmin)+dmin, data))
 
-        arr = myxml.Element('float_array',
+        arr = E('float_array',
             id = '%s_data' % srcid,
             count = len(data),
         )
@@ -379,7 +401,7 @@ class ColladaWriter:
         if attr.name not in attr_types: return None
         typ    = attrFmts[attr.format]
         offs   = attr.buf_offs #* buf.stride
-        tech   = myxml.Element('technique_common')
+        tech   = E('technique_common')
         params = attr_types[attr.name]['params']
         acc    = tech.Child('accessor',
             count  = len(data)*len(params), # XXX what is this
@@ -398,23 +420,24 @@ class ColladaWriter:
     def toXML(self):
         """Generate XML document for this file."""
         document = myxml.Document('COLLADA',
-            myxml.Element('asset',
-                myxml.Element('contributor',
-                    myxml.Element('author', "Nintendo"),
-                    myxml.Element('authoring_tool',
+            E('asset',
+                E('contributor',
+                    E('author', "Nintendo"),
+                    E('authoring_tool',
                         "https://github.com/RenaKunisaki/botwtools"
                     ),
                 ),
-                myxml.Element('unit', name='meter', meter=1),
-                myxml.Element('up_axis', 'Y_UP'),
+                E('unit', name='meter', meter=1),
+                E('up_axis', 'Y_UP'),
             ),
-            #myxml.Element('library_cameras',       *self.cameras),
-            #myxml.Element('library_lights',        *self.lights),
-            myxml.Element('library_effects',       *self.effects),
-            myxml.Element('library_images',        *self.images),
-            myxml.Element('library_materials',     *self.materials),
-            myxml.Element('library_geometries',    *self.geometries),
-            myxml.Element('library_visual_scenes', *self.scenes),
+            #E('library_cameras',       *self.cameras),
+            #E('library_lights',        *self.lights),
+            E('library_effects',       *self.effects),
+            E('library_images',        *self.images),
+            E('library_materials',     *self.materials),
+            E('library_geometries',    *self.geometries),
+            E('library_controllers',   *self.controllers),
+            E('library_visual_scenes', *self.scenes),
             xmlns="http://www.collada.org/2005/11/COLLADASchema",
             version="1.4.1",
         )

@@ -71,12 +71,18 @@ class FSKL(FresObject):
         self.inverse_idxs = fres.read('h',
             pos   = self.inverse_idx_offs,
             count = self.num_inverse_idxs)
-        #log.debug("Inverse idxs: %s", self.inverse_idxs)
+        log.debug("Inverse idxs: %s", self.inverse_idxs)
 
         # read inverse mtx (which I assume is 4x4)
-        self.inverse_mtx = fres.read('4f', count = 4,
-            pos = self.inverse_mtx_offs)
-        #log.debug("Inverse mtx: %s", self.inverse_mtx)
+        self.inverse_mtxs = []
+        for i in range(len(self.inverse_idxs)):
+            mtx = fres.read('4f', count = 4,
+                pos = self.inverse_mtx_offs + (i*16*4))
+            log.debug("Inverse mtx %d:", i)
+            for y in range(4):
+                log.debug("  %s", ' '.join(map(
+                    lambda v: '%+3.2f' % v, mtx[y])))
+            self.inverse_mtxs.append(mtx)
 
         return self
 

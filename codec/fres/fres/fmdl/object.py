@@ -111,6 +111,7 @@ class FMDL(FresObject):
     def toData(self):
         """Export model to COLLADA file."""
         writer = ColladaWriter()
+        writer.addFSKL(self.skeleton)
 
         for i, fmat in enumerate(self.fmats):
             writer.addFMAT(fmat)
