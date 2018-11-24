@@ -20,6 +20,7 @@
                 - is this an appropriate name?
             - shader param fields unk0, unk14, idx0, idx1
             - is `TexInfo.txt` used?
+                - apparently it tells how many textures there are.
         - don't hardcode `geometry0_lod0_src4` as sampler texcoord
         - figure out proper way to tell what each texture is used for
         - figure out why Blender is ignoring the `_Nrm` textures, and how to get the `_Spm` textures to be used for specular intensity rather than specular color - I can't see any difference in a file exported from Blender?

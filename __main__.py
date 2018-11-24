@@ -73,7 +73,9 @@ def main():
     global arg_parser
     args = _setupArgs()
     if not any(vars(args).values()): # no argument given
-        arg_parser.print_help()
+        #arg_parser.print_help()
+        from ui import UI
+        UI().run()
         return 0
 
     if not args.debug: log.setLevel(logger.logging.INFO)
