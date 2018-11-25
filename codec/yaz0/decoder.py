@@ -70,9 +70,11 @@ class Yaz0Stream(io.RawIOBase):
             self._outputStart += excess
 
         self.dest_pos += 1
-        if self.dest_pos & 0x3FFFF == 0:
-            log.debug("extracted: %d / %d %d%%", self.dest_pos,
-                self.size, (self.dest_pos / self.size) * 100)
+        if self.dest_pos & 0x1FFFF == 0:
+            log.debug("extracted: %d / %dK %d%%",
+                self.dest_pos / 1024,
+                self.size / 1024,
+                (self.dest_pos / self.size) * 100)
         return b
 
 

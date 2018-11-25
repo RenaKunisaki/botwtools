@@ -24,11 +24,14 @@ class Buffer:
         self.stride = stride
         self.offset = offset
         self.data   = file.read(size, offset)
+        if len(self.data) < size:
+            log.warn("Buffer size is 0x%X but only read 0x%X",
+                size, len(self.data))
 
-        #log.debug("Buffer size=%04X stride=%04X offs=%06X: %s %s",
-        #    size, stride, offset,
-        #    ' '.join(map(lambda b: '%02X'%b, self.data[0:16])),
-        #    self.data[0:16])
+        log.debug("Buffer size=%04X stride=%04X offs=%06X: %s %s",
+            size, stride, offset,
+            ' '.join(map(lambda b: '%02X'%b, self.data[0:16])),
+            self.data[0:16])
 
         fmts = {
               'int8': 'b',
@@ -45,5 +48,12 @@ class Buffer:
             'char':   'c',
         }
         for name, fmt in fmts.items():
-            view = memoryview(self.data).cast(fmt)
-            setattr(self, name, view)
+            try:
+                view = memoryview(self.data).cast(fmt)
+                setattr(self, name, view)
+            except TypeError:
+                # this just means we can't interpret the buffer as
+                # eg int64 because its size isn't a multiple of
+                # that type's size.
+                log.debug("FRES buffer: data size 0x%X doesn't fit format %s for type %s",
+                    len(self.data), fmt, name)
