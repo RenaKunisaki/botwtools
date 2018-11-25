@@ -36,7 +36,8 @@ class Yaz0Stream(io.RawIOBase):
 
     def __init__(self, file:BinInput):
         self.file = file
-        _, name = os.path.split(file.name)
+        # temp files' names can be integers, not strings
+        _, name = os.path.split(str(file.name))
         self.name = name + '.out'
         self.magic, self.dest_end = self.file.read('>4sI')
         if self.magic not in (b'Yaz0', b'Yaz1'):
@@ -45,6 +46,8 @@ class Yaz0Stream(io.RawIOBase):
         self.dest_pos = 0
         self.size     = self.dest_end
         self._output  = []
+        self._outputStart = 0
+        log.debug("Yaz0 output size: %d", self.size)
 
 
     def _nextByte(self) -> bytes:
@@ -56,13 +59,20 @@ class Yaz0Stream(io.RawIOBase):
 
     def _outputByte(self, b:(int,bytes)) -> bytes:
         """Write byte to output and return it."""
-        # XXX we keep the output in memory because the compression
-        # involves seeking back in the output stream and re-outputting
-        # some bytes. However we only need to keep the most recent
-        # 0x111 bytes, not the entire file.
         if type(b) is int: b = bytes((b,))
         self._output.append(b)
+
+        # we only need to keep the last 0x1111 bytes of the output
+        # since that's the furthest back we can seek to copy from.
+        excess = len(self._output) - 0x1111
+        if excess > 0:
+            self._output = self._output[-0x1111:]
+            self._outputStart += excess
+
         self.dest_pos += 1
+        if self.dest_pos & 0x3FFFF == 0:
+            log.debug("extracted: %d / %d %d%%", self.dest_pos,
+                self.size, (self.dest_pos / self.size) * 100)
         return b
 
 
@@ -86,7 +96,10 @@ class Yaz0Stream(io.RawIOBase):
                 else: n = self._nextByte() + 0x12
                 assert (3 <= n <= 0x111)
                 for i in range(n):
-                    yield self._outputByte(self._output[copy_src])
+                    #log.debug("copy src=0x%X start=0x%X len=0x%X",
+                    #    copy_src, self._outputStart, len(self._output))
+                    p = copy_src - self._outputStart
+                    yield self._outputByte(self._output[p])
                     copy_src += 1
             code <<= 1
             code_len -= 1
