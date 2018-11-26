@@ -189,8 +189,8 @@ class FMAT(FresObject):
                     val = '<unknown>'
                 param['vals'].append(val)
 
-            log.debug("Render param: %-5s[%d] %-32s: %s",
-                typeName, cnt, name, ', '.join(map(str, param['vals'])))
+            #log.debug("Render param: %-5s[%d] %-32s: %s",
+            #    typeName, cnt, name, ', '.join(map(str, param['vals'])))
 
             if name in self.renderParams:
                 log.warning("Duplicate render param '%s'", name)
@@ -199,7 +199,7 @@ class FMAT(FresObject):
 
     def _readShaderParams(self):
         self.shaderParams = {}
-        log.debug("Shader params:")
+        #log.debug("Shader params:")
 
         array_offs = self.shader_param_array_offs
         data_offs  = self.shader_param_data_offs
@@ -221,8 +221,8 @@ class FMAT(FresObject):
             data = self.fres.read(size, data_offs + offset)
             data = struct.unpack(type['fmt'], data)
 
-            log.debug("%-38s %-5s %s", name, type['name'],
-                type['outfmt'] % data)
+            #log.debug("%-38s %-5s %s", name, type['name'],
+            #    type['outfmt'] % data)
 
             if name in self.shaderParams:
                 log.warning("Duplicate shader param '%s'", name)
@@ -263,11 +263,11 @@ class FMAT(FresObject):
         self.mat_param_dict = self._readDict(
             assign.mat_param_dict, "mat_params")
         self.mat_params = {}
-        log.debug("material params:")
+        #log.debug("material params:")
         for i in range(assign.num_mat_params):
             name = self.mat_param_dict[i+1]['name']
             val  = self.fres.readStrPtr(assign.mat_param_vals + (i*8))
-            log.debug("%-40s: %s", name, val)
+            #log.debug("%-40s: %s", name, val)
             if name in self.mat_params:
                 log.warning("duplicate mat_param '%s'", name)
             self.mat_params[name] = val
