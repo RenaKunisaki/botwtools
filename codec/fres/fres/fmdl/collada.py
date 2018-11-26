@@ -211,7 +211,7 @@ class ColladaWriter:
             for row in mtx:
                 cnt += len(row)
                 mtxs.append(' '.join(map(
-                    lambda v: '%+3.2f' % v, row)))
+                    lambda v: '%5.2f' % v, row)))
             mtxs.append('')
         skin.Child('float_array', '\n'.join(mtxs),
             id=ctrl_id+'-skin-bind_poses-array',

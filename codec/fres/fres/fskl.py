@@ -56,7 +56,13 @@ class FSKL(FresObject):
         log.debug("Skeleton contains %d bones, %d inverse idxs, %d extras",
             self.num_bones, self.num_inverse_idxs, self.num_extra)
 
-        # read bones
+        self._readBones(fres)
+        self._readInverseIdxs(fres)
+        self._readInverseMtxs(fres)
+
+        return self
+
+    def _readBones(self, fres):
         self.bones = []
         self.bonesByName = {}
         offs = self.bone_array_offs
@@ -68,30 +74,35 @@ class FSKL(FresObject):
                 self.bonesByName[b.name] = b
             offs += Bone._reader.size
 
-        # read inverse indices
+    def _readInverseIdxs(self, fres):
         self.inverse_idxs = fres.read('h',
             pos   = self.inverse_idx_offs,
             count = self.num_inverse_idxs)
         log.debug("Inverse idxs: %s", self.inverse_idxs)
 
-        # read inverse mtx (which I assume is 4x4)
+    def _readInverseMtxs(self, fres):
+        """Read the inverse matrices."""
+        # I'm assuming these are 4x4
         self.inverse_mtxs = []
         for i in range(len(self.inverse_idxs)):
             mtx = fres.read('4f', count = 4,
                 pos = self.inverse_mtx_offs + (i*16*4))
+            # warn about invalid values
             for y in range(4):
                 for x in range(4):
                     n = mtx[y][x]
                     if math.isnan(n) or math.isinf(n):
                         log.warning("Skeleton inverse mtx %d element [%d,%d] is %s",
                             i, x, y, n)
+            # replace all invalid values with zeros
+            flt = lambda e: \
+                0 if (math.isnan(e) or math.isinf(e)) else e
+            mtx = map(lambda row: tuple(map(flt, row)), mtx)
             #log.debug("Inverse mtx %d:", i)
             #for y in range(4):
             #    log.debug("  %s", ' '.join(map(
             #        lambda v: '%+3.2f' % v, mtx[y])))
             self.inverse_mtxs.append(mtx)
-
-        return self
 
 
     def validate(self):
