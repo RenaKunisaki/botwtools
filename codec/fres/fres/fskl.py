@@ -14,6 +14,7 @@
 # along with botwtools.  If not, see <https://www.gnu.org/licenses/>.
 
 import logging; log = logging.getLogger(__name__)
+import math
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
@@ -50,8 +51,8 @@ class FSKL(FresObject):
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the skeleton from given FRES."""
         super().readFromFRES(fres, offset, reader)
-        #self.dumpToDebugLog()
-        #self.dumpOffsets()
+        self.dumpToDebugLog()
+        self.dumpOffsets()
         log.debug("Skeleton contains %d bones, %d inverse idxs, %d extras",
             self.num_bones, self.num_inverse_idxs, self.num_extra)
 
@@ -78,10 +79,16 @@ class FSKL(FresObject):
         for i in range(len(self.inverse_idxs)):
             mtx = fres.read('4f', count = 4,
                 pos = self.inverse_mtx_offs + (i*16*4))
-            log.debug("Inverse mtx %d:", i)
             for y in range(4):
-                log.debug("  %s", ' '.join(map(
-                    lambda v: '%+3.2f' % v, mtx[y])))
+                for x in range(4):
+                    n = mtx[y][x]
+                    if math.isnan(n) or math.isinf(n):
+                        log.warning("Skeleton inverse mtx %d element [%d,%d] is %s",
+                            i, x, y, n)
+            #log.debug("Inverse mtx %d:", i)
+            #for y in range(4):
+            #    log.debug("  %s", ' '.join(map(
+            #        lambda v: '%+3.2f' % v, mtx[y])))
             self.inverse_mtxs.append(mtx)
 
         return self
