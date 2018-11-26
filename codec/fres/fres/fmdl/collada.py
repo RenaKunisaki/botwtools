@@ -188,8 +188,12 @@ class ColladaWriter:
         controller = E('controller', id=ctrl_id)
         self.controllers.append(controller)
 
+        # XXX which geometry to use here?
         arr_id = ctrl_id+'-skin-joints-array'
-        skin   = controller.Child('skin', source='#some_geometry')
+        skin   = controller.Child('skin', source='#geometry0')
+        skin.Child('bind_shape_matrix',
+            "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1") # XXX
+
         name_array = skin.Child('Name_array', id=arr_id,
             count=len(fskl.bones))
         name_array.text = ' '.join([b.name for b in fskl.bones])
@@ -199,6 +203,26 @@ class ColladaWriter:
             count=len(fskl.bones), stride=1)
         param     = accessor.Child('param',
             name='JOINT', type='Name')
+
+        # add the inverse mtxs
+        mtxs = []
+        cnt  = 0
+        for mtx in fskl.inverse_mtxs:
+            for row in mtx:
+                cnt += len(row)
+                mtxs.append(' '.join(map(
+                    lambda v: '%+3.2f' % v, row)))
+            mtxs.append('')
+        skin.Child('float_array', '\n'.join(mtxs),
+            id=ctrl_id+'-skin-bind_poses-array',
+            count=cnt)
+
+        # add the accessor for weights
+        skin.Child('technique_common').Child(
+            'accessor', source='#geometry0_src_w0',
+            count='42', # XXX
+            stride='1',
+        ).Child('param', name='WEIGHT', type='float')
 
 
     def _makeUkingMatNodes(self, fmat):
