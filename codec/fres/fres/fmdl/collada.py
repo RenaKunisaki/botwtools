@@ -189,40 +189,60 @@ class ColladaWriter:
         self.controllers.append(controller)
 
         # XXX which geometry to use here?
-        arr_id = ctrl_id+'-skin-joints-array'
         skin   = controller.Child('skin', source='#geometry0')
         skin.Child('bind_shape_matrix',
             "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1") # XXX
 
-        name_array = skin.Child('Name_array', id=arr_id,
-            count=len(fskl.bones))
-        name_array.text = ' '.join([b.name for b in fskl.bones])
+        # make source for joint names
+        arr_id = ctrl_id+'-skin-joints-array'
+        cnt = len(fskl.bones)
+        src = skin.Child('source', id=ctrl_id+'-skin-joints')
+        src.Child('Name_array',
+            ' '.join([b.name for b in fskl.bones]),
+            id=arr_id, count=cnt)
+        src.Child('technique_common') \
+            .Child('accessor',
+            source='#'+arr_id, count=cnt, stride=1) \
+                .Child('param', name='JOINT', type='name')
 
-        technique = skin.Child('technique_common')
-        accessor  = technique.Child('accessor', source='#'+arr_id,
-            count=len(fskl.bones), stride=1)
-        param     = accessor.Child('param',
-            name='JOINT', type='Name')
-
-        # add the inverse mtxs
+        # make source for bind_poses
+        arr_id = ctrl_id+'-skin-bind_poses-array'
+        cnt = len(fskl.inverse_mtxs) * 16
         mtxs = []
-        cnt  = 0
         for mtx in fskl.inverse_mtxs:
             for row in mtx:
-                cnt += len(row)
                 mtxs.append(' '.join(map(
                     lambda v: '%5.2f' % v, row)))
             mtxs.append('')
-        skin.Child('float_array', '\n'.join(mtxs),
-            id=ctrl_id+'-skin-bind_poses-array',
-            count=cnt)
+        src = skin.Child('source', id=ctrl_id+'-skin-bind_poses')
+        src.Child('float_array', ' '.join(mtxs),
+            id=arr_id, count=cnt)
+        src.Child('technique_common') \
+            .Child('accessor',
+            source='#'+arr_id, count=cnt, stride=16) \
+                .Child('param', name='TRANSFORM', type='float4x4')
 
-        # add the accessor for weights
-        skin.Child('technique_common').Child(
-            'accessor', source='#geometry0_src_w0',
-            count='42', # XXX
-            stride='1',
-        ).Child('param', name='WEIGHT', type='float')
+        # make source for skin weights
+        arr_id = ctrl_id+'-skin-weights-array'
+        cnt = len(fskl.bones)
+        src = skin.Child('source', id=ctrl_id+'-skin-weights')
+        #src.Child('float_array',
+        #    ' '.join([b.name for b in fskl.bones]
+        #    id=arr_id, count=cnt)
+        src.Child('technique_common') \
+            .Child('accessor',
+            # XXX count
+            source='#geometry0_src_w0', count=42, stride=1) \
+                .Child('param', name='WEIGHT', type='float')
+
+        # add the joints
+        joints = skin.Child('joints')
+        joints.Child('input', semantic='JOINT',
+            source='#'+ctrl_id+'-skin-joints')
+        joints.Child('input', semantic='INV_BIND_MATRIX',
+            source='#'+ctrl_id+'-skin-bind_poses')
+
+        # XXX vertices
 
 
     def _makeUkingMatNodes(self, fmat):

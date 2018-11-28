@@ -19,6 +19,7 @@ from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
 from structreader import StructReader, BinaryObject
 from .bone import Bone
+from .boneIdxGroup import BoneIdxGroup
 
 class FSKL(FresObject):
     """FSKL object header."""
@@ -65,7 +66,9 @@ class FSKL(FresObject):
     def _readBones(self, fres):
         self.bones = []
         self.bonesByName = {}
+        self.boneIdxGroups = []
         offs = self.bone_array_offs
+
         for i in range(self.num_bones):
             b = Bone().readFromFRES(fres, offs)
             self.bones.append(b)
@@ -73,6 +76,12 @@ class FSKL(FresObject):
                 log.warn("Duplicate bone name '%s'", b.name)
                 self.bonesByName[b.name] = b
             offs += Bone._reader.size
+
+        offs = self.bone_idx_group_offs
+        for i in range(self.num_bones+2):
+            g = BoneIdxGroup().readFromFRES(fres, offs)
+            self.boneIdxGroups.append(g)
+            offs += BoneIdxGroup._reader.size
 
     def _readInverseIdxs(self, fres):
         self.inverse_idxs = fres.read('h',
@@ -83,8 +92,14 @@ class FSKL(FresObject):
     def _readInverseMtxs(self, fres):
         """Read the inverse matrices."""
         # I'm assuming these are 4x4
+
         self.inverse_mtxs = []
-        for i in range(len(self.inverse_idxs)):
+        # 4x4 = 16 floats = 64 bytes
+        # floor because there may be padding
+        # XXX how do you actually determine this number?
+        numMtxs = (
+            self.bone_idx_group_offs - self.inverse_mtx_offs) // 64
+        for i in range(numMtxs):
             mtx = fres.read('4f', count = 4,
                 pos = self.inverse_mtx_offs + (i*16*4))
             # warn about invalid values

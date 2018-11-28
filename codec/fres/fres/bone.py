@@ -40,6 +40,7 @@ class Bone(FresObject):
         ('f',  'posX'),
         ('f',  'posY'),
         ('f',  'posZ'),
+        size = 80,
     )
 
     def readFromFRES(self, fres, offset=None, reader=None):

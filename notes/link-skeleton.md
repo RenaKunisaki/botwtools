@@ -31,3 +31,84 @@ FSKL dump:
         <param name="WEIGHT" type="float"></param>
     </accessor>
 </technique_common>
+
+*library_controllers*
+  *controller*  id=`Renamon_Tongue-skin` name=`Renamon`
+    *skin*  source=`#tongue1-mesh`
+      *bind_shape_matrix*: `1 0 0 0  0 1 0 0...`
+
+      *source*  id=`Renamon_Tongue-skin-joints`
+        *Name_array*  id=`Renamon_Tongue-skin-joints-array` count=`180`
+          `DEF-head DEF-finger_index_03_L ...`
+        *technique_common*
+          *accessor*  source=`#Renamon_Tongue-skin-joints-array` count=`180` stride=`1`
+            *param*  name=`JOINT` type=`name`
+
+      *source*  id=`Renamon_Tongue-skin-bind_poses`
+        *float_array*  id=`Renamon_Tongue-skin-bind_poses-array` count=`2880`
+          `1 0 0 0...`
+        *technique_common*
+          *accessor*
+            *param*
+      ...more sources...
+
+      *joints*
+        *input*  semantic=`JOINT` source=`#Renamon_Tongue-skin-joints`
+        *input*  semantic=`INV_BIND_MATRIX` source=`#Renamon_Tongue-skin-bind_poses`
+
+      *vertex_weights*  count=`392`
+        *input*  semantic=`JOINT` source=`#Renamon_Tongue-skin-joints` offset=`0`
+        *vcount*: `4 4 4...`
+        *v*: `127 0 131 1 134 2...`
+
+<!-- Renamon -->
+<library_controllers>
+  <controller id="Renamon_Tongue-skin" name="Renamon">
+    <skin source="#tongue1-mesh">
+      <bind_shape_matrix>1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1</bind_shape_matrix>
+
+      <source id="Renamon_Tongue-skin-joints">
+        <Name_array id="Renamon_Tongue-skin-joints-array" count="180">
+          DEF-head DEF-finger_index_03_L ...
+        </Name_array>
+        <technique_common>
+          <accessor source="#Renamon_Tongue-skin-joints-array" count="180" stride="1">
+            <param name="JOINT" type="name"/>
+          </accessor>
+        </technique_common>
+      </source>
+
+      <source id="Renamon_Tongue-skin-bind_poses">
+        <float_array id="Renamon_Tongue-skin-bind_poses-array" count="2880">
+          1 0 0 0...
+        </float_array>
+        <technique_common>
+          <accessor source="#Renamon_Tongue-skin-bind_poses-array" count="180" stride="16">
+            <param name="TRANSFORM" type="float4x4"/>
+          </accessor>
+        </technique_common>
+      </source>
+
+      <source id="Renamon_Tongue-skin-weights">
+        <float_array id="Renamon_Tongue-skin-weights-array" count="1425">
+          0.4183802...
+        </float_array>
+        <technique_common>
+          <accessor source="#Renamon_Tongue-skin-weights-array" count="1425" stride="1">
+            <param name="WEIGHT" type="float"/>
+          </accessor>
+        </technique_common>
+      </source>
+
+      <joints>
+        <input semantic="JOINT" source="#Renamon_Tongue-skin-joints"/>
+        <input semantic="INV_BIND_MATRIX" source="#Renamon_Tongue-skin-bind_poses"/>
+      </joints>
+
+      <vertex_weights count="392">
+        <input semantic="JOINT" source="#Renamon_Tongue-skin-joints" offset="0"/>
+        <vcount>4 4 4...</vcount>
+        <v>127 0 131 1 134 2...</v>
+      </vertex_weights>
+    </skin>
+  </controller>

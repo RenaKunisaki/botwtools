@@ -78,7 +78,7 @@ class Header(FresObject):
         Offset64('embed_dict_offset'),
         Offset64('unkA8'),
         Offset64('str_tab_offset'),
-        Offset  ('unkB8'),
+        Offset  ('unkB8'), # str tab size?
         ('H',    'fmdl_cnt'),
         ('H',    'fska_cnt'),
         ('H',    'fmaa_cnt'),

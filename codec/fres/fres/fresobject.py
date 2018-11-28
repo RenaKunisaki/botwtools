@@ -32,7 +32,10 @@ class FresObject(BinaryObject):
             typ = field['type']
             if isinstance(typ, StrOffs):
                 offs = getattr(self, name)
-                data = typ.readStr(self.fres.file, offs)
+                if offs > 0:
+                    data = typ.readStr(self.fres.file, offs)
+                else:
+                    data = None
                 setattr(self, name+'_offset', offs)
                 setattr(self, name, data)
 
