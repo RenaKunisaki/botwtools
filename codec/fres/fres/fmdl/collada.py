@@ -242,7 +242,14 @@ class ColladaWriter:
         joints.Child('input', semantic='INV_BIND_MATRIX',
             source='#'+ctrl_id+'-skin-bind_poses')
 
-        # XXX vertices
+        # add the vertices
+        vtxs = skin.Child('vertex_weights', count=0) # XXX count
+        vtxs.Child('input', semantic='JOINT',
+            source='#'+ctrl_id+'-skin-joints', offset=0)
+        vtxs.Child('input', semantic='WEIGHT',
+            source='#'+ctrl_id+'-skin-weights', offset=1)
+        vtxs.Child('vcount') # XXX value
+        vtxs.Child('v') # XXX value
 
 
     def _makeUkingMatNodes(self, fmat):

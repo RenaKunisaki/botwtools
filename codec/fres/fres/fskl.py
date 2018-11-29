@@ -31,15 +31,12 @@ class FSKL(FresObject):
         ('4s', 'magic'),
         ('I',  'size'),
         ('I',  'size2'),
-        ('I',  'unk0C'), # always 0
-
+        Padding(4),
         Offset64('bone_idx_group_offs'),
         Offset64('bone_array_offs'),
         Offset64('inverse_idx_offs'),
         Offset64('inverse_mtx_offs'),
-
         Offset64('unk30'),
-
         ('I',  'flags'),
         ('H',  'num_bones'),
         ('H',  'num_inverse_idxs'),
@@ -102,6 +99,7 @@ class FSKL(FresObject):
         for i in range(numMtxs):
             mtx = fres.read('4f', count = 4,
                 pos = self.inverse_mtx_offs + (i*16*4))
+
             # warn about invalid values
             for y in range(4):
                 for x in range(4):
@@ -109,10 +107,13 @@ class FSKL(FresObject):
                     if math.isnan(n) or math.isinf(n):
                         log.warning("Skeleton inverse mtx %d element [%d,%d] is %s",
                             i, x, y, n)
+
             # replace all invalid values with zeros
             flt = lambda e: \
                 0 if (math.isnan(e) or math.isinf(e)) else e
-            mtx = map(lambda row: tuple(map(flt, row)), mtx)
+            mtx = list(map(lambda row: tuple(map(flt, row)), mtx))
+
+            # log values to debug
             #log.debug("Inverse mtx %d:", i)
             #for y in range(4):
             #    log.debug("  %s", ' '.join(map(

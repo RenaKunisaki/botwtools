@@ -37,6 +37,7 @@ FMDL and etc   |001730|0081C0|
 size           |0098F0|  N/A |
 but if the FMDL starts at 1730, how is the size 98F0?
 unless that FMDL belongs to the skeleton?
+anyway that's only the FSHP_dict, the FMDL header is at 0xD0
 
 so 21 matrices is correct, but what tells us that?
 just the fact that whatever references them never goes beyond 20?
@@ -278,3 +279,35 @@ Offset|MaxSiz|What
     001728: FSHP dict
     001760: FMAT dict
     009E7C: str_tab_end
+
+What are we missing?
+    - which geometry the skeleton is attached to
+    - the count for skin-weights
+        - we need to look up the `w0` attribute
+    - the count of vertex weights
+    - vertex_weights values:
+        - vcount (number of influences)
+        - v (joint/weight influence idxs)
+    - how to know the number of inverse mtxs in the file
+    - support formats other than `triangles`
+
+The vertex_weights tag associates the weights and joints from
+the previously defined sources with the vertices in the geometry
+being skinned.
+Each entry in this list matches a vertex in the original geometry,
+so the count here should be the same as the count in the geometry
+being skinned.
+Each weight/joint pair is referred to as an "influence", a vertex
+can have any number of influences applied to it.
+The <vcount>  value for a vertex defines the number of influences
+on that vertex.
+In this case every vertex has 5 influences.
+The values in the <v> array are the indices of the joint and weight
+that make up that influence.
+
+<vertex_weights count="42">
+         <input semantic="JOINT" source="#pCylinderShape1-skin-joints" offset="0"></input>
+         <input semantic="WEIGHT" source="#pCylinderShape1-skin-weights" offset="1"></input>
+         <vcount>5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
+5 5 5 5 5 5 5 5 5 5 5 5 </vcount>
+         <v>0
