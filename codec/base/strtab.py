@@ -21,12 +21,9 @@ class StringTable(BinaryObject):
     """String table."""
     _magic = b'_STR'
     _reader = StructReader(
-        ('4s',   'magic'),
-        ('I',    'unk04'), # 0
-        Offset64('unk08'),
-
-        ('I',  'num_strs'),
-        Padding(4),
+        ('4s', 'magic'),    Padding(4),
+        ('I',  'size'),     Padding(4),
+        ('I',  'num_strs'), Padding(4),
         size = 0x18,
     )
 
