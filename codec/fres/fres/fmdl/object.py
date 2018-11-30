@@ -111,7 +111,6 @@ class FMDL(FresObject):
     def toData(self):
         """Export model to COLLADA file."""
         writer = ColladaWriter()
-        writer.addFSKL(self.skeleton)
 
         for i, fmat in enumerate(self.fmats):
             writer.addFMAT(fmat)
@@ -120,5 +119,6 @@ class FMDL(FresObject):
             writer.addFVTX(fvtx, name=self.fshps[i].name)
             writer.addFSHP(self.fshps[i]) # XXX this is weird
 
+        writer.addFSKL(self.skeleton)
         writer.addScene()
         return writer.toXML().tostring(pretty_print=True)

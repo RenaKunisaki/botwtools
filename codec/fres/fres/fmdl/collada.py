@@ -70,6 +70,7 @@ class ColladaWriter:
         self.controllers = []
         self.effects     = []
         self.fmats       = []
+        self.fshps       = []
         self.fvtxs       = []
         self.geometries  = []
         self.images      = []
@@ -98,6 +99,7 @@ class ColladaWriter:
 
     def addFSHP(self, fshp):
         """Add an FSHP to the file."""
+        self.fshps.append(fshp)
         for i, lod in enumerate(fshp.lods):
             name = '%s.%d' % (fshp.name, i)
             self._makePlistForLod(fshp, lod, name, i)
@@ -189,14 +191,15 @@ class ColladaWriter:
         self.controllers.append(controller)
 
         # XXX which geometry to use here?
-        skin   = controller.Child('skin', source='#geometry0')
+        geom = self.fvtxs[0]
+        skin = controller.Child('skin', source='#geometry0')
         skin.Child('bind_shape_matrix',
             "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1") # XXX
 
         # make source for joint names
         arr_id = ctrl_id+'-skin-joints-array'
-        cnt = len(fskl.bones)
-        src = skin.Child('source', id=ctrl_id+'-skin-joints')
+        cnt    = len(fskl.bones)
+        src    = skin.Child('source', id=ctrl_id+'-skin-joints')
         src.Child('Name_array',
             ' '.join([b.name for b in fskl.bones]),
             id=arr_id, count=cnt)
@@ -229,10 +232,12 @@ class ColladaWriter:
         #src.Child('float_array',
         #    ' '.join([b.name for b in fskl.bones]
         #    id=arr_id, count=cnt)
+
+        bufs =self._getAttrBuffers(self.fshps[0].lods[0], geom)
+        cnt  =len(bufs['_w0'])
         src.Child('technique_common') \
-            .Child('accessor',
-            # XXX count
-            source='#geometry0_src_w0', count=42, stride=1) \
+            .Child('accessor', source='#geometry0_src_w0',
+                count=cnt, stride=1) \
                 .Child('param', name='WEIGHT', type='float')
 
         # add the joints
@@ -243,7 +248,7 @@ class ColladaWriter:
             source='#'+ctrl_id+'-skin-bind_poses')
 
         # add the vertices
-        vtxs = skin.Child('vertex_weights', count=0) # XXX count
+        vtxs = skin.Child('vertex_weights', count=len(geom.vtxs))
         vtxs.Child('input', semantic='JOINT',
             source='#'+ctrl_id+'-skin-joints', offset=0)
         vtxs.Child('input', semantic='WEIGHT',
