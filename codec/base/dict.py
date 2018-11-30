@@ -37,7 +37,7 @@ class Dict(BinaryObject):
         super()._unpackFromData(data)
 
         self.items = []
-        for i in range(self.numItems):
+        for i in range(self.numItems+1):
             self._file.seek(self._file_offset + self._reader.size +
                 (i*self._itemReader.size))
             item = self._itemReader.unpackFromFile(self._file)

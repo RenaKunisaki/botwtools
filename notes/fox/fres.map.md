@@ -48,15 +48,13 @@ Map of `Animal_Fox.fres` file:
         note the FSHP[1] visibility_groups are 0 and 0x12...
     001520 bone_idx_group_offs
 001728 FMDL[0].FSHP_dict
-    0,
-    2, -1,  1, ""
-    0,  2,  0, "Model__Mt_Body"
-    2,  2,  1, "Model__Mt_Eye"
+    0: 2, -1,  1, ``
+    1: 0,  2,  0, `Model__Mt_Body`
+    2: 2,  2,  1, `Model__Mt_Eye`
 001760 FMDL[0].FMAT_dict
-    0,
-    2, -1,  1, ""
-    0,  2,  0, "Mt_Body"
-    2,  2,  1, "Mt_Eye"
+    0: 2, -1,  1, ``
+    1: 0,  2,  0, `Mt_Body`
+    2: 2,  2,  1, `Mt_Eye`
 001798 FMDL[0].FSHP[0]
     001798 LOD[0]
         idx_cnt=3348 (0xD14)
@@ -114,6 +112,7 @@ Map of `Animal_Fox.fres` file:
         5:  8,  2,  8, `_u0`
         6:  0,  1,  6, `_u1`
         7: 10,  7,  5, `_i0`
+        8:  9,  7,  8, `_w0`
 001E88 FMDL[0].FVTX[1]
     001E88 vtx_attrib_array_offs
     001EF8 unk18 - all zeros
@@ -121,6 +120,14 @@ Map of `Animal_Fox.fres` file:
     002058 vtx_stridesize_offs
     0020B8 unk20, LOD[1].face_offs - all zeros
     0020D8 vtx_attrib_dict_offs
+        0: -1, 1, 0, ``
+        1:  4, 0, 5, `_p0`
+        2:  9, 3, 4, `_n0`
+        3: 10, 1, 3, `_t0`
+        4: 10, 4, 2, `_b0`
+        5:  8, 2, 7, `_u0`
+        6: 10, 6, 5, `_i0`
+        7:  9, 6, 7, `_w0`
 0020E8 FMDL[0].FVTX[0].vtx_buf_offs
 002160 FMDL[0].FMAT[0]
     002160 render_param_offs
@@ -134,9 +141,23 @@ Map of `Animal_Fox.fres` file:
     003140 tex_slot_offs
     003158 tex_ref_array_offs
     003170 shader_assign_offs
+        vtx attrs: `_p0`, `_n0`, `_t0`, `_w0`, `_i0`, `_u0`, `_u1`
+        tex attrs: `_a0`, `_s0`, `_n0`
+    003F90 mat_params: (407 items)
+        0: -1,  1,   0, ``
+        1:  0,  3,   6, `uking_enable_hide_normal_pass`
+        2:  2, 17, 108, `uking_reverse_polygon_offset`
+        3:  1,  2,  96, `uking_edit_expand_depthshadow_far`
     005918 render_param_dict_offs
     005B40 sampler_dict_offs
-    005B88 shader_param_dict_offs
+        0: -1, 1, 0, ``
+        1:  4, 0, 2, `_a0`
+        2:  8, 2, 3, `_n0`
+        3:  9, 1, 3, `_s0`
+    005B88 shader_param_dict_offs (62 items)
+        0: -1,  1,  0, ``
+        1:  0, 18,  6, `uk_user_data`
+        2:  4, 17, 21, `uk_user_data1`
 005F80 FMDL[0].FMAT[1]
     005F80 render_param_offs
     0063A0 unk30_offs - all zeros
@@ -149,10 +170,27 @@ Map of `Animal_Fox.fres` file:
     006F78 tex_slot_offs
     006F90 tex_ref_array_offs
     006FA8 shader_assign_offs
-    009738 render_param_dict_offs
+    007DB0 mat_params (407 items)
+        0: -1,  1,   0, ``
+        1:  0,  3,   6, `uking_enable_hide_normal_pass`
+        2:  2, 17, 108, `uking_reverse_polygon_offset`
+        3:  1,  2,  96, `uking_edit_expand_depthshadow_far`
+    009738 render_param_dict_offs (33 items)
+        0: -1,  1, 0, ``
+        1:  0,  8, 3, `gsys_pass`
+        2:  2, 23, 4, `gsys_dynamic_depth_shadow`
+        3:  1, 15, 2, `gsys_dynamic_depth_shadow_only`
 0098F0 FMDL[0].FSKL[0].size
-009960 FMDL[0].FMAT[1].sampler_dict_offs
-0099A8 FMDL[0].FMAT[1].shader_param_dict_offs
+009960 FMDL[0].FMAT[1].sampler_dict_offs (3 items)
+    0: -1, 1, 0, ``
+    1:  4, 0, 2, `_a0`
+    2:  8, 2, 3, `_n0`
+    3:  9, 1, 3, `_s0`
+0099A8 FMDL[0].FMAT[1].shader_param_dict_offs (62 items)
+    0: -1,  1,  0, ``
+    1:  0, 18,  6, `uk_user_data`
+    2:  4, 17, 21, `uk_user_data1`
+    3:  3,  2,  4, `uking_wind_vtx_transform_intensity`
 009DA0 FMAA[0]
     009DA0 field28 - FF FF 00 00  00 00 00 00
     009DA8 field30 - material names
@@ -160,11 +198,7 @@ Map of `Animal_Fox.fres` file:
     009DF8 field38 - zeros
     009E08 field40 - texture names
 009E68 FSKL offset + size ---------------------------------------
-009E68 String table header:
-    `_STR`
-    0x14498 (size, + offset = 0x1E300)
-    0
-    0x25A (602; number of strings?)
+009E68 String table, size=0x14498, 602 strings
 009E7C String table first entry ("")
 00D4A0 String table end, even though the size disagrees...
 00F468 FMDL[0].FVTX[1].vtx_buf_offs
@@ -172,8 +206,7 @@ Map of `Animal_Fox.fres` file:
        FMDL[0].FVTX[0,1].unk10
        FMDL[0].FSHP[1].LOD[1].unk08
 01E200 Embed[0]: "7", padding until 1E300
-01E300 RLT, end of string table
-    `_RLT`
+01E300 RLT, end of string table, according to its size
     0x1E300 (the offset of the RLT itself...)
     should probably figure out what this is.
 01E5A0 End of file

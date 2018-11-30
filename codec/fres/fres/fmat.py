@@ -250,7 +250,7 @@ class FMAT(FresObject):
         self.mat_params = {}
         #log.debug("material params:")
         for i in range(assign.num_mat_params):
-            name = self.mat_param_dict.items[i]['name']
+            name = self.mat_param_dict.items[i+1]['name']
             val  = self.fres.readStrPtr(assign.mat_param_vals + (i*8))
             #log.debug("%-40s: %s", name, val)
             if name in self.mat_params:
