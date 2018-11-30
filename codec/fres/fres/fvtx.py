@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .attribute import Attribute
 from .buffer import Buffer
@@ -54,11 +55,19 @@ class FVTX(FresObject):
         self.dumpToDebugLog()
         #self.dumpOffsets()
 
+        self._readDicts()
         self._readBuffers()
         self._readAttrs()
         self._readVtxs()
 
         return self
+
+
+    def _readDicts(self):
+        self.vtx_attrib_dict = Dict().readFromFile(self.fres.file,
+            self.vtx_attrib_dict_offs)
+        log.debug("FVTX attrib dict:")
+        self.vtx_attrib_dict.dumpToDebugLog()
 
 
     def _readBuffers(self):

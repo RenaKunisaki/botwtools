@@ -22,6 +22,7 @@ from .embedded import EmbeddedFile
 from .fmdl     import FMDL
 from .rlt      import RLT
 from codec.base.strtab import StringTable
+from codec.base.dict   import Dict
 
 class FRES:
     """Represents an FRES archive."""
@@ -64,8 +65,19 @@ class FRES:
         self.header.dumpToDebugLog()
         self.header.dumpOffsets()
 
+        # read string table and dicts
         self.strtab = self.readStringTable(
             self.header.str_tab_offset - 0x14) # WTF?
+        self.fmdlDict  = self.readDict(self.header.fmdl_dict_offset)
+        self.fmaaDict  = self.readDict(self.header.fmaa_dict_offset)
+        self.embedDict = self.readDict(self.header.embed_dict_offset)
+
+        log.debug("FMDL dict:")
+        self.fmdlDict.dumpToDebugLog()
+        log.debug("FMAA dict:")
+        self.fmaaDict.dumpToDebugLog()
+        log.debug("Embed dict:")
+        self.embedDict.dumpToDebugLog()
 
         for typ in self.object_types:
             self.readObjects(*typ)
@@ -118,6 +130,9 @@ class FRES:
 
     def readStringTable(self, offset):
         return StringTable().readFromFile(self.file, offset)
+
+    def readDict(self, offset):
+        return Dict().readFromFile(self.file, offset)
 
 
     def read(self, size:(int,str)=-1, pos:int=None, count:int=1,

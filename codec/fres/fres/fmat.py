@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .idxgrp import IndexGroup
 
@@ -118,26 +119,10 @@ class FMAT(FresObject):
 
 
     def _readDict(self, offs, name):
-        unk, cnt = self.fres.read('II', offs)
-        log.debug("FMAT dict %s: unk=0x%X cnt=%d", name, unk, cnt)
-        data = []
-        offs += 8
-        for i in range(cnt+1): # +1 for root node
-            search, left, right, name, pad = self.fres.read(
-                'iHHII', offs+(i*16))
-            if name: name = self.fres.readStr(name)
-            else: name = None
-            #log.debug('#%3d: %04X (%d:%d) %04X %04X (%X) "%s"',
-            #    i, search, search >> 3, search & 7,
-            #    left, right, pad, name)
-            data.append({
-                'search': search,
-                'left':   left,
-                'right':  right,
-                'pad':    pad,
-                'name':   name,
-            })
-        return data
+        d = Dict().readFromFile(self.fres.file, offs)
+        log.debug("FMAT dict %s:", name)
+        d.dumpToDebugLog()
+        return d
 
 
     def _readTextureList(self):
@@ -265,12 +250,13 @@ class FMAT(FresObject):
         self.mat_params = {}
         #log.debug("material params:")
         for i in range(assign.num_mat_params):
-            name = self.mat_param_dict[i+1]['name']
+            name = self.mat_param_dict.items[i]['name']
             val  = self.fres.readStrPtr(assign.mat_param_vals + (i*8))
             #log.debug("%-40s: %s", name, val)
             if name in self.mat_params:
                 log.warning("duplicate mat_param '%s'", name)
-            self.mat_params[name] = val
+            if name != '':
+                self.mat_params[name] = val
 
     def validate(self):
         super().validate()

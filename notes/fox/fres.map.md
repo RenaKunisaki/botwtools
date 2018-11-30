@@ -105,17 +105,15 @@ Map of `Animal_Fox.fres` file:
         1DB0 00 00 00 00...
         1DC0 00 00 00 00...
     001DD0 unk20 - all zeros
-    001DF0 vtx_attrib_dict_offs
-         0,
-         8, -1, 6, ""
-         4,  5, 0, `_p0`
-         9,  4, 3, `_n0`
-        10,  3, 1, `_t0`
-        10,  2, 4, `_b0`
-         8,  8, 2, `_u0`
-         0,  6, 1, `_u1`
-        10,  5, 7, `_i0`
-         9,  8, 7, `_w0`
+    001DF0 vtx_attrib_dict_offs, unk00 = 0
+        0: -1,  6,  0, ``
+        1:  4,  0,  5, `_p0`
+        2:  9,  3,  4, `_n0`
+        3: 10,  1,  3, `_t0`
+        4: 10,  4,  2, `_b0`
+        5:  8,  2,  8, `_u0`
+        6:  0,  1,  6, `_u1`
+        7: 10,  7,  5, `_i0`
 001E88 FMDL[0].FVTX[1]
     001E88 vtx_attrib_array_offs
     001EF8 unk18 - all zeros
