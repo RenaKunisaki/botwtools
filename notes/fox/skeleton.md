@@ -62,6 +62,7 @@ as int16:
 0xC21E, 0,  0, 0,  1,  0,  1, 15  "Spine_1"
 0xB98A, 0,  0, 0,  3,  0, 14,  8  "Spine_2"
 0xAC38, 0,  0, 0, 16,  0,  7, 23  "Arm_1_L"
+this is just a dict.
 
 guessed format:
 u32 name_offset
@@ -282,14 +283,14 @@ Offset|MaxSiz|What
 
 What are we missing?
     - which geometry the skeleton is attached to
-    - the count for skin-weights
-        - we need to look up the `w0` attribute
-    - the count of vertex weights
     - vertex_weights values:
         - vcount (number of influences)
         - v (joint/weight influence idxs)
     - how to know the number of inverse mtxs in the file
     - support formats other than `triangles`
+Blender seems to expect one inverse mtx for each joint,
+but there are only 21 mtxs.
+So there must be 21 joints...
 
 The vertex_weights tag associates the weights and joints from
 the previously defined sources with the vertices in the geometry
@@ -310,4 +311,4 @@ that make up that influence.
          <input semantic="WEIGHT" source="#pCylinderShape1-skin-weights" offset="1"></input>
          <vcount>5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5
 5 5 5 5 5 5 5 5 5 5 5 5 </vcount>
-         <v>0
+         <v>0 1 1 2 2 3 3 4 4 5 0 6...

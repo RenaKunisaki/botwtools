@@ -226,6 +226,9 @@ class ColladaWriter:
                 .Child('param', name='TRANSFORM', type='float4x4')
 
         # make source for skin weights
+        # unfortunately it seems we can't just reference the
+        # w0 array defined in the geometry, at least not in Blender.
+        # instead we have to copy it.
         arr_id = ctrl_id+'-skin-weights-array'
         cnt = len(fskl.bones)
         src = skin.Child('source', id=ctrl_id+'-skin-weights')
@@ -234,9 +237,13 @@ class ColladaWriter:
         #    id=arr_id, count=cnt)
 
         bufs =self._getAttrBuffers(self.fshps[0].lods[0], geom)
-        cnt  =len(bufs['_w0'])
+        data =bufs['_w0']
+        src.Child('float_array', ' '.join(map(str, data)),
+            count=len(data), id=ctrl_id+'-skin-weights-data')
+
         src.Child('technique_common') \
-            .Child('accessor', source='#geometry0_src_w0',
+            .Child('accessor',
+                source='#'+ctrl_id+'-skin-weights-data',
                 count=cnt, stride=1) \
                 .Child('param', name='WEIGHT', type='float')
 
@@ -248,13 +255,21 @@ class ColladaWriter:
             source='#'+ctrl_id+'-skin-bind_poses')
 
         # add the vertices
-        vtxs = skin.Child('vertex_weights', count=len(geom.vtxs))
+        #nvtxs = len(geom.vtxs)
+        nvtxs = cnt
+        vtxs  = skin.Child('vertex_weights', count=nvtxs)
         vtxs.Child('input', semantic='JOINT',
             source='#'+ctrl_id+'-skin-joints', offset=0)
         vtxs.Child('input', semantic='WEIGHT',
             source='#'+ctrl_id+'-skin-weights', offset=1)
-        vtxs.Child('vcount') # XXX value
-        vtxs.Child('v') # XXX value
+
+        # XXX these are almost definitely wrong.
+        vtxs.Child('vcount', '1 ' * nvtxs)
+        vlist = []
+        for i in range(nvtxs):
+            vlist.append(str(i))
+            vlist.append(str(i+1))
+        vtxs.Child('v', ' '.join(vlist))
 
 
     def _makeUkingMatNodes(self, fmat):

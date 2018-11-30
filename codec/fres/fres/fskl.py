@@ -17,9 +17,9 @@ import logging; log = logging.getLogger(__name__)
 import math
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .bone import Bone
-from .boneIdxGroup import BoneIdxGroup
 
 class FSKL(FresObject):
     """FSKL object header."""
@@ -74,11 +74,8 @@ class FSKL(FresObject):
                 self.bonesByName[b.name] = b
             offs += Bone._reader.size
 
-        offs = self.bone_idx_group_offs
-        for i in range(self.num_bones+2):
-            g = BoneIdxGroup().readFromFRES(fres, offs)
-            self.boneIdxGroups.append(g)
-            offs += BoneIdxGroup._reader.size
+        self.boneIdxGroups = Dict().readFromFile(self.fres.file,
+            self.bone_idx_group_offs)
 
     def _readInverseIdxs(self, fres):
         self.inverse_idxs = fres.read('h',
