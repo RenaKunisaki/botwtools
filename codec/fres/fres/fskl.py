@@ -34,29 +34,44 @@ class FSKL(FresObject):
         Padding(4),
         Offset64('bone_idx_group_offs'),
         Offset64('bone_array_offs'),
-        Offset64('inverse_idx_offs'),
-        Offset64('inverse_mtx_offs'),
+        Offset64('smooth_idx_offs'),
+        Offset64('smooth_mtx_offs'),
         Offset64('unk30'),
         ('I',  'flags'),
         ('H',  'num_bones'),
-        ('H',  'num_inverse_idxs'),
+        ('H',  'num_smooth_idxs'),
+        ('H',  'num_rigid_idxs'),
         ('H',  'num_extra'),
-        Padding(2),
         ('I',  'unk44'),
         size = 0x48,
     )
+
+    FLAG_SCALE_NONE = 0x00000000 # no scaling
+    FLAG_SCALE_STD  = 0x00000100 # standard scaling
+    FLAG_SCALE_MAYA = 0x00000200 # Respects Maya's segment scale
+        # compensation which offsets child bones rather than
+        # scaling them with the parent.
+    FLAG_SCALE_SOFTIMAGE = 0x00000300 # Respects the scaling method
+        # of Softimage.
+    FLAG_EULER = 0x00001000 # euler rotn, not quaternion
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the skeleton from given FRES."""
         super().readFromFRES(fres, offset, reader)
         self.dumpToDebugLog()
         self.dumpOffsets()
-        log.debug("Skeleton contains %d bones, %d inverse idxs, %d extras",
-            self.num_bones, self.num_inverse_idxs, self.num_extra)
+
+        scaleModes = ('none', 'standrd', 'maya', 'softimage')
+        log.debug("Skeleton contains %d bones, %d smooth idxs, %d rigid idxs, %d extras; scale mode=%s, rotation=%s; smooth_mtx_offs=0x%X",
+            self.num_bones, self.num_smooth_idxs,
+            self.num_rigid_idxs, self.num_extra,
+            scaleModes[(self.flags >> 8) & 3],
+            'euler' if self.flags & self.FLAG_EULER else 'quaternion',
+            self.smooth_mtx_offs)
 
         self._readBones(fres)
-        self._readInverseIdxs(fres)
-        self._readInverseMtxs(fres)
+        self._readSmoothIdxs(fres)
+        self._readSmoothMtxs(fres)
 
         return self
 
@@ -77,45 +92,47 @@ class FSKL(FresObject):
         self.boneIdxGroups = Dict().readFromFile(self.fres.file,
             self.bone_idx_group_offs)
 
-    def _readInverseIdxs(self, fres):
-        self.inverse_idxs = fres.read('h',
-            pos   = self.inverse_idx_offs,
-            count = self.num_inverse_idxs)
-        log.debug("Inverse idxs: %s", self.inverse_idxs)
+    def _readSmoothIdxs(self, fres):
+        self.smooth_idxs = fres.read('h',
+            pos   = self.smooth_idx_offs,
+            count = self.num_smooth_idxs)
+        log.debug("Smooth idxs: %s", self.smooth_idxs)
 
-    def _readInverseMtxs(self, fres):
-        """Read the inverse matrices."""
-        # I'm assuming these are 4x4
+    def _readSmoothMtxs(self, fres):
+        """Read the smooth matrices."""
 
-        self.inverse_mtxs = []
-        # 4x4 = 16 floats = 64 bytes
-        # floor because there may be padding
-        # XXX how do you actually determine this number?
-        numMtxs = (
-            self.bone_idx_group_offs - self.inverse_mtx_offs) // 64
-        for i in range(numMtxs):
-            mtx = fres.read('4f', count = 4,
-                pos = self.inverse_mtx_offs + (i*16*4))
+        self.smooth_mtxs = []
+        for i in range(max(self.smooth_idxs)):
+            mtx = fres.read('3f', count = 4,
+                pos = self.smooth_mtx_offs + (i*16*3))
 
             # warn about invalid values
             for y in range(4):
-                for x in range(4):
+                for x in range(3):
                     n = mtx[y][x]
                     if math.isnan(n) or math.isinf(n):
-                        log.warning("Skeleton inverse mtx %d element [%d,%d] is %s",
+                        log.warning("Skeleton smooth mtx %d element [%d,%d] is %s",
                             i, x, y, n)
 
             # replace all invalid values with zeros
             flt = lambda e: \
                 0 if (math.isnan(e) or math.isinf(e)) else e
-            mtx = list(map(lambda row: tuple(map(flt, row)), mtx))
+            mtx = list(map(lambda row: list(map(flt, row)), mtx))
+            #mtx[3][3] = 1 # debug
+
+            # transpose
+            #m = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
+            #for y in range(4):
+            #    for x in range(4):
+            #        m[x][y] = mtx[y][x]
+            #mtx = m
 
             # log values to debug
             #log.debug("Inverse mtx %d:", i)
             #for y in range(4):
             #    log.debug("  %s", ' '.join(map(
             #        lambda v: '%+3.2f' % v, mtx[y])))
-            self.inverse_mtxs.append(mtx)
+            self.smooth_mtxs.append(mtx)
 
 
     def validate(self):

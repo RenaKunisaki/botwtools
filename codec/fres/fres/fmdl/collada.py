@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
+import numpy as np
 from ..types import attrFmts
 E = myxml.Element
 
@@ -74,6 +75,7 @@ class ColladaWriter:
         self.fvtxs       = []
         self.geometries  = []
         self.images      = []
+        self.joints      = []
         self.materials   = []
         self.meshes      = []
         self.scene_nodes = []
@@ -196,29 +198,27 @@ class ColladaWriter:
         skin.Child('bind_shape_matrix',
             "1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1") # XXX
 
+        jointNames = self._makeSkeletonNode(fskl)
+
         # make source for joint names
         arr_id = ctrl_id+'-skin-joints-array'
-        cnt    = len(fskl.bones)
+        cnt    = len(jointNames)
         src    = skin.Child('source', id=ctrl_id+'-skin-joints')
         src.Child('Name_array',
-            ' '.join([b.name for b in fskl.bones]),
+            ' '.join(jointNames),
             id=arr_id, count=cnt)
         src.Child('technique_common') \
             .Child('accessor',
             source='#'+arr_id, count=cnt, stride=1) \
                 .Child('param', name='JOINT', type='name')
 
-        # make source for bind_poses
+        # make source for bind_poses (XXX necessary?)
         arr_id = ctrl_id+'-skin-bind_poses-array'
-        cnt = len(fskl.inverse_mtxs) * 16
-        mtxs = []
-        for mtx in fskl.inverse_mtxs:
-            for row in mtx:
-                mtxs.append(' '.join(map(
-                    lambda v: '%5.2f' % v, row)))
-            mtxs.append('')
+        cnt    = len(jointNames) * 4 * 4
+        mtxs   = (['1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1'] *
+            len(jointNames))
         src = skin.Child('source', id=ctrl_id+'-skin-bind_poses')
-        src.Child('float_array', ' '.join(mtxs),
+        src.Child('float_array', '\n'.join(mtxs),
             id=arr_id, count=cnt)
         src.Child('technique_common') \
             .Child('accessor',
@@ -256,7 +256,7 @@ class ColladaWriter:
 
         # add the vertices
         #nvtxs = len(geom.vtxs)
-        nvtxs = cnt
+        nvtxs = len(jointNames)
         vtxs  = skin.Child('vertex_weights', count=nvtxs)
         vtxs.Child('input', semantic='JOINT',
             source='#'+ctrl_id+'-skin-joints', offset=0)
@@ -373,10 +373,23 @@ class ColladaWriter:
         tris.Child('p', '\n\t\t\t\t\t\t\t\t\t\t' + (' '.join(map(str, lod.idx_buf))))
 
         # node -> instance_geometry
-        node = E('node', name=model_name, type='NODE',
-            id = 'node%d' % len(self.scene_nodes),
-        )
-        inst = node.Child('instance_geometry', url='#'+gid)
+        #node = E('node', name=model_name, type='NODE',
+        #    id = 'node%d' % len(self.scene_nodes),
+        #)
+        #inst = node.Child('instance_geometry', url='#'+gid)
+        #inst.Child('bind_material') \
+        #    .Child('technique_common') \
+        #    .Child('instance_material',
+        #        symbol=mat.name, target='#'+matid)
+        #    #.Child('bind_vertex_input', semantic="_u0",
+        #    #    input_semantic="TEXCOORD", input_set=0)
+
+        #self.scene_nodes.append(node)
+
+        node = E('node', id=gid, name=mat.name, type='NODE')
+        self.scene_nodes.append(node)
+        inst = node.Child('instance_controller', url='#controller0')
+        inst.Child('skeleton', '#skeleton_root')
         inst.Child('bind_material') \
             .Child('technique_common') \
             .Child('instance_material',
@@ -384,7 +397,74 @@ class ColladaWriter:
             #.Child('bind_vertex_input', semantic="_u0",
             #    input_semantic="TEXCOORD", input_set=0)
 
-        self.scene_nodes.append(node)
+    def _makeSkeletonNode(self, fskl):
+        parent     = None
+        jointNames = []
+        seenParent = {}
+        boneNodes  = {}
+
+        for i, bone in enumerate(fskl.bones):
+            parentIdx = bone.parent
+
+            if parentIdx >= 0:
+                parent = fskl.bones[parentIdx]
+                parentNode = boneNodes[parentIdx]
+                node = parentNode.Child('node',
+                    name=bone.name, sid=bone.name, type='JOINT')
+            else:
+                parent = None
+                node = E('node', id='skeleton_root',
+                    name=bone.name, sid=bone.name, type='JOINT')
+                self.scene_nodes.append(node)
+
+            boneNodes[i] = node
+            T = np.array([bone.posX,   bone.posY,   bone.posZ])
+            S = np.array([bone.scaleX, bone.scaleY, bone.scaleZ])
+            R = np.array([bone.rotX,bone.rotY,bone.rotZ,bone.rotW])
+
+            # XXX this is probably wrong, since it's pointless
+            # (why not just set these to 0 instead of having
+            # these flags?)
+            if bone.flags & bone.FLAG_NO_ROTATION:
+                R = np.array([0, 0, 0, 1])
+            if bone.flags & bone.FLAG_NO_TRANSLATION:
+                T = np.array([0, 0, 0])
+            if bone.flags & bone.FLAG_SEG_SCALE_COMPENSATE:
+                # apply inverse of parent's scale
+                if parent:
+                    S *= 1 / np.array([
+                        parent.scaleX, parent.scaleY, parent.scaleZ])
+                else:
+                    log.error("Bone '%s' has FLAG_SEG_SCALE_COMPENSATE but no parent", bone.name)
+            # no idea what "scale uniformly"/"scale volume by 1"
+            # actually mean.
+            # XXX billboarding if it's ever used.
+
+            # multiply by the smooth matrix if any
+            if bone.smooth_mtx_idx >= 0:
+                mtx = fskl.smooth_mtxs[bone.smooth_mtx_idx]
+                node.Child('matrix',
+                    '\n'.join(map(lambda row: ' '.join(
+                        map(str, row)), mtx)),
+                    sid='smooth')
+            # should do rigid mtxs too if they're ever used...
+
+            node.Child('translate',
+                '%3.2f %3.2f %3.2f' % (T[0], T[1], T[2]),
+                sid='translate')
+            node.Child('scale',
+                '%3.2f %3.2f %3.2f' % (S[0], S[1], S[2]),
+                sid='scale')
+            node.Child('rotate',
+                '%3.2f %3.2f %3.2f %3.2f' % (R[0],R[1],R[2],R[3]),
+                sid='rotate')
+
+
+
+            if parent and not seenParent.get(parentIdx, False):
+                seenParent[parentIdx] = True
+                jointNames.append(parent.name)
+        return jointNames
 
 
     def _getAttrBuffers(self, lod, fvtx):

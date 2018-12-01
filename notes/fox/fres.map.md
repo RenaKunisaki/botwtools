@@ -46,6 +46,8 @@ Map of `Animal_Fox.fres` file:
     000FB0 inverse_mtx_offs - space for 21 mtxs plus some padding.
     001200 flags (probably not an offset)
         note the FSHP[1] visibility_groups are 0 and 0x12...
+        http://mk8.tockdom.com/wiki/FMDL#Header_.28FSKL.29
+        apparently tells how bones are scaled.
     001520 bone_idx_group_offs
 001728 FMDL[0].FSHP_dict
     0: 2, -1,  1, ``
