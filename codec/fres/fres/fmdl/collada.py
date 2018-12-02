@@ -17,7 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
 import numpy as np
-from vmath import Matrix, Vec3
+from vmath import Matrix, Vec3, Vec4
 from ..types import attrFmts
 E = myxml.Element
 
@@ -427,7 +427,7 @@ class ColladaWriter:
             # (why not just set these to 0 instead of having
             # these flags?)
             if bone.flags & bone.FLAG_NO_ROTATION:
-                R = np.array([0, 0, 0, 1])
+                R = Vec4(0, 0, 0, 1)
             if bone.flags & bone.FLAG_NO_TRANSLATION:
                 T = Vec3(0, 0, 0)
             if bone.flags & bone.FLAG_SCALE_VOL_1:
@@ -439,9 +439,8 @@ class ColladaWriter:
                         parent.scaleX, parent.scaleY, parent.scaleZ)
                 else:
                     log.error("Bone '%s' has FLAG_SEG_SCALE_COMPENSATE but no parent", bone.name)
-            # no idea what "scale uniformly"/"scale volume by 1"
-            # actually mean.
-            # XXX billboarding if it's ever used.
+            # no idea what "scale uniformly" actually means.
+            # XXX billboarding, rigid mtxs, if ever used.
 
             # multiply by the smooth matrix if any
             if bone.smooth_mtx_idx >= 0:
@@ -450,7 +449,6 @@ class ColladaWriter:
                     '\n'.join(map(lambda row: ' '.join(
                         map(str, row)), mtx)),
                     sid='smooth')
-            # should do rigid mtxs too if they're ever used...
 
             node.Child('translate',
                 '%3.2f %3.2f %3.2f' % (T[0], T[1], T[2]),
