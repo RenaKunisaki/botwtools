@@ -46,6 +46,16 @@ class Matrix(np.ndarray):
             d.append(row)
         return Matrix(*d)
 
+    @staticmethod
+    def Translate(size, vec):
+        """Create square matrix translated by vector."""
+        return Matrix.I(size).translate(vec)
+
+    @staticmethod
+    def Scale(size, vec):
+        """Create square matrix scaled by vector."""
+        return Matrix.I(size).scale(vec)
+
     def __invert__(self):
         return np.linalg.inv(self)
 

@@ -100,30 +100,35 @@ class Vec4(np.ndarray):
             and self[3] == other[3])
 
     def __add__(self, other):
-        return Vec4(self[0]+other[0], self[1]+other[1], self[2]+other[2], self[3]+other[3])
+        C = type(self) # to support subclassing
+        return C(self[0]+other[0], self[1]+other[1], self[2]+other[2], self[3]+other[3])
 
     def __sub__(self, other):
-        return Vec4(self[0]-other[0], self[1]-other[1], self[2]-other[2], self[3]+other[3])
+        C = type(self)
+        return C(self[0]-other[0], self[1]-other[1], self[2]-other[2], self[3]+other[3])
 
     def __mul__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec4(self[0]*other, self[1]*other, self[2]*other,
+            return C(self[0]*other, self[1]*other, self[2]*other,
                 self[3]*other)
         else:
-            return Vec4(self[0]*other[0], self[1]*other[1], self[2]*other[2], self[3]*other[3])
+            return C(self[0]*other[0], self[1]*other[1], self[2]*other[2], self[3]*other[3])
 
     def __truediv__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec4(self[0]/other, self[1]/other, self[2]/other,
+            return C(self[0]/other, self[1]/other, self[2]/other,
                 self[3]/other)
         else:
-            return Vec4(self[0]/other[0], self[1]/other[1], self[2]/other[2], self[3]/other[3])
+            return C(self[0]/other[0], self[1]/other[1], self[2]/other[2], self[3]/other[3])
 
     def __floordiv__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec4(self[0]//other, self[1]//other, self[2]//other, self[3]//other)
+            return C(self[0]//other, self[1]//other, self[2]//other, self[3]//other)
         else:
-            return Vec4(self[0]//other[0], self[1]//other[1], self[2]//other[2], self[3]//other[3])
+            return C(self[0]//other[0], self[1]//other[1], self[2]//other[2], self[3]//other[3])
 
     def __iadd__(self, other):
         self[0] += other[0]
@@ -179,4 +184,5 @@ class Vec4(np.ndarray):
         return self
 
     def __neg__(self):
-        return Vec4(-self[0], -self[1], -self[2], -self[3])
+        C = type(self)
+        return C(-self[0], -self[1], -self[2], -self[3])

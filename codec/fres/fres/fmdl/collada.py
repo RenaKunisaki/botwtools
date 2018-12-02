@@ -17,7 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
 import numpy as np
-from vmath import Matrix, Vec3, Vec4
+from vmath import Matrix, Vec3, Vec4, Quaternion
 from ..types import attrFmts
 E = myxml.Element
 
@@ -438,6 +438,9 @@ class ColladaWriter:
             # no idea what "scale uniformly" actually means.
             # XXX billboarding, rigid mtxs, if ever used.
 
+            T = Matrix.Translate(4, T)
+            S = Matrix.Scale    (4, S)
+            R = Quaternion.fromEulerAngles(R).toMatrix()
             M = Matrix.I(4)
 
             # multiply by the smooth matrix if any
@@ -451,17 +454,14 @@ class ColladaWriter:
                 #        map(str, row)), mtx)),
                 #    sid='smooth')
 
-            M = M.translate(T)
-            M = M.rotateXYZ(R)
-            M = M.scale(S)
+            M = M @ T @ R @ S
 
-            # multiply by inverse of parent transform
+            # multiply by parent transform
             if parent:
-                P = Matrix.I(4)
-                P = P.translate(parent.pos)
-                P = P.rotateXYZ(parent.rot)
-                P = P.scale(parent.scale)
-                M = M @ P
+                PT = Matrix.Translate(4, parent.pos)
+                PS = Matrix.Scale    (4, parent.scale)
+                PR = Quaternion.fromEulerAngles(parent.rot).toMatrix()
+                M = M @ PT @ PR @ PS
 
             #node.Child('translate',
             #    '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),

@@ -95,28 +95,33 @@ class Vec3(np.ndarray):
             and self[2] == other[2])
 
     def __add__(self, other):
-        return Vec3(self[0]+other[0], self[1]+other[1], self[2]+other[2])
+        C = type(self) # to support subclassing
+        return C(self[0]+other[0], self[1]+other[1], self[2]+other[2])
 
     def __sub__(self, other):
-        return Vec3(self[0]-other[0], self[1]-other[1], self[2]-other[2])
+        C = type(self)
+        return C(self[0]-other[0], self[1]-other[1], self[2]-other[2])
 
     def __mul__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec3(self[0]*other, self[1]*other, self[2]*other)
+            return C(self[0]*other, self[1]*other, self[2]*other)
         else:
-            return Vec3(self[0]*other[0], self[1]*other[1], self[2]*other[2])
+            return C(self[0]*other[0], self[1]*other[1], self[2]*other[2])
 
     def __truediv__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec3(self[0]/other, self[1]/other, self[2]/other)
+            return C(self[0]/other, self[1]/other, self[2]/other)
         else:
-            return Vec3(self[0]/other[0], self[1]/other[1], self[2]/other[2])
+            return C(self[0]/other[0], self[1]/other[1], self[2]/other[2])
 
     def __floordiv__(self, other):
+        C = type(self)
         if type(other) in (int, float):
-            return Vec3(self[0]//other, self[1]//other, self[2]//other)
+            return C(self[0]//other, self[1]//other, self[2]//other)
         else:
-            return Vec3(self[0]//other[0], self[1]//other[1], self[2]//other[2])
+            return C(self[0]//other[0], self[1]//other[1], self[2]//other[2])
 
     def __iadd__(self, other):
         self[0] += other[0]
@@ -164,4 +169,9 @@ class Vec3(np.ndarray):
         return self
 
     def __neg__(self):
-        return Vec3(-self[0], -self[1], -self[2])
+        C = type(self)
+        return C(-self[0], -self[1], -self[2])
+
+Vec3.UnitX = Vec3(1, 0, 0)
+Vec3.UnitY = Vec3(0, 1, 0)
+Vec3.UnitZ = Vec3(0, 0, 1)
