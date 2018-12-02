@@ -16,7 +16,8 @@
 import logging; log = logging.getLogger(__name__)
 from structreader import StructReader, BinaryObject
 from .fresobject import FresObject
-from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.types import Offset, Offset64, StrOffs, Padding, Vec3f, Vec4f
+from vmath import Vec3, Vec4
 
 class Bone(FresObject):
     """A bone in an FSKL."""
@@ -33,16 +34,9 @@ class Bone(FresObject):
         ('h',  'billboard_idx'),
         ('H',  'udata_count'),
         ('I',  'flags'),
-        ('f',  'scaleX'),
-        ('f',  'scaleY'),
-        ('f',  'scaleZ'),
-        ('f',  'rotX'),
-        ('f',  'rotY'),
-        ('f',  'rotZ'),
-        ('f',  'rotW'),
-        ('f',  'posX'),
-        ('f',  'posY'),
-        ('f',  'posZ'),
+        Vec3f('scale'),
+        Vec4f('rot'),
+        Vec3f('pos'),
         size = 80,
     )
 
@@ -116,13 +110,11 @@ class Bone(FresObject):
             if self.flags & val:
                 flagStr.append(name)
 
-        log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%+2.1f %+2.1f %+2.1f rot=%+2.1f %+2.1f %+2.1f %+2.1f pos=%+2.1f %+2.1f %+2.1f flags=0x%08X  %s",
+        log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%s rot=%s pos=%s flags=0x%08X  %s",
             self.bone_idx, self.name, self.parent,
             self.smooth_mtx_idx, self.rigid_mtx_idx,
             self.billboard_idx, self.udata_count,
-            self.scaleX, self.scaleY, self.scaleZ,
-            self.rotX, self.rotY, self.rotZ, self.rotW,
-            self.posX, self.posY, self.posZ,
+            self.scale, self.rot, self.pos,
             self.flags, ', '.join(flagStr))
 
         #log.debug("Bone name  = '%s'", self.name)

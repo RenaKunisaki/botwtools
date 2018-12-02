@@ -49,25 +49,30 @@ class Vec4(np.ndarray):
 
     def __getitem__(self, key):
         if type(key) is int: return super().__getitem__(key)
-        if key in 'xX': return self[0]
-        if key in 'yY': return self[1]
-        if key in 'zZ': return self[2]
-        if key in 'wW': return self[3]
+        elif key in 'xX': return self[0]
+        elif key in 'yY': return self[1]
+        elif key in 'zZ': return self[2]
+        elif key in 'wW': return self[3]
         # XXX slice
-        raise KeyError(key)
+        else: raise KeyError(key)
 
     def __setitem__(self, key, val):
         if type(key) is int: return super().__setitem__(key, val)
-        if key in 'xX': self[0] = val
-        if key in 'yY': self[1] = val
-        if key in 'zZ': self[2] = val
-        if key in 'wW': self[3] = val
+        elif key in 'xX': self[0] = val
+        elif key in 'yY': self[1] = val
+        elif key in 'zZ': self[2] = val
+        elif key in 'wW': self[3] = val
         # XXX slice
-        raise KeyError(key)
+        else: raise KeyError(key)
         return self
 
     def __getattr__(self, key):
-        if key == 'length':
+        if   key in 'xX': return self[0]
+        elif key in 'yY': return self[1]
+        elif key in 'zZ': return self[2]
+        elif key in 'wW': return self[3]
+
+        elif key == 'length':
             return math.sqrt(
                 (self[0] * self[0])+
                 (self[1] * self[1])+
@@ -77,6 +82,14 @@ class Vec4(np.ndarray):
             return self / self.length
         else:
             raise AttributeError(key)
+
+    def __setattr__(self, key, val):
+        if   key in 'xX': self[0] = val
+        elif key in 'yY': self[1] = val
+        elif key in 'zZ': self[2] = val
+        elif key in 'wW': self[3] = val
+        else: raise AttributeError(key)
+        return self
 
     def __eq__(self, other):
         return (self[0] == other[0]

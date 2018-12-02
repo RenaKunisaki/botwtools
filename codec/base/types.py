@@ -17,6 +17,10 @@ import logging; log = logging.getLogger(__name__)
 import io
 import struct
 from structreader import readString, readStringWithLength
+from vmath import Vec3, Vec4, Matrix
+
+SIZEOF_FLOAT  = 4
+SIZEOF_DOUBLE = 8
 
 
 # some type annotations
@@ -109,3 +113,100 @@ class Padding(BaseType):
                 log.error("Padding byte at offset 0x%X is 0x%X",
                     i, buffer[i+offset])
         return None
+
+
+class Vec3f(BaseType):
+    """A vector of 3 floats."""
+    size = SIZEOF_FLOAT * 3
+    def read(self, buffer, offset):
+        x, y, z = struct.unpack_from('3f', buffer, offset)
+        return Vec3(x, y, z)
+
+class Vec3d(BaseType):
+    """A vector of 3 doubles."""
+    size = SIZEOF_DOUBLE * 3
+    def read(self, buffer, offset):
+        x, y, z = struct.unpack_from('3d', buffer, offset)
+        return Vec3(x, y, z)
+
+class Vec4f(BaseType):
+    """A vector of 4 floats."""
+    size = SIZEOF_FLOAT * 4
+    def read(self, buffer, offset):
+        x, y, z, w = struct.unpack_from('4f', buffer, offset)
+        return Vec4(x, y, z, w)
+
+class Vec4d(BaseType):
+    """A vector of 4 doubles."""
+    size = SIZEOF_DOUBLE * 4
+    def read(self, buffer, offset):
+        x, y, z, w = struct.unpack_from('4d', buffer, offset)
+        return Vec4(x, y, z, w)
+
+class Mat4x4f(BaseType):
+    """A 4x4 matrix of floats."""
+    size = SIZEOF_FLOAT * 4 * 4
+    def read(self, buffer, offset):
+        d = struct.unpack_from('16f', buffer, offset)
+        return Matrix(
+            d[ 0: 4],
+            d[ 4: 8],
+            d[ 8:12],
+            d[12:16],
+        )
+
+class Mat4x4d(BaseType):
+    """A 4x4 matrix of doubles."""
+    size = SIZEOF_DOUBLE * 4 * 4
+    def read(self, buffer, offset):
+        d = struct.unpack_from('16d', buffer, offset)
+        return Matrix(
+            d[ 0: 4],
+            d[ 4: 8],
+            d[ 8:12],
+            d[12:16],
+        )
+
+class Mat4x3f(BaseType):
+    """A 4x3 matrix of floats."""
+    size = SIZEOF_FLOAT * 4 * 3
+    def read(self, buffer, offset):
+        d = struct.unpack_from('12f', buffer, offset)
+        return Matrix(
+            d[ 0: 4],
+            d[ 4: 8],
+            d[ 8:12],
+        )
+
+class Mat4x3d(BaseType):
+    """A 4x3 matrix of doubles."""
+    size = SIZEOF_DOUBLE * 4 * 3
+    def read(self, buffer, offset):
+        d = struct.unpack_from('12d', buffer, offset)
+        return Matrix(
+            d[ 0: 4],
+            d[ 4: 8],
+            d[ 8:12],
+        )
+
+class Mat3x3f(BaseType):
+    """A 3x3 matrix of floats."""
+    size = SIZEOF_FLOAT * 3 * 3
+    def read(self, buffer, offset):
+        d = struct.unpack_from('9f', buffer, offset)
+        return Matrix(
+            d[0:3],
+            d[3:6],
+            d[6:9],
+        )
+
+class Mat3x3d(BaseType):
+    """A 3x3 matrix of doubles."""
+    size = SIZEOF_DOUBLE * 3 * 3
+    def read(self, buffer, offset):
+        d = struct.unpack_from('9d', buffer, offset)
+        return Matrix(
+            d[0:3],
+            d[3:6],
+            d[6:9],
+        )

@@ -419,9 +419,9 @@ class ColladaWriter:
                 self.scene_nodes.append(node)
 
             boneNodes[i] = node
-            T = Vec3(bone.posX,   bone.posY,   bone.posZ)
-            S = Vec3(bone.scaleX, bone.scaleY, bone.scaleZ)
-            R = np.array([bone.rotX,bone.rotY,bone.rotZ,bone.rotW])
+            T = bone.pos
+            S = bone.scale
+            R = bone.rot
 
             # XXX this is probably wrong, since it's pointless
             # (why not just set these to 0 instead of having
@@ -435,8 +435,7 @@ class ColladaWriter:
             if bone.flags & bone.FLAG_SEG_SCALE_COMPENSATE:
                 # apply inverse of parent's scale
                 if parent:
-                    S *= 1 / Vec3(
-                        parent.scaleX, parent.scaleY, parent.scaleZ)
+                    S *= 1 / parent.scale
                 else:
                     log.error("Bone '%s' has FLAG_SEG_SCALE_COMPENSATE but no parent", bone.name)
             # no idea what "scale uniformly" actually means.
@@ -451,13 +450,13 @@ class ColladaWriter:
                     sid='smooth')
 
             node.Child('translate',
-                '%3.2f %3.2f %3.2f' % (T[0], T[1], T[2]),
+                '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
                 sid='translate')
             node.Child('scale',
-                '%3.2f %3.2f %3.2f' % (S[0], S[1], S[2]),
+                '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
                 sid='scale')
             node.Child('rotate',
-                '%3.2f %3.2f %3.2f %3.2f' % (R[0],R[1],R[2],R[3]),
+                '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
                 sid='rotate')
 
 
