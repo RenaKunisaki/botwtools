@@ -17,7 +17,7 @@ import logging; log = logging.getLogger(__name__)
 from structreader import StructReader, BinaryObject
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags, Vec3f, Vec4f
-from vmath import Vec3, Vec4
+from vmath import Matrix, Vec3, Vec4, Quaternion
 
 class Bone(FresObject):
     """A bone in an FSKL."""
@@ -28,7 +28,7 @@ class Bone(FresObject):
         StrOffs('name'),
         ('5I',  'unk04'),
         ('H',  'bone_idx'),
-        ('h',  'parent'),
+        ('h',  'parent_idx'),
         ('h',  'smooth_mtx_idx'),
         ('h',  'rigid_mtx_idx'),
         ('h',  'billboard_idx'),
@@ -80,6 +80,8 @@ class Bone(FresObject):
         #self.s60  = readStringWithLength(file, '<H', self.unk60)
         #self.s70  = readStringWithLength(file, '<H', self.unk70)
         #self.s88  = readStringWithLength(file, '<H', self.unk88)
+        self.parent = None # to be set by the FSKL
+        self.fskl   = None # to be set by the FSKL
 
         flagStr=[]
         names=(
@@ -107,7 +109,7 @@ class Bone(FresObject):
                 flagStr.append(name)
 
         log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%s rot=%s pos=%s flags=0x%08X  %s",
-            self.bone_idx, self.name, self.parent,
+            self.bone_idx, self.name, self.parent_idx,
             self.smooth_mtx_idx, self.rigid_mtx_idx,
             self.billboard_idx, self.udata_count,
             self.scale, self.rot, self.pos,
@@ -125,3 +127,46 @@ class Bone(FresObject):
     def validate(self):
         super().validate()
         return True
+
+
+    def computeTransform(self):
+        """Compute final transformation matrix."""
+        T = self.pos
+        S = self.scale
+        R = self.rot
+
+        # why have these flags instead of just setting the
+        # values to 0/1? WTF Nintendo.
+        if self.flags['NO_ROTATION']:    R = Vec4(0, 0, 0, 1)
+        if self.flags['NO_TRANSLATION']: T = Vec3(0, 0, 0)
+        if self.flags['SCALE_VOL_1']:    S = Vec3(1, 1, 1)
+        if self.flags['SEG_SCALE_COMPENSATE']:
+            # apply inverse of parent's scale
+            if self.parent:
+                S *= 1 / self.parent.scale
+            else:
+                log.error("Bone '%s' has flag SEG_SCALE_COMPENSATE but no parent", self.name)
+        # no idea what "scale uniformly" actually means.
+        # XXX billboarding, rigid mtxs, if ever used.
+
+        # Build matrices from these transformations.
+        T = Matrix.Translate(4, T)
+        S = Matrix.Scale    (4, S)
+        R = Quaternion.fromEulerAngles(R).toMatrix()
+        M = Matrix.I(4)
+
+        # multiply by the smooth matrix if any
+        if self.smooth_mtx_idx >= 0:
+            mtx = self.fskl.smooth_mtxs[self.smooth_mtx_idx]
+            # convert 4x3 to 4x4
+            mtx = Matrix(mtx[0], mtx[1], mtx[2], (0, 0, 0, 1))
+            M = M @ mtx
+
+        # apply the transformations
+        M = M @ T @ R @ S
+
+        # apply the parent transformations
+        if self.parent:
+            M = M @ self.parent.computeTransform()
+
+        return M

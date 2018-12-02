@@ -405,63 +405,18 @@ class ColladaWriter:
         boneNodes  = {}
 
         for i, bone in enumerate(fskl.bones):
-            parentIdx = bone.parent
+            parent = bone.parent
 
-            if parentIdx >= 0:
-                parent = fskl.bones[parentIdx]
-                parentNode = boneNodes[parentIdx]
+            if parent:
+                parentNode = boneNodes[bone.parent_idx]
                 node = parentNode.Child('node',
                     name=bone.name, sid=bone.name, type='JOINT')
             else:
-                parent = None
                 node = E('node', id='skeleton_root',
                     name=bone.name, sid=bone.name, type='JOINT')
                 self.scene_nodes.append(node)
 
             boneNodes[i] = node
-            T = bone.pos
-            S = bone.scale
-            R = bone.rot
-
-            # XXX this is probably wrong, since it's pointless
-            # (why not just set these to 0 instead of having
-            # these flags?)
-            if bone.flags['NO_ROTATION']:    R = Vec4(0, 0, 0, 1)
-            if bone.flags['NO_TRANSLATION']: T = Vec3(0, 0, 0)
-            if bone.flags['SCALE_VOL_1']:    S = Vec3(1, 1, 1)
-            if bone.flags['SEG_SCALE_COMPENSATE']:
-                # apply inverse of parent's scale
-                if parent:
-                    S *= 1 / parent.scale
-                else:
-                    log.error("Bone '%s' has flag SEG_SCALE_COMPENSATE but no parent", bone.name)
-            # no idea what "scale uniformly" actually means.
-            # XXX billboarding, rigid mtxs, if ever used.
-
-            T = Matrix.Translate(4, T)
-            S = Matrix.Scale    (4, S)
-            R = Quaternion.fromEulerAngles(R).toMatrix()
-            M = Matrix.I(4)
-
-            # multiply by the smooth matrix if any
-            if bone.smooth_mtx_idx >= 0:
-                mtx = fskl.smooth_mtxs[bone.smooth_mtx_idx]
-                # convert 4x3 to 4x4
-                mtx = Matrix(mtx[0], mtx[1], mtx[2], (0, 0, 0, 1))
-                M = M @ mtx
-                #node.Child('matrix',
-                #    '\n'.join(map(lambda row: ' '.join(
-                #        map(str, row)), mtx)),
-                #    sid='smooth')
-
-            M = M @ T @ R @ S
-
-            # multiply by parent transform
-            if parent:
-                PT = Matrix.Translate(4, parent.pos)
-                PS = Matrix.Scale    (4, parent.scale)
-                PR = Quaternion.fromEulerAngles(parent.rot).toMatrix()
-                M = M @ PT @ PR @ PS
 
             #node.Child('translate',
             #    '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
@@ -473,13 +428,14 @@ class ColladaWriter:
             #    '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
             #    sid='rotate')
 
+            M = bone.computeTransform()
             node.Child('matrix',
                 '\n'.join(map(lambda row: ' '.join(
                     map(str, row)), M.T)),
                 sid='transform')
 
-            if parent and not seenParent.get(parentIdx, False):
-                seenParent[parentIdx] = True
+            if parent and not seenParent.get(bone.parent_idx,False):
+                seenParent[bone.parent_idx] = True
                 jointNames.append(parent.name)
         return jointNames
 

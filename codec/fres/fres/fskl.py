@@ -90,6 +90,18 @@ class FSKL(FresObject):
                 self.bonesByName[b.name] = b
             offs += Bone._reader.size
 
+        # set parents
+        for bone in self.bones:
+            bone.fskl = self
+            if bone.parent_idx >= len(self.bones):
+                log.error("Bone %s has invalid parent_idx %d (max is %d)",
+                    bone.name, bone.parent_idx, len(self.bones))
+                bone.parent = None
+            elif bone.parent_idx >= 0:
+                bone.parent = self.bones[bone.parent_idx]
+            else:
+                bone.parent = None
+
         self.boneIdxGroups = Dict().readFromFile(self.fres.file,
             self.bone_idx_group_offs)
 
