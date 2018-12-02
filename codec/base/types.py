@@ -115,6 +115,22 @@ class Padding(BaseType):
         return None
 
 
+class Flags(BaseType):
+    """A set of bitflags."""
+    def __init__(self, name, flags, fmt='I'):
+        self.name   = name
+        self._flags = flags
+        self.fmt    = fmt
+        self.size   = struct.calcsize(fmt)
+
+    def read(self, buffer, offset):
+        val = struct.unpack_from(self.fmt, buffer, offset)[0]
+        res = {'_raw':val}
+        for name, mask in self._flags.items():
+            res[name] = (val & mask) == mask
+        return res
+
+
 class Vec3f(BaseType):
     """A vector of 3 floats."""
     size = SIZEOF_FLOAT * 3

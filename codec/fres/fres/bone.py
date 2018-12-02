@@ -16,7 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 from structreader import StructReader, BinaryObject
 from .fresobject import FresObject
-from codec.base.types import Offset, Offset64, StrOffs, Padding, Vec3f, Vec4f
+from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags, Vec3f, Vec4f
 from vmath import Vec3, Vec4
 
 class Bone(FresObject):
@@ -33,48 +33,46 @@ class Bone(FresObject):
         ('h',  'rigid_mtx_idx'),
         ('h',  'billboard_idx'),
         ('H',  'udata_count'),
-        ('I',  'flags'),
+        Flags('flags', {
+            'VISIBLE': 0x00000001,
+            'EULER':   0x00001000, # use euler rotn, not quaternion
+            'BB_CHILD':0x00010000, # child billboarding
+            'BB_WORLD_VEC':0x00020000, # World View Vector.
+                # The Z axis is parallel to the camera.
+            'BB_WORLD_POINT':0x00030000, # World View Point.
+                # The Z axis is equal to the direction the camera
+                # is pointing to.
+            'BB_SCREEN_VEC':0x00040000, # Screen View Vector.
+                # The Z axis is parallel to the camera, the Y axis is
+                # equal to the up vector of the camera.
+            'BB_SCREEN_POINT':0x00050000, # Screen View Point.
+                # The Z axis is equal to the direction the camera is
+                # pointing to, the Y axis is equal to the up vector of
+                # the camera.
+            'BB_Y_VEC':0x00060000, # Y-Axis View Vector.
+                # The Z axis has been made parallel to the camera view
+                # by rotating the Y axis.
+            'BB_Y_POINT':0x00070000, # Y-Axis View Point.
+                # The Z axis has been made equal to the direction
+                # the camera is pointing to by rotating the Y axis.
+            'SEG_SCALE_COMPENSATE':0x00800000, # Segment scale
+                # compensation. Set for bones scaled in Maya whose
+                # scale is not applied to child bones.
+            'UNIFORM_SCALE': 0x01000000, # Scale uniformly.
+            'SCALE_VOL_1':   0x02000000, # Scale volume by 1.
+            'NO_ROTATION':   0x04000000,
+            'NO_TRANSLATION':0x08000000,
+            # same as previous but for hierarchy of bones
+            'GRP_UNIFORM_SCALE': 0x10000000,
+            'GRP_SCALE_VOL_1':   0x20000000,
+            'GRP_NO_ROTATION':   0x40000000,
+            'GRP_NO_TRANSLATION':0x80000000,
+        }),
         Vec3f('scale'),
         Vec4f('rot'),
         Vec3f('pos'),
         size = 80,
     )
-
-    FLAG_VISIBLE     =0x00000001
-    FLAG_EULER       =0x00001000 # use euler rotn, not quaternion
-    FLAG_BB_NONE     =0x00000000 # no billboarding
-    FLAG_BB_CHILD    =0x00010000 # child billboarding
-    FLAG_BB_WORLD_VEC=0x00020000 # World View Vector.
-        # The Z axis is parallel to the camera.
-    FLAG_BB_WORLD_POINT=0x00030000 # World View Point.
-        # The Z axis is equal to the direction the camera
-        # is pointing to.
-    FLAG_BB_SCREEN_VEC=0x00040000 # Screen View Vector.
-        # The Z axis is parallel to the camera, the Y axis is
-        # equal to the up vector of the camera.
-    FLAG_BB_SCREEN_POINT=0x00050000 # Screen View Point.
-        # The Z axis is equal to the direction the camera is
-        # pointing to, the Y axis is equal to the up vector of
-        # the camera.
-    FLAG_BB_Y_VEC=0x00060000 # Y-Axis View Vector.
-        # The Z axis has been made parallel to the camera view
-        # by rotating the Y axis.
-    FLAG_BB_Y_POINT=0x00070000 # Y-Axis View Point.
-        # The Z axis has been made equal to the direction
-        # the camera is pointing to by rotating the Y axis.
-    FLAG_SEG_SCALE_COMPENSATE=0x00800000 # Segment scale
-        # compensation. Set for bones scaled in Maya whose
-        # scale is not applied to child bones.
-    FLAG_UNIFORM_SCALE =0x01000000 # Scale uniformly.
-    FLAG_SCALE_VOL_1   =0x02000000 # Scale volume by 1.
-    FLAG_NO_ROTATION   =0x04000000
-    FLAG_NO_TRANSLATION=0x08000000
-    # same as previous but for hierarchy of bones
-    FLAG_GRP_UNIFORM_SCALE =0x10000000
-    FLAG_GRP_SCALE_VOL_1   =0x20000000
-    FLAG_GRP_NO_ROTATION   =0x40000000
-    FLAG_GRP_NO_TRANSLATION=0x80000000
-
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the bone from given FRES."""
@@ -87,7 +85,6 @@ class Bone(FresObject):
         names=(
             'VISIBLE',
             'EULER',
-            'BB_NONE',
             'BB_CHILD',
             'BB_WORLD_VEC',
             'BB_WORLD_POINT',
@@ -106,8 +103,7 @@ class Bone(FresObject):
             'GRP_NO_TRANSLATION',
         )
         for name in names:
-            val = getattr(self, 'FLAG_'+name)
-            if self.flags & val:
+            if self.flags[name]:
                 flagStr.append(name)
 
         log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%s rot=%s pos=%s flags=0x%08X  %s",
