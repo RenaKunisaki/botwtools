@@ -438,23 +438,47 @@ class ColladaWriter:
             # no idea what "scale uniformly" actually means.
             # XXX billboarding, rigid mtxs, if ever used.
 
+            M = Matrix.I(4)
+
             # multiply by the smooth matrix if any
             if bone.smooth_mtx_idx >= 0:
                 mtx = fskl.smooth_mtxs[bone.smooth_mtx_idx]
-                node.Child('matrix',
-                    '\n'.join(map(lambda row: ' '.join(
-                        map(str, row)), mtx)),
-                    sid='smooth')
+                # convert 4x3 to 4x4
+                mtx = Matrix(mtx[0], mtx[1], mtx[2], (0, 0, 0, 1))
+                M = M @ mtx
+                #node.Child('matrix',
+                #    '\n'.join(map(lambda row: ' '.join(
+                #        map(str, row)), mtx)),
+                #    sid='smooth')
 
-            node.Child('translate',
-                '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
-                sid='translate')
-            node.Child('scale',
-                '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
-                sid='scale')
-            node.Child('rotate',
-                '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
-                sid='rotate')
+            M = M.translate(T)
+            M = M.rotateX(R.x).rotateY(R.y).rotateZ(R.z)
+            M = M.scale(S)
+
+            # multiply by inverse of parent transform
+            if parent:
+                P = Matrix.I(4) \
+                    .translate(parent.pos) \
+                    .rotateX(parent.rot.x) \
+                    .rotateY(parent.rot.y) \
+                    .rotateZ(parent.rot.z) \
+                    .scale(parent.scale)
+                M = M @ P
+
+            #node.Child('translate',
+            #    '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
+            #    sid='translate')
+            #node.Child('scale',
+            #    '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
+            #    sid='scale')
+            #node.Child('rotate',
+            #    '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
+            #    sid='rotate')
+
+            node.Child('matrix',
+                '\n'.join(map(lambda row: ' '.join(
+                    map(str, row)), M.T)),
+                sid='transform')
 
             if parent and not seenParent.get(parentIdx, False):
                 seenParent[parentIdx] = True

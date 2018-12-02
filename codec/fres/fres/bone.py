@@ -111,7 +111,7 @@ class Bone(FresObject):
             self.smooth_mtx_idx, self.rigid_mtx_idx,
             self.billboard_idx, self.udata_count,
             self.scale, self.rot, self.pos,
-            self.flags, ', '.join(flagStr))
+            self.flags['_raw'], ', '.join(flagStr))
 
         #log.debug("Bone name  = '%s'", self.name)
         #log.debug("Bone s60   = '%s'", self.s60)

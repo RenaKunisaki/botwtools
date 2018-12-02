@@ -42,10 +42,12 @@ class Vec4(np.ndarray):
     # XXX cross product?
 
     def __str__(self):
-        return "(%3.2f, %3.2f, %3.2f, %3.2f)" % self
+        return "(%3.2f, %3.2f, %3.2f, %3.2f)" % (
+            self[0], self[1], self[2], self[3])
 
     def __repr__(self):
-        return "Vec4(%f, %f, %f, %f)" % self
+        return "Vec4(%f, %f, %f, %f)" % (
+            self[0], self[1], self[2], self[3])
 
     def __getitem__(self, key):
         if type(key) is int: return super().__getitem__(key)

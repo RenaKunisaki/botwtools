@@ -35,6 +35,17 @@ class Matrix(np.ndarray):
                 obj[x,y] = data[y][x]
         return obj
 
+    @staticmethod
+    def I(size):
+        """Create identity matrix of specified dimension."""
+        d = []
+        for y in range(size):
+            row = []
+            for x in range(size):
+                row.append(1 if x == y else 0)
+            d.append(row)
+        return Matrix(*d)
+
     def __invert__(self):
         return np.linalg.inv(self)
 
@@ -57,30 +68,30 @@ class Matrix(np.ndarray):
 
     def rotateX(self, r):
         """Rotate on X axis."""
-        rot = Matrix([
+        rot = Matrix(
             [1, 0,            0,           0],
             [0, math.cos(r), -math.sin(r), 0],
             [0, math.sin(r),  math.cos(r), 0],
             [0, 0,            0,           1],
-        ])
+        )
         return self @ rot
 
     def rotateY(self, r):
         """Rotate on Y axis."""
-        rot = Matrix([
+        rot = Matrix(
             [ math.cos(r), 0, math.sin(r), 0],
             [ 0,           1, 0,           0],
-            [-math.sin(r), 0, math.cos(a), 0],
+            [-math.sin(r), 0, math.cos(r), 0],
             [0,            0, 0,           1],
-        ])
+        )
         return self @ rot
 
     def rotateZ(self, r):
         """Rotate on Z axis."""
-        rot = Matrix([
+        rot = Matrix(
             [math.cos(r), -math.sin(r), 0, 0],
             [math.sin(r),  math.cos(r), 0, 0],
             [0,            0,           1, 0],
             [0,            0,           0, 1],
-        ])
+        )
         return self @ rot
