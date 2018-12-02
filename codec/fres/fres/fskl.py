@@ -16,7 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 import math
 from .fresobject import FresObject
-from codec.base.types import Offset, Offset64, StrOffs, Padding
+from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags
 from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .bone import Bone
@@ -38,7 +38,16 @@ class FSKL(FresObject):
         Offset64('smooth_idx_offs'),
         Offset64('smooth_mtx_offs'),
         Offset64('unk30'),
-        ('I',  'flags'),
+        Flags('flags', {
+            #'SCALE_NONE': 0x00000000, # no scaling
+            'SCALE_STD':  0x00000100, # standard scaling
+            'SCALE_MAYA': 0x00000200, # Respects Maya's segment scale
+                # compensation which offsets child bones rather than
+                # scaling them with the parent.
+            'SCALE_SOFTIMAGE': 0x00000300, # Respects the scaling method
+                # of Softimage.
+            'EULER': 0x00001000, # euler rotn, not quaternion
+        }),
         ('H',  'num_bones'),
         ('H',  'num_smooth_idxs'),
         ('H',  'num_rigid_idxs'),
@@ -46,15 +55,6 @@ class FSKL(FresObject):
         ('I',  'unk44'),
         size = 0x48,
     )
-
-    FLAG_SCALE_NONE = 0x00000000 # no scaling
-    FLAG_SCALE_STD  = 0x00000100 # standard scaling
-    FLAG_SCALE_MAYA = 0x00000200 # Respects Maya's segment scale
-        # compensation which offsets child bones rather than
-        # scaling them with the parent.
-    FLAG_SCALE_SOFTIMAGE = 0x00000300 # Respects the scaling method
-        # of Softimage.
-    FLAG_EULER = 0x00001000 # euler rotn, not quaternion
 
     def readFromFRES(self, fres, offset=None, reader=None):
         """Read the skeleton from given FRES."""
@@ -66,8 +66,8 @@ class FSKL(FresObject):
         log.debug("Skeleton contains %d bones, %d smooth idxs, %d rigid idxs, %d extras; scale mode=%s, rotation=%s; smooth_mtx_offs=0x%X",
             self.num_bones, self.num_smooth_idxs,
             self.num_rigid_idxs, self.num_extra,
-            scaleModes[(self.flags >> 8) & 3],
-            'euler' if self.flags & self.FLAG_EULER else 'quaternion',
+            scaleModes[(self.flags['_raw'] >> 8) & 3],
+            'euler' if self.flags['EULER'] else 'quaternion',
             self.smooth_mtx_offs)
 
         self._readBones(fres)
