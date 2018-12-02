@@ -452,17 +452,15 @@ class ColladaWriter:
                 #    sid='smooth')
 
             M = M.translate(T)
-            M = M.rotateX(R.x).rotateY(R.y).rotateZ(R.z)
+            M = M.rotateXYZ(R)
             M = M.scale(S)
 
             # multiply by inverse of parent transform
             if parent:
-                P = Matrix.I(4) \
-                    .translate(parent.pos) \
-                    .rotateX(parent.rot.x) \
-                    .rotateY(parent.rot.y) \
-                    .rotateZ(parent.rot.z) \
-                    .scale(parent.scale)
+                P = Matrix.I(4)
+                P = P.translate(parent.pos)
+                P = P.rotateXYZ(parent.rot)
+                P = P.scale(parent.scale)
                 M = M @ P
 
             #node.Child('translate',

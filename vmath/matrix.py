@@ -95,3 +95,31 @@ class Matrix(np.ndarray):
             [0,            0,           0, 1],
         )
         return self @ rot
+
+    def rotateXYZ(self, vec):
+        """Rotate on X, Y, and Z axes."""
+        # from http://www.opengl-tutorial.org/assets/faq_quaternions/index.html#Q36
+        A   = math.cos(vec.x)
+        B   = math.sin(vec.x)
+        C   = math.cos(vec.y)
+        D   = math.sin(vec.y)
+        E   = math.cos(vec.z)
+        F   = math.sin(vec.z)
+        AD  =   A * D
+        BD  =   B * D
+        m0  =   C * E
+        m1  =  -C * F
+        m2  =   D
+        m4  =  BD * E + A * F
+        m5  = -BD * F + A * E
+        m6  =  -B * C
+        m8  = -AD * E + B * F
+        m9  =  AD * F + B * E
+        m10 =   A * C
+        M   = Matrix(
+            (m0, m1, m2,  0),
+            (m4, m5, m6,  0),
+            (m8, m9, m10, 0),
+            (0,  0,  0,   1),
+        )
+        return self @ M
