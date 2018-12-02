@@ -192,3 +192,35 @@ that make up that influence.
     <v>0 1 1 2 2 3 3 4 4 5 0 6...
 
 The FSKL may specify an Smooth Matrix for any Bone. It does this by creating an entry in the Inverse Index array which is the index of the bone, and in the corresponding place in the Smooth Matrix array it places a 4×3 transformation matrix which reverses the full transformation of the bone and all its parents. Smooth Matrices are optional, it is Unknown if they are ever referenced. The position of and number of elements in the Smooth Matrix array and the Smooth Index array are given in the FSKL Header.
+
+Q28. How do I generate a rotation matrix in the X-axis?
+-------------------------------------------------------
+
+  Use the 4x4 matrix:
+
+         |  1  0       0       0 |
+     M = |  0  cos(A) -sin(A)  0 |
+         |  0  sin(A)  cos(A)  0 |
+         |  0  0       0       1 |
+
+
+Q29. How do I generate a rotation matrix in the Y-axis?
+-------------------------------------------------------
+
+  Use the 4x4 matrix:
+
+         |  cos(A)  0   sin(A)  0 |
+     M = |  0       1   0       0 |
+         | -sin(A)  0   cos(A)  0 |
+         |  0       0   0       1 |
+
+
+Q30. How do I generate a rotation matrix in the Z-axis?
+-------------------------------------------------------
+
+  Use the 4x4 matrix:
+
+         |  cos(A)  -sin(A)   0   0 |
+     M = |  sin(A)   cos(A)   0   0 |
+         |  0        0        1   0 |
+         |  0        0        0   1 |

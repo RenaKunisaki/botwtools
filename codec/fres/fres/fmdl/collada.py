@@ -17,6 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
 import numpy as np
+from vmath import Matrix
 from ..types import attrFmts
 E = myxml.Element
 

@@ -20,6 +20,7 @@ from codec.base.types import Offset, Offset64, StrOffs, Padding
 from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .bone import Bone
+from vmath import Matrix
 
 class FSKL(FresObject):
     """FSKL object header."""
@@ -119,6 +120,7 @@ class FSKL(FresObject):
                 0 if (math.isnan(e) or math.isinf(e)) else e
             mtx = list(map(lambda row: list(map(flt, row)), mtx))
             #mtx[3][3] = 1 # debug
+            mtx = Matrix(*mtx)
 
             # transpose
             #m = [[0,0,0,0], [0,0,0,0], [0,0,0,0], [0,0,0,0]]
