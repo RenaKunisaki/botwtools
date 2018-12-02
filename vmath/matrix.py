@@ -35,6 +35,13 @@ class Matrix(np.ndarray):
                 obj[x,y] = data[y][x]
         return obj
 
+    def __invert__(self):
+        return np.linalg.inv(self)
+
+    def __getattr__(self, key):
+        if key == 'I': return ~self
+        return super().__getattr__(key)
+
     def translate(self, vec):
         """Translate by vector."""
         w = self.shape[0]-1
