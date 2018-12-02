@@ -426,12 +426,9 @@ class ColladaWriter:
             # XXX this is probably wrong, since it's pointless
             # (why not just set these to 0 instead of having
             # these flags?)
-            if bone.flags['NO_ROTATION']:
-                R = Vec4(0, 0, 0, 1)
-            if bone.flags['NO_TRANSLATION']:
-                T = Vec3(0, 0, 0)
-            if bone.flags['SCALE_VOL_1']:
-                S = Vec3(1, 1, 1)
+            if bone.flags['NO_ROTATION']:    R = Vec4(0, 0, 0, 1)
+            if bone.flags['NO_TRANSLATION']: T = Vec3(0, 0, 0)
+            if bone.flags['SCALE_VOL_1']:    S = Vec3(1, 1, 1)
             if bone.flags['SEG_SCALE_COMPENSATE']:
                 # apply inverse of parent's scale
                 if parent:
@@ -458,8 +455,6 @@ class ColladaWriter:
             node.Child('rotate',
                 '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
                 sid='rotate')
-
-
 
             if parent and not seenParent.get(parentIdx, False):
                 seenParent[parentIdx] = True
