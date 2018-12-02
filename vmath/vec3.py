@@ -24,7 +24,7 @@ class Vec3(np.ndarray):
     methods which amazingly don't seem to be built in.
     """
     def __new__(cls, x=0, y=0, z=0):
-        obj = super(Matrix, cls).__new__(cls, (3,))
+        obj = super(Vec3, cls).__new__(cls, (3,))
         obj[0] = x
         obj[1] = y
         obj[2] = z
@@ -51,16 +51,18 @@ class Vec3(np.ndarray):
         return "Vec3(%f, %f, %f)" % (self[0], self[1], self[2])
 
     def __getitem__(self, key):
-        if key == 0 or key in 'xX': return self[0]
-        if key == 1 or key in 'yY': return self[1]
-        if key == 2 or key in 'zZ': return self[2]
+        if type(key) is int: return super().__getitem__(key)
+        if key in 'xX': return self[0]
+        if key in 'yY': return self[1]
+        if key in 'zZ': return self[2]
         # XXX slice
         raise KeyError(key)
 
     def __setitem__(self, key, val):
-        if key == 0 or key in 'xX': self[0] = val
-        if key == 1 or key in 'yY': self[1] = val
-        if key == 2 or key in 'zZ': self[2] = val
+        if type(key) is int: return super().__setitem__(key, val)
+        if key in 'xX': self[0] = val
+        if key in 'yY': self[1] = val
+        if key in 'zZ': self[2] = val
         # XXX slice
         raise KeyError(key)
         return self

@@ -17,7 +17,7 @@ import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
 import numpy as np
-from vmath import Matrix
+from vmath import Matrix, Vec3
 from ..types import attrFmts
 E = myxml.Element
 
@@ -419,8 +419,8 @@ class ColladaWriter:
                 self.scene_nodes.append(node)
 
             boneNodes[i] = node
-            T = np.array([bone.posX,   bone.posY,   bone.posZ])
-            S = np.array([bone.scaleX, bone.scaleY, bone.scaleZ])
+            T = Vec3(bone.posX,   bone.posY,   bone.posZ)
+            S = Vec3(bone.scaleX, bone.scaleY, bone.scaleZ)
             R = np.array([bone.rotX,bone.rotY,bone.rotZ,bone.rotW])
 
             # XXX this is probably wrong, since it's pointless
@@ -429,12 +429,14 @@ class ColladaWriter:
             if bone.flags & bone.FLAG_NO_ROTATION:
                 R = np.array([0, 0, 0, 1])
             if bone.flags & bone.FLAG_NO_TRANSLATION:
-                T = np.array([0, 0, 0])
+                T = Vec3(0, 0, 0)
+            if bone.flags & bone.FLAG_SCALE_VOL_1:
+                S = Vec3(1, 1, 1)
             if bone.flags & bone.FLAG_SEG_SCALE_COMPENSATE:
                 # apply inverse of parent's scale
                 if parent:
-                    S *= 1 / np.array([
-                        parent.scaleX, parent.scaleY, parent.scaleZ])
+                    S *= 1 / Vec3(
+                        parent.scaleX, parent.scaleY, parent.scaleZ)
                 else:
                     log.error("Bone '%s' has FLAG_SEG_SCALE_COMPENSATE but no parent", bone.name)
             # no idea what "scale uniformly"/"scale volume by 1"

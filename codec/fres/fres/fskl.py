@@ -62,7 +62,7 @@ class FSKL(FresObject):
         self.dumpToDebugLog()
         self.dumpOffsets()
 
-        scaleModes = ('none', 'standrd', 'maya', 'softimage')
+        scaleModes = ('none', 'standard', 'maya', 'softimage')
         log.debug("Skeleton contains %d bones, %d smooth idxs, %d rigid idxs, %d extras; scale mode=%s, rotation=%s; smooth_mtx_offs=0x%X",
             self.num_bones, self.num_smooth_idxs,
             self.num_rigid_idxs, self.num_extra,
