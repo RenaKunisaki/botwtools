@@ -193,34 +193,44 @@ that make up that influence.
 
 The FSKL may specify an Smooth Matrix for any Bone. It does this by creating an entry in the Inverse Index array which is the index of the bone, and in the corresponding place in the Smooth Matrix array it places a 4×3 transformation matrix which reverses the full transformation of the bone and all its parents. Smooth Matrices are optional, it is Unknown if they are ever referenced. The position of and number of elements in the Smooth Matrix array and the Smooth Index array are given in the FSKL Header.
 
-Q28. How do I generate a rotation matrix in the X-axis?
--------------------------------------------------------
+Ear_L:
+-0.10, -0.57, +0.81 approximate correct position
+-0.07, +0.34, +0.06 actual position
++0.03, +0.06, -0.07 raw Position
 
-  Use the 4x4 matrix:
+the result doesn't change if we change the order of T, R, S, parent,
+or the SEG_SCALE_COMPENSATE flag (the scales are all 1 anyway)
 
-         |  1  0       0       0 |
-     M = |  0  cos(A) -sin(A)  0 |
-         |  0  sin(A)  cos(A)  0 |
-         |  0  0       0       1 |
-
-
-Q29. How do I generate a rotation matrix in the Y-axis?
--------------------------------------------------------
-
-  Use the 4x4 matrix:
-
-         |  cos(A)  0   sin(A)  0 |
-     M = |  0       1   0       0 |
-         | -sin(A)  0   cos(A)  0 |
-         |  0       0   0       1 |
-
-
-Q30. How do I generate a rotation matrix in the Z-axis?
--------------------------------------------------------
-
-  Use the 4x4 matrix:
-
-         |  cos(A)  -sin(A)   0   0 |
-     M = |  sin(A)   cos(A)   0   0 |
-         |  0        0        1   0 |
-         |  0        0        0   1 |
+FSKL: scale mode=maya, rotation=euler
+Name    |Scale| Rotation         | Position        | Parent | Flags
+--------|-----|------------------|-----------------|--------|--------------
+Skl_Root|1 1 1| 1.57 0.00  0.00 1| 0.00  0.58 -0.14|Root    |VISIBLE EULER                      UNIFORM_SCALE SCALE_VOL_1
+Spine_1 |1 1 1|-1.57 0.00  1.57 1| 0.00  0.00  0.00|Skl_Root|VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_TRANSLATION
+Spine_2 |1 1 1| 0.00 0.00  0.00 1| 0.29  0.00  0.00|Spine_1 |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_ROTATION
+Arm_1_L |1 1 1| 0.00 0.00 -2.04 1| 0.15 -0.09 -0.08|Spine_2 |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Arm_2_L |1 1 1| 0.00 0.00  0.47 1| 0.15  0.00  0.00|Arm_1_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Wrist_L |1 1 1| 0.00 0.00  0.21 1| 0.27  0.00  0.00|Arm_2_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Toe_1_FL|1 1 1| 0.00 0.00  1.33 1| 0.07  0.00  0.00|Wrist_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Arm_1_R |1 1 1| 0.00 0.00  1.10 1| 0.15 -0.09  0.08|Spine_2 |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Arm_2_R |1 1 1| 0.00 0.00  0.47 1|-0.15  0.00  0.00|Arm_1_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Wrist_R |1 1 1| 0.00 0.00  0.21 1|-0.27  0.00  0.00|Arm_2_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Toe_1_FR|1 1 1| 0.00 0.00  1.33 1|-0.06  0.00  0.00|Wrist_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Neck_1  |1 1 1| 0.00 0.00  0.47 1| 0.16 -0.03  0.00|Spine_2 |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Head    |1 1 1| 0.00 0.00 -0.59 1| 0.20  0.00  0.00|Neck_1  |VISIBLE EULER SEG_SCALE_COMPENSATE
+Chin    |1 1 1| 0.00 0.00 -0.17 1| 0.05 -0.05  0.00|Head    |VISIBLE EULER SEG_SCALE_COMPENSATE
+Ear_L   |1 1 1| 1.57 0.44  1.26 1| 0.03  0.06 -0.07|Head    |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Ear_R   |1 1 1| 1.57 0.44 -1.88 1| 0.03  0.06  0.07|Head    |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Eyelid_L|1 1 1| 0.35 0.52  0.70 1| 0.14  0.01 -0.03|Head    |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Eyelid_R|1 1 1| 0.35 0.52 -2.44 1| 0.14  0.01  0.03|Head    |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Waist   |1 1 1|-1.57 0.00 -1.57 1| 0.00  0.00  0.00|Skl_Root|VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_TRANSLATION
+Leg_1_L |1 1 1|-3.14 0.00 -2.01 1| 0.14 -0.04  0.08|Waist   |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Leg_2_L |1 1 1| 0.00 0.00 -1.52 1| 0.22  0.00  0.00|Leg_1_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Ankle_L |1 1 1| 0.00 0.00  1.06 1| 0.24  0.00  0.00|Leg_2_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Toe_1_BL|1 1 1| 0.00 0.00  1.27 1| 0.19  0.00  0.00|Ankle_L |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Leg_1_R |1 1 1|-3.14 0.00  1.13 1| 0.14 -0.04 -0.08|Waist   |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Leg_2_R |1 1 1| 0.00 0.00 -1.52 1|-0.22  0.00  0.00|Leg_1_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Ankle_R |1 1 1| 0.00 0.00  1.06 1|-0.24  0.00  0.00|Leg_2_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Toe_1_BR|1 1 1| 0.00 0.00  1.27 1|-0.19  0.00  0.00|Ankle_R |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1
+Tail_1  |1 1 1| 0.00 0.00  0.00 1| 0.19  0.00  0.00|Waist   |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_ROTATION
+Tail_2  |1 1 1| 0.00 0.00  0.00 1| 0.27  0.00  0.00|Tail_1  |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_ROTATION
+Tail_3  |1 1 1| 0.00 0.00  0.00 1| 0.32  0.00  0.00|Tail_2  |VISIBLE EULER SEG_SCALE_COMPENSATE UNIFORM_SCALE SCALE_VOL_1 NO_ROTATION

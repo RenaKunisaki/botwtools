@@ -20,7 +20,7 @@ from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags
 from codec.base.dict  import Dict
 from structreader import StructReader, BinaryObject
 from .bone import Bone
-from vmath import Matrix
+from vmath import Matrix, Vec4
 
 class FSKL(FresObject):
     """FSKL object header."""
@@ -70,9 +70,9 @@ class FSKL(FresObject):
             'euler' if self.flags['EULER'] else 'quaternion',
             self.smooth_mtx_offs)
 
-        self._readBones(fres)
         self._readSmoothIdxs(fres)
         self._readSmoothMtxs(fres)
+        self._readBones(fres)
 
         return self
 
@@ -101,6 +101,17 @@ class FSKL(FresObject):
                 bone.parent = self.bones[bone.parent_idx]
             else:
                 bone.parent = None
+
+        for bone in self.bones:
+            log.debug("Bone '%8s' S=%s R=%s P=%s parent=%s %s final pos=%s",
+                bone.name, bone.scale, bone.rot, bone.pos,
+                bone.parent.name if bone.parent else '<none>',
+                bone._flagStr,
+                Vec4(0,0,0,1) @ bone.computeTransform())
+
+        #log.debug("Final bone transforms:")
+        #for bone in self.bones:
+        #    log.debug("%s\n%s", bone.name, bone.computeTransform())
 
         self.boneIdxGroups = Dict().readFromFile(self.fres.file,
             self.bone_idx_group_offs)

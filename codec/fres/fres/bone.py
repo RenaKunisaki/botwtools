@@ -107,13 +107,14 @@ class Bone(FresObject):
         for name in names:
             if self.flags[name]:
                 flagStr.append(name)
+        self._flagStr = ' '.join(flagStr)
 
-        log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%s rot=%s pos=%s flags=0x%08X  %s",
-            self.bone_idx, self.name, self.parent_idx,
-            self.smooth_mtx_idx, self.rigid_mtx_idx,
-            self.billboard_idx, self.udata_count,
-            self.scale, self.rot, self.pos,
-            self.flags['_raw'], ', '.join(flagStr))
+        #log.debug("Bone %d: '%s', parent=%d smooth=%d rigid=%d billboard=%d udata=%d scale=%s rot=%s pos=%s flags=0x%08X  %s",
+        #    self.bone_idx, self.name, self.parent_idx,
+        #    self.smooth_mtx_idx, self.rigid_mtx_idx,
+        #    self.billboard_idx, self.udata_count,
+        #    self.scale, self.rot, self.pos,
+        #    self.flags['_raw'], ', '.join(flagStr))
 
         #log.debug("Bone name  = '%s'", self.name)
         #log.debug("Bone s60   = '%s'", self.s60)
@@ -137,9 +138,11 @@ class Bone(FresObject):
 
         # why have these flags instead of just setting the
         # values to 0/1? WTF Nintendo.
-        if self.flags['NO_ROTATION']:    R = Vec4(0, 0, 0, 1)
-        if self.flags['NO_TRANSLATION']: T = Vec3(0, 0, 0)
-        if self.flags['SCALE_VOL_1']:    S = Vec3(1, 1, 1)
+        # they seem to only be set when the values already are
+        # 0 (or 1, for scale) anyway.
+        #if self.flags['NO_ROTATION']:    R = Vec4(0, 0, 0, 1)
+        #if self.flags['NO_TRANSLATION']: T = Vec3(0, 0, 0)
+        #if self.flags['SCALE_VOL_1']:    S = Vec3(1, 1, 1)
         if self.flags['SEG_SCALE_COMPENSATE']:
             # apply inverse of parent's scale
             if self.parent:
@@ -153,20 +156,22 @@ class Bone(FresObject):
         T = Matrix.Translate(4, T)
         S = Matrix.Scale    (4, S)
         R = Quaternion.fromEulerAngles(R).toMatrix()
-        M = Matrix.I(4)
+        if self.parent:
+            P = self.parent.computeTransform()
+        else: P = Matrix.I(4)
 
         # multiply by the smooth matrix if any
-        if self.smooth_mtx_idx >= 0:
-            mtx = self.fskl.smooth_mtxs[self.smooth_mtx_idx]
-            # convert 4x3 to 4x4
-            mtx = Matrix(mtx[0], mtx[1], mtx[2], (0, 0, 0, 1))
-            M = M @ mtx
+        #if self.smooth_mtx_idx >= 0:
+        #    mtx = self.fskl.smooth_mtxs[self.smooth_mtx_idx]
+        #    # convert 4x3 to 4x4
+        #    mtx = Matrix(mtx[0], mtx[1], mtx[2], (0, 0, 0, 1))
+        #    M = M @ mtx
 
         # apply the transformations
-        M = M @ T @ R @ S
-
-        # apply the parent transformations
-        if self.parent:
-            M = M @ self.parent.computeTransform()
+        # SRTP is the order used by BFRES-Viewer...
+        #M = T @ R @ S @ P
+        M = S @ R @ T @ P
+        #M = P @ T @ R @ S
+        #M = P @ S @ R @ T
 
         return M

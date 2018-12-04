@@ -41,44 +41,35 @@ class Quaternion(Vec4):
         z = Quaternion.fromAxisAngle(Vec3.UnitZ, rot.z)
         q = z * y * x
         if q.w < 0: q *= -1
+        #log.debug("Q from %s: %s * %s * %s => %s",
+        #    rot, x, y, z, q)
         return q
 
     def toMatrix(self):
         """Build a 4x4 matrix from this quaternion."""
-        # converted from: http://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToMatrix/index.htm
-
-        qx  = self.x
-        qy  = self.y
-        qz  = self.z
-        qw  = self.w
-        sqw = qw * qw
-        sqx = qx * qx
-        sqy = qy * qy
-        sqz = qz * qz
-
-        # invs (inverse square length) is only required if quaternion is not already normalised
-        invs = 1 / (sqx + sqy + sqz + sqw)
-        m00  = ( sqx - sqy - sqz + sqw)*invs # since sqw + sqx + sqy + sqz =1/invs*invs
-        m11  = (-sqx + sqy - sqz + sqw)*invs
-        m22  = (-sqx - sqy + sqz + sqw)*invs
-
-        tmp1 = qx*qy
-        tmp2 = qz*qw
-        m10  = 2.0 * (tmp1 + tmp2)*invs
-        m01  = 2.0 * (tmp1 - tmp2)*invs
-
-        tmp1 = qx*qz
-        tmp2 = qy*qw
-        m20  = 2.0 * (tmp1 - tmp2)*invs
-        m02  = 2.0 * (tmp1 + tmp2)*invs
-        tmp1 = qy*qz
-        tmp2 = qx*qw
-        m21  = 2.0 * (tmp1 + tmp2)*invs
-        m12  = 2.0 * (tmp1 - tmp2)*invs
-
+        x,  y,  z, w = self.x, self.y, self.z, self.w
+        x2, y2, z2   = x+x,  y+y,  z+z
+        xx, xy, xz   = x*x2, x*y2, x*z2
+        yy, yz, zz   = y*y2, y*z2, z*z2
+        wx, wy, wz   = w*x2, w*y2, w*z2
         return Matrix(
-            (m00, m01, m02, 0),
-            (m10, m11, m12, 0),
-            (m20, m21, m22, 0),
-            (0,   0,   0,   1),
+            (1-(yy+zz),     xy+wz,     xz-wy,  0),
+            (   xy-wz,   1-(xx+zz),    yz+wx,  0),
+            (   xz+wy,      yz-wx,  1-(xx+yy), 0),
+            (0,          0,         0,         1),
         )
+
+    def __mul__(self, other):
+        C = type(self)
+        if type(other) in (int, float):
+            return C(self[0]*other, self[1]*other, self[2]*other,
+                self[3]*other)
+        else:
+            ax, ay, az, aw = self [0], self [1], self [2], self [3]
+            bx, by, bz, bw = other[0], other[1], other[2], other[3]
+            return C(
+                aw * bw - ax * bx - ay * by - az * bz,  # 1
+                aw * bx + ax * bw + ay * bz - az * by,  # i
+                aw * by - ax * bz + ay * bw + az * bx,  # j
+                aw * bz + ax * by - ay * bx + az * bw,  # k
+            )
