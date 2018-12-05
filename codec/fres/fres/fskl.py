@@ -108,6 +108,7 @@ class FSKL(FresObject):
                 bone.parent.name if bone.parent else '<none>',
                 bone._flagStr,
                 Vec4(0,0,0,1) @ bone.computeTransform())
+        self.bones[0].printHeirarchy(self)
 
         #log.debug("Final bone transforms:")
         #for bone in self.bones:

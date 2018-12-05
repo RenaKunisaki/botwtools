@@ -88,6 +88,9 @@ class Bone(FresObject):
         #self.rot.x %= (2*math.pi)
         #self.rot.y %= (2*math.pi)
         #self.rot.z %= (2*math.pi)
+        self.pos.x *= -1
+        self.pos.z *= -1
+        self.rot.x *= -1
 
         flagStr=[]
         names=(
@@ -167,6 +170,9 @@ class Bone(FresObject):
         else: P = Matrix.I(4)
         M = Matrix.I(4)
 
+        #log.debug("Bone '%8s' @ %s R %s: T=\n%srot=\n%s =>\n%s",
+        #    self.name, self.pos, self.rot, T, R, R @ T)
+
         # multiply by the smooth matrix if any
         #if self.smooth_mtx_idx >= 0:
         #    mtx = self.fskl.smooth_mtxs[self.smooth_mtx_idx]
@@ -176,9 +182,30 @@ class Bone(FresObject):
 
         # apply the transformations
         # SRTP is the order used by BFRES-Viewer...
-        #M = M @ T @ R @ S @ P
-        M = M @ S @ R @ T @ P
-        #M = M @ P @ T @ R @ S
-        #M = M @ P @ S @ R @ T
+        M = M @ S
+        M = M @ R
+        M = M @ T
+        M = M @ P
 
         return M
+
+    def printHeirarchy(self, fskl, _depth=0):
+        """Dump bone heirarchy to console."""
+        ind  = ('  ' * _depth)
+        name = '%s%02X %s' % (ind, self.bone_idx, self.name)
+        pos  = Vec4(0,0,0,1) @ self.computeTransform()
+
+        def D(r):
+            return r / (math.pi / 180)
+
+        log.debug("%s%s|%5.2f %5.2f %5.2f|%5.2f %5.2f %5.2f|%4d %4d %4d",
+            name,
+            ' ' * (26-len(name)),
+            pos.x, pos.y, pos.z,
+            self.pos.x, self.pos.y, self.pos.z,
+            D(self.rot.x), D(self.rot.y), D(self.rot.z),
+        )
+
+        for bone in fskl.bones:
+            if bone.parent_idx == self.bone_idx:
+                bone.printHeirarchy(fskl, _depth+1)
