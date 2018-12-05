@@ -18,6 +18,7 @@ from structreader import StructReader, BinaryObject
 from .fresobject import FresObject
 from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags, Vec3f, Vec4f
 from vmath import Matrix, Vec3, Vec4, Quaternion
+import math
 
 class Bone(FresObject):
     """A bone in an FSKL."""
@@ -82,6 +83,11 @@ class Bone(FresObject):
         #self.s88  = readStringWithLength(file, '<H', self.unk88)
         self.parent = None # to be set by the FSKL
         self.fskl   = None # to be set by the FSKL
+
+        #self.rot *= -1
+        #self.rot.x %= (2*math.pi)
+        #self.rot.y %= (2*math.pi)
+        #self.rot.z %= (2*math.pi)
 
         flagStr=[]
         names=(
@@ -159,6 +165,7 @@ class Bone(FresObject):
         if self.parent:
             P = self.parent.computeTransform()
         else: P = Matrix.I(4)
+        M = Matrix.I(4)
 
         # multiply by the smooth matrix if any
         #if self.smooth_mtx_idx >= 0:
@@ -169,9 +176,9 @@ class Bone(FresObject):
 
         # apply the transformations
         # SRTP is the order used by BFRES-Viewer...
-        #M = T @ R @ S @ P
-        M = S @ R @ T @ P
-        #M = P @ T @ R @ S
-        #M = P @ S @ R @ T
+        #M = M @ T @ R @ S @ P
+        M = M @ S @ R @ T @ P
+        #M = M @ P @ T @ R @ S
+        #M = M @ P @ S @ R @ T
 
         return M

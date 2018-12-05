@@ -26,6 +26,7 @@ class Quaternion(Vec4):
     @staticmethod
     def fromAxisAngle(axis:Vec3, angle):
         """Construct from axis angle."""
+
         return Quaternion(
             x = axis.x * math.sin(angle/2),
             y = axis.y * math.sin(angle/2),
@@ -39,10 +40,11 @@ class Quaternion(Vec4):
         x = Quaternion.fromAxisAngle(Vec3.UnitX, rot.x)
         y = Quaternion.fromAxisAngle(Vec3.UnitY, rot.y)
         z = Quaternion.fromAxisAngle(Vec3.UnitZ, rot.z)
-        q = z * y * x
+        #q = z * y * x
+        q = x * y * z
         if q.w < 0: q *= -1
         #log.debug("Q from %s: %s * %s * %s => %s",
-        #    rot, x, y, z, q)
+        #    rot, z, y, x, q)
         return q
 
     def toMatrix(self):
@@ -68,8 +70,8 @@ class Quaternion(Vec4):
             ax, ay, az, aw = self [0], self [1], self [2], self [3]
             bx, by, bz, bw = other[0], other[1], other[2], other[3]
             return C(
-                aw * bw - ax * bx - ay * by - az * bz,  # 1
                 aw * bx + ax * bw + ay * bz - az * by,  # i
                 aw * by - ax * bz + ay * bw + az * bx,  # j
                 aw * bz + ax * by - ay * bx + az * bw,  # k
+                aw * bw - ax * bx - ay * by - az * bz,  # 1
             )
