@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 import struct
 import myxml
+import math
 import numpy as np
 from vmath import Matrix, Vec3, Vec4, Quaternion
 from ..types import attrFmts
@@ -418,21 +419,43 @@ class ColladaWriter:
 
             boneNodes[i] = node
 
+            # write the raw transforms
+            #T = bone.pos
+            #R = bone.rot
+            #S = bone.scale
             #node.Child('translate',
             #    '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
             #    sid='translate')
-            #node.Child('scale',
-            #    '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
-            #    sid='scale')
             #node.Child('rotate',
             #    '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, R.w),
             #    sid='rotate')
+            #node.Child('scale',
+            #    '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
+            #    sid='scale')
 
-            M = bone.computeTransform()
+            # compute the final transforms which includes
+            # those of the parents.
+            # you'd think the parent transforms would already be
+            # applied since this node is a child of the parent node,
+            # but that would make too much sense.
+            M  = bone.computeTransform()
             node.Child('matrix',
-                '\n'.join(map(lambda row: ' '.join(
-                    map(str, row)), M.T)),
+                ' '.join(map(lambda row: ' '.join(
+                    map(lambda f: '%1.3f' % f, row)), M.T)),
                 sid='transform')
+
+            # decompose, in hopes it convinces Blender
+            # to apply the transforms correctly. (it doesn't)
+            #T, R, S = M.decomposeTransform()
+            #node.Child('translate',
+            #    '%3.2f %3.2f %3.2f' % (T.x, T.y, T.z),
+            #    sid='translate')
+            #node.Child('rotate',
+            #    '%3.2f %3.2f %3.2f %3.2f' % (R.x, R.y, R.z, 1),
+            #    sid='rotate')
+            #node.Child('scale',
+            #    '%3.2f %3.2f %3.2f' % (S.x, S.y, S.z),
+            #    sid='scale')
 
             if parent and not seenParent.get(bone.parent_idx,False):
                 seenParent[bone.parent_idx] = True

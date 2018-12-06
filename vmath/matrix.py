@@ -16,6 +16,7 @@
 import logging; log = logging.getLogger(__name__)
 import math
 import numpy as np
+from .vec3 import Vec3
 
 class Matrix(np.ndarray):
     """2-dimensional matrix of arbitrary size.
@@ -133,3 +134,30 @@ class Matrix(np.ndarray):
             (0,  0,  0,   1),
         )
         return self @ M
+
+    def decomposeTransform(self):
+        """Return decomposed Translation, Scale, and Rotation vectors.
+        Assumes this is a 4x4 transformation matrix.
+        """
+        M  = self
+        T  = Vec3(M[3,0], M[3,1], M[3,2])
+        Sx = Vec3(M[0,0], M[0,1], M[0,2])
+        Sy = Vec3(M[1,0], M[1,1], M[1,2])
+        Sz = Vec3(M[2,0], M[2,1], M[2,2])
+        S  = Vec3(Sx.length, Sy.length, Sz.length)
+        Rm = Matrix(
+            (M[0,0]/S.x, M[0,1]/S.y, M[0,2]/S.z),
+            (M[1,0]/S.x, M[1,1]/S.y, M[1,2]/S.z),
+            (M[2,0]/S.x, M[2,1]/S.y, M[2,2]/S.z),
+        )
+        sy = math.sqrt(Rm[0,0] * Rm[0,0] + Rm[1,0] * Rm[1,0])
+        if sy >= 0.000001:
+            Rx = math.atan2( Rm[2,1], Rm[2,2])
+            Ry = math.atan2(-Rm[2,0], sy)
+            Rz = math.atan2( Rm[1,0], Rm[0,0])
+        else: # singular
+            Rx = math.atan2(-Rm[1,2], Rm[1,1])
+            Ry = math.atan2(-Rm[2,0], sy)
+            Rz = 0
+        R = Vec3(Rx, Ry, Rz)
+        return T, S, R
