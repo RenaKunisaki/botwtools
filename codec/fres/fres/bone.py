@@ -193,15 +193,17 @@ class Bone(FresObject):
         """Dump bone heirarchy to console."""
         ind  = ('  ' * _depth)
         name = '%s%02X %s' % (ind, self.bone_idx, self.name)
-        pos  = Vec4(0,0,0,1) @ self.computeTransform()
+        M    = self.computeTransform()
+        T, S, R = M.decomposeTransform()
 
         def D(r):
             return r / (math.pi / 180)
 
-        log.debug("%s%s|%5.2f %5.2f %5.2f|%5.2f %5.2f %5.2f|%4d %4d %4d",
+        log.debug("%s%s|%5.2f %5.2f %5.2f|%4d %4d %4d|%5.2f %5.2f %5.2f|%4d %4d %4d",
             name,
             ' ' * (26-len(name)),
-            pos.x, pos.y, pos.z,
+            T.x, T.y, T.z,
+            D(R.z), D(R.y), D(R.z),
             self.pos.x, self.pos.y, self.pos.z,
             D(self.rot.x), D(self.rot.y), D(self.rot.z),
         )

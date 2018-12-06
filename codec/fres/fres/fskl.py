@@ -102,12 +102,7 @@ class FSKL(FresObject):
             else:
                 bone.parent = None
 
-        for bone in self.bones:
-            log.debug("Bone '%8s' S=%s R=%s P=%s parent=%s %s final pos=%s",
-                bone.name, bone.scale, bone.rot, bone.pos,
-                bone.parent.name if bone.parent else '<none>',
-                bone._flagStr,
-                Vec4(0,0,0,1) @ bone.computeTransform())
+        log.debug("Skeleton:                 |Final Position   |Final Rotation|Raw Position     |Raw Rotation")
         self.bones[0].printHeirarchy(self)
 
         #log.debug("Final bone transforms:")
