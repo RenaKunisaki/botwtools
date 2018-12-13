@@ -24,11 +24,12 @@ from ..fshp import FSHP
 from ..fskl import FSKL
 from ..fvtx import FVTX
 from .collada import ColladaWriter
+from .x3d import X3DWriter
 
 
 class FMDL(FresObject):
     """FMDL object header."""
-    defaultFileExt = 'dae'
+    defaultFileExt = 'x3d'
     # offsets in this struct are relative to the beginning of
     # the FRES file.
     # I'm assuming they're 64-bit since most are a 32-bit offset
@@ -109,16 +110,16 @@ class FMDL(FresObject):
 
 
     def toData(self):
-        """Export model to COLLADA file."""
-        writer = ColladaWriter()
+        """Export model to X3D file."""
+        writer = X3DWriter(self)
 
-        for i, fmat in enumerate(self.fmats):
-            writer.addFMAT(fmat)
+        #for i, fmat in enumerate(self.fmats):
+        #    writer.addFMAT(fmat)
 
-        for i, fvtx in enumerate(self.fvtxs):
-            writer.addFVTX(fvtx, name=self.fshps[i].name)
-            writer.addFSHP(self.fshps[i]) # XXX this is weird
+        #for i, fvtx in enumerate(self.fvtxs):
+        #    writer.addFVTX(fvtx, name=self.fshps[i].name)
+        #    writer.addFSHP(self.fshps[i]) # XXX this is weird
 
-        writer.addFSKL(self.skeleton)
-        writer.addScene()
+        #writer.addFSKL(self.skeleton)
+        #writer.addScene()
         return writer.toXML().tostring(pretty_print=True)

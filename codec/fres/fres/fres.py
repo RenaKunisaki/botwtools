@@ -132,7 +132,11 @@ class FRES:
         return StringTable().readFromFile(self.file, offset)
 
     def readDict(self, offset):
-        return Dict().readFromFile(self.file, offset)
+        try:
+            return Dict().readFromFile(self.file, offset)
+        except UnicodeDecodeError:
+            log.exception("Error reading dict from 0x%X", offset)
+            raise
 
 
     def read(self, size:(int,str)=-1, pos:int=None, count:int=1,
