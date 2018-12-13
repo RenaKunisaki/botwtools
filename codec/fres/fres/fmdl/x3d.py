@@ -83,24 +83,37 @@ class X3DWriter:
         return attr_buffers
 
 
+    def _makeHead(self):
+        """Make the <head> for the X3D document."""
+        return E('head',
+            E('meta', name='filename', content='XXX'),
+            E('meta', name='generator', content="https://github.com/RenaKunisaki/botwtools"),
+            profile='Core', version='3.3',
+        )
+
+
     def _makeShape(self, fshp):
         """Make element for an FSHP."""
-        xfrm = E('Transform',
-            DEF=fshp.name,
-        )
+        xfrm = E('Transform', DEF=fshp.name)
         for j, lod in enumerate(fshp.lods):
             fvtx    = self.fres.fvtxs[fshp.fvtx_idx]
             buffers = self._getAttrBuffers(lod, fvtx)
             pos     = buffers['_p0']
+
+            # Make Shape node.
             shape   = xfrm.Child('Shape',
                 DEF='%s.lod%d' % (fshp.name, j),
             )
+
+            # Make Appearance node.
             shape.Child('Appearance').Child('Material')
+
+            # Make polygon nodes. XXX support other formats
             shape.Child('IndexedTriangleSet', solid='true',
                 index=' '.join(map(str, lod.idx_buf))) \
-            .Child('Coordinate',
-                point=' '.join(map(lambda f: '%f'%f, pos)),
-            )
+                .Child('Coordinate',
+                    point=' '.join(map(lambda f: '%f'%f, pos)),
+                )
         return xfrm
 
 
@@ -118,11 +131,7 @@ class X3DWriter:
         #    'xmlns:xsd': 'http://www.w3.org/2001/XMLSchema-instance',
         #    'xsd:noNamespaceSchemaLocation': #'http://www.web3d.org/specifications/x3d-3.3.xsd',
         #})
-        root.Child('head',
-                E('meta', name='filename', content='XXX'),
-                E('meta', name='generator', content="https://github.com/RenaKunisaki/botwtools"),
-                profile='Core', version='3.3',
-        )
+        root.append(self._makeHead())
         scene = root.Child('Scene')
 
         # Transform > Group > Shape > Appearance > Material
