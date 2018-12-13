@@ -66,9 +66,7 @@ class X3DWriter:
                     data = struct.unpack(fmt['fmt'], data)
                     if func: data = func(data)
 
-                    # stupid: strip W coord for Blender;
-                    # its importer rejects anything where position's
-                    # stride is not 3.
+                    # Strip W coordinate from position buffers.
                     if attr.name == '_p0': data = data[0:3]
 
                     # flip texture Y coord because COLLADA is backward
@@ -83,6 +81,27 @@ class X3DWriter:
         #for name, buf in attr_buffers.items():
         #    log.debug("%s: %s", name, buf)
         return attr_buffers
+
+
+    def _makeShape(self, fshp):
+        """Make element for an FSHP."""
+        xfrm = E('Transform',
+            DEF=fshp.name,
+        )
+        for j, lod in enumerate(fshp.lods):
+            fvtx    = self.fres.fvtxs[fshp.fvtx_idx]
+            buffers = self._getAttrBuffers(lod, fvtx)
+            pos     = buffers['_p0']
+            shape   = xfrm.Child('Shape',
+                DEF='%s.lod%d' % (fshp.name, j),
+            )
+            shape.Child('Appearance').Child('Material')
+            shape.Child('IndexedTriangleSet', solid='true',
+                index=' '.join(map(str, lod.idx_buf))) \
+            .Child('Coordinate',
+                point=' '.join(map(lambda f: '%f'%f, pos)),
+            )
+        return xfrm
 
 
     def toXML(self):
@@ -102,10 +121,7 @@ class X3DWriter:
         root.Child('head',
                 E('meta', name='filename', content='XXX'),
                 E('meta', name='generator', content="https://github.com/RenaKunisaki/botwtools"),
-            **{
-                'profile': 'Core',
-                'version': '3.3',
-            },
+                profile='Core', version='3.3',
         )
         scene = root.Child('Scene')
 
@@ -113,23 +129,7 @@ class X3DWriter:
         # Transform > Group > Shape > IndexedFaceSet > Coordinate
 
         for i, fshp in enumerate(self.fres.fshps):
-            xfrm = scene.Child('Transform',
-                DEF=fshp.name,
-            )
-            for j, lod in enumerate(fshp.lods):
-                fvtx    = self.fres.fvtxs[fshp.fvtx_idx]
-                buffers = self._getAttrBuffers(lod, fvtx)
-                pos     = buffers['_p0']
-                shape   = xfrm.Child('Shape',
-                    DEF='%s.lod%d' % (fshp.name, j),
-                )
-                shape.Child('Appearance').Child('Material')
-                shape.Child('IndexedTriangleSet', solid='true',
-                    index=' '.join(map(str, lod.idx_buf))) \
-                .Child('Coordinate',
-                    point=' '.join(map(lambda f: '%f'%f, pos)),
-                )
-
+            scene.append(self._makeShape(fshp))
 
         #for scene in self.scenes:
         #    root.Child('scene')
