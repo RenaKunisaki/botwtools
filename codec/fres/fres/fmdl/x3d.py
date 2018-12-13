@@ -86,10 +86,24 @@ class X3DWriter:
     def _makeHead(self):
         """Make the <head> for the X3D document."""
         return E('head',
-            E('meta', name='filename', content='XXX'),
+            E('meta', name='filename',  content='XXX'),
+            E('meta', name='title',     content=self.fres.name),
             E('meta', name='generator', content="https://github.com/RenaKunisaki/botwtools"),
             profile='Core', version='3.3',
         )
+
+
+    def _makeAppearance(self, fshp, lod):
+        """Make Appearance element for an LOD of an FSHP."""
+        appearance = E('Appearance')
+        material = appearance.Child('Material')
+
+        fmat = self.fres.fmats[fshp.fmat_idx]
+        for tex in fmat.textures:
+            appearance.Child('ImageTexture',
+                url='./textures/%s.png' % tex['name'])
+
+        return appearance
 
 
     def _makeShape(self, fshp):
@@ -106,7 +120,7 @@ class X3DWriter:
             )
 
             # Make Appearance node.
-            shape.Child('Appearance').Child('Material')
+            shape.append(self._makeAppearance(fshp, lod))
 
             # Make polygon nodes. XXX support other formats
             shape.Child('IndexedTriangleSet', solid='true',
