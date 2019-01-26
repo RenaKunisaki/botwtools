@@ -57,7 +57,7 @@ class Header(FresObject):
         Offset(  'rlt_offset'),
         Offset(  'file_size'),  # size of this file
         StrOffs( 'name2'),
-        Offset(  'unk24'),
+        Offset(  'unk24'), # probably padding
 
         #Padding(4),
         Offset64('fmdl_offset'),

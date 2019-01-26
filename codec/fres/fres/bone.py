@@ -20,6 +20,14 @@ from codec.base.types import Offset, Offset64, StrOffs, Padding, Flags, Vec3f, V
 from vmath import Matrix, Vec3, Vec4, Quaternion
 import math
 
+def _printMtx(m, name):
+    print(name+":")
+    for y in range(4):
+        r = []
+        for x in range(4):
+            r.append('%+9.6f' % m[y][x])
+        print('\t' + ('  '.join(r)))
+
 class Bone(FresObject):
     """A bone in an FSKL."""
     # offsets in this struct are relative to the beginning of
@@ -162,12 +170,21 @@ class Bone(FresObject):
         # XXX billboarding, rigid mtxs, if ever used.
 
         # Build matrices from these transformations.
+        print("BONE", self.name)
         T = Matrix.Translate(4, T)
+        _printMtx(T, 'T')
         S = Matrix.Scale    (4, S)
+        _printMtx(S, 'S')
+        print("R input", R.x, R.y, R.z)
         R = Quaternion.fromEulerAngles(R).toMatrix()
+        _printMtx(R, 'R')
         if self.parent:
             P = self.parent.computeTransform()
-        else: P = Matrix.I(4)
+            print("P:",self.parent.pos,self.parent.rot,self.parent.scale)
+            _printMtx(P, 'P:'+self.parent.name)
+        else:
+            P = Matrix.I(4)
+            _printMtx(P, 'P:none')
         M = Matrix.I(4)
 
         #log.debug("Bone '%8s' @ %s R %s: T=\n%srot=\n%s =>\n%s",
@@ -186,6 +203,7 @@ class Bone(FresObject):
         M = M @ R
         M = M @ T
         M = M @ P
+        _printMtx(M, 'Final')
 
         return M
 

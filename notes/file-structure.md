@@ -26,6 +26,7 @@
     - FVIS (Visual Animation)
     - FSCN (Scene Animation)
     - FSHU (Shape Animation)
+    - buf_mem_pool
     - embedded file
         - BNTX (Binary Texture)
             - NX (Texture)
